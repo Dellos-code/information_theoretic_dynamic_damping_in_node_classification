@@ -1,0 +1,394 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- UNIVERSAL PREAMBLE BLOCK ---
+\usepackage[a4paper, top=2.4cm, bottom=2.4cm, left=2.1cm, right=2.1cm]{geometry}
+\usepackage{fontspec}
+\usepackage[greek, bidi=basic, provide=*]{babel}
+
+\babelprovide[import, onchar=ids fonts]{greek}
+\babelprovide[import, onchar=ids fonts]{english}
+
+% Set default/Latin font to Sans Serif in the main (rm) slot
+\babelfont{rm}{Noto Sans}
+% Assign a specific font for Greek text
+\babelfont[greek]{rm}{Noto Sans}
+
+% Math and formatting packages
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+
+\setlist[itemize]{label=-, itemsep=3pt, topsep=4pt}
+\setlist[enumerate]{itemsep=3pt, topsep=4pt}
+\setlength{\parskip}{5pt}
+\setlength{\parindent}{0pt}
+\emergencystretch=2em
+
+\newtheorem{theorem}{Θεώρημα}
+\newtheorem{proposition}{Πρόταση}
+\newtheorem{lemma}{Λήμμα}
+\theoremstyle{definition}
+\newtheorem{definition}{Ορισμός}
+\newtheorem{remark}{Παρατήρηση}
+
+\newtheorem{theoremEN}{Theorem}
+\newtheorem{propositionEN}{Proposition}
+\theoremstyle{definition}
+\newtheorem{remarkEN}{Remark}
+
+\title{\textbf{Πληροφοριοθεωρητική Δυναμική Απόσβεση ανά Κόμβο και Βαθμονομημένη Ομοφιλία/Ετεροφιλία για Κατηγοριοποίηση Κόμβων σε Στοχαστικά Γραφήματα}\\[8pt]
+\large Information-Theoretic Per-Node Dynamic Damping and Trust-Calibrated Homophily/Heterophily for Node Classification in Stochastic Graphs}
+\author{Ιωάννης Κωνσταντέλλος (Ioannis Konstantellos)\\
+\small Τμήμα Μηχανικών Η/Υ και Πληροφορικής (CEID), Πανεπιστήμιο Πατρών}
+\date{Νοέμβριος 2026}
+
+\begin{document}
+
+\maketitle
+
+% ==============================================================================
+% ΜΕΡΟΣ Α: ΕΛΛΗΝΙΚΗ ΕΚΔΟΣΗ
+% ==============================================================================
+\begin{center}
+\Large \textbf{Μέρος Α: Ελληνική έκδοση}
+\end{center}
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\begin{abstract}
+\noindent Παρουσιάζουμε ένα νέο, πλήρως αυτοσυνεπές μαθηματικό και αλγοριθμικό πλαίσιο για την ημι-επιβλεπόμενη κατηγοριοποίηση κόμβων (multi-class node classification) σε ακατεύθυντα στοχαστικά γραφήματα με $k$ κατηγορίες $\{A_0, A_1, \dots, A_{k-1}\}$. Το προτεινόμενο μοντέλο επιλύει ενοποιημένα τρία θεμελιώδη προβλήματα της διάχυσης πληροφορίας σε γραφήματα: (i)~τη βαθμονόμηση της αβεβαιότητας (trust calibration) τόσο στις πιθανότητες των ακμών όσο και στις πρωταρχικές κατανομές (priors) των κόμβων μέσω εκθετικής απόσβεσης $1 - e^{-T}$ και ισομερούς ανακατανομής μέγιστης εντροπίας, (ii)~την ενσωμάτωση ομοφιλικών και ετεροφιλικών ακμών μέσω μιας δυαδικής (boolean) μεταβλητής πολικότητας και ενός κανονικοποιημένου τελεστή συμπληρώματος στο μοναδιαίο simplex, και (iii)~τον ενδογενή, ανά κόμβο και ανά επανάληψη προσδιορισμό του παράγοντα απόσβεσης $\alpha_j^{(t)}$ του αλγορίθμου PageRank μέσω της θεωρίας πληροφορίας Shannon και της πιθανότητας διαφυγής $P_{\mathrm{esc}}(j)$. Αποδεικνύουμε ότι ο προτεινόμενος κανόνας $\alpha_j^{(t)} = \frac{(H_{\max} - H')P_{\mathrm{esc}}(j)}{(H_{\max} - H')P_{\mathrm{esc}}(j) + (H_{\max} - H)}$ —όπου $H$ είναι η εντροπία της πρωταρχικής κατανομής $v_j$ του κόμβου $j$ (του πολυ-κατηγορικού αναλόγου του $x$) και $H'$ η εντροπία του εισερχόμενου σταθμισμένου σήματος των γειτόνων του $S_j^{(t)} = \sum_{i \in N(j)} w_{ij}\tilde{V}_i^{(j,t)}$— ισοδυναμεί με τον λόγο των αποκλίσεων Kullback--Leibler από την ομοιόμορφη κατανομή πλήρους άγνοιας, είναι αναλλοίωτος ως προς τη βάση του λογαρίθμου ($\log_2$ έναντι $\ln$), και ικανοποιεί με απόλυτη μαθηματική συνέπεια όλες τις οριακές συνθήκες άγνοιας και βεβαιότητας.
+\end{abstract}
+
+\section{Διατύπωση Προβλήματος και Προκαταρκτική Βαθμονόμηση Εμπιστοσύνης (\texorpdfstring{$T$}{T})}
+
+Έστω ένα ακατεύθυντο γράφημα $G = (\mathcal{V}, \mathcal{E})$ με $n = |\mathcal{V}|$ κόμβους και σύνολο $k \ge 2$ πιθανών κατηγοριών (καστών) $\mathcal{A} = \{A_0, A_1, \dots, A_{k-1}\}$.
+\begin{itemize}
+\item Κάθε κόμβος $j \in \mathcal{V}$ διαθέτει ένα πρωταρχικό διάνυσμα πιθανοτικής κατανομής (prior distribution) $v_j = \big(v_{j,0}, v_{j,1}, \dots, v_{j,k-1}\big)^\top \in \Delta^{k-1}$ (το πολυ-κατηγορικό ανάλογο του πρωταρχικού διανύσματος $x$ στον αλγόριθμο εκτίμησης προσβασιμότητας), όπου $v_{j,c} \in [0,1]$ είναι η αρχική πιθανότητα να ανήκει ο κόμβος $j$ στην κατηγορία $A_c$ και $\sum_{c=0}^{k-1} v_{j,c} = 1$.
+\item Κάθε ακμή $(i, j) \in \mathcal{E}$ διαθέτει μια πιθανότητα $p_{ij} = p_{ji} \in [0, 1]$, η οποία εκφράζει τον στοχαστικό/πιθανοτικό βαθμό ομοφιλικής ταύτισης ή ετεροφιλικής αντίθεσης μεταξύ των κόμβων $i$ και $j$ (διατηρώντας ταυτόχρονα την πιθανοτική ερμηνεία ανεξάρτητης ενεργοποίησης ακμής).
+\end{itemize}
+
+Στην πράξη, οι αρχικές εκτιμήσεις των πιθανοτήτων $p_{ij}$ και $v_j$ συνοδεύονται από διαφορετικό βαθμό αξιοπιστίας. Για τον λόγο αυτόν, κάθε αρχική πιθανότητα συνοδεύεται από έναν μη-αρνητικό δείκτη εμπιστοσύνης (trust metric) $T \in [0, \infty)$. Πριν από την εκτέλεση του κυρίως αλγορίθμου, εφαρμόζουμε το ακόλουθο προκαταρκτικό βήμα βαθμονόμησης:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+\item \textbf{Βαθμονόμηση Πιθανοτήτων Ακμών:} Κάθε πιθανότητα ακμής $p_{ij}$ με δείκτη εμπιστοσύνης $T_{ij} \ge 0$ αντικαθίσταται από:
+\begin{equation}\label{eq:edge_trust_gr}
+p_{ij} \leftarrow p_{ij}\left(1 - e^{-T_{ij}}\right).
+\end{equation}
+\item \textbf{Βαθμονόμηση Πρωταρχικών Κατανομών Κόμβων ($v_j$):} Κάθε συνιστώσα $v_{j,c}$ του πρωταρχικού διανύσματος $v_j$ (με δείκτη εμπιστοσύνης $T_j \ge 0$) πολλαπλασιάζεται με τον συντελεστή $\left(1 - e^{-T_j}\right)$, και το υπόλοιπο της πιθανοτικής μάζας που υπολείπεται ώστε το διάνυσμα να αθροίζει στη μονάδα ($100\%$), δηλαδή $1 - \left(1 - e^{-T_j}\right)\sum_{c=0}^{k-1} v_{j,c} = e^{-T_j}$, μοιράζεται \textbf{εξίσου} στις $k$ κατηγορίες:
+\begin{equation}\label{eq:prior_trust_gr}
+v_{j,c} \leftarrow v_{j,c}\left(1 - e^{-T_j}\right) + \frac{e^{-T_j}}{k} \quad \forall c \in \{0, \dots, k-1\} \quad \Longleftrightarrow \quad v_j \leftarrow \left(1 - e^{-T_j}\right)v_j + \frac{e^{-T_j}}{k}\mathbf{1}_k,
+\end{equation}
+όπου $\mathbf{1}_k = [1, 1, \dots, 1]^\top \in \mathbb{R}^k$.
+\end{enumerate}
+
+\begin{proposition}[Ιδιότητες της Βαθμονόμησης Εμπιστοσύνης]\label{prop:trust_gr}
+Ο μετασχηματισμός~\eqref{eq:prior_trust_gr} διατηρεί τη στοχαστικότητα ($\sum_{c=0}^{k-1} v_{j,c} = 1$ και $v_{j,c} \ge 0$). Για $T_j = 0$ (μηδενική εμπιστοσύνη) επιβάλλει την ομοιόμορφη κατανομή μέγιστης εντροπίας $v_j = \frac{1}{k}\mathbf{1}_k$, ενώ για $T_j \to \infty$ (απόλυτη εμπιστοσύνη) αφήνει το $v_j$ αμετάβλητο.
+\end{proposition}
+
+\begin{proof}
+Εφόσον $T_j \ge 0$, ισχύει $1 - e^{-T_j} \in [0, 1)$ και $e^{-T_j} \in (0, 1]$, οπότε κάθε συνιστώσα $v_{j,c}\big(1 - e^{-T_j}\big) + \frac{e^{-T_j}}{k}$ είναι αυστηρά μη-αρνητική. Αθροίζοντας επί όλων των $k$ κατηγοριών λαμβάνουμε $\big(1 - e^{-T_j}\big)\sum_{c=0}^{k-1} v_{j,c} + \sum_{c=0}^{k-1}\frac{e^{-T_j}}{k} = \big(1 - e^{-T_j}\big)\cdot 1 + k \cdot \frac{e^{-T_j}}{k} = 1$. Για $T_j = 0$ έχουμε $1 - e^0 = 0 \implies v_j = \frac{1}{k}\mathbf{1}_k$, ενώ για $T_j \to \infty$ έχουμε $e^{-T_j} \to 0 \implies v_j \to v_j$.
+\end{proof}
+
+Μετά την εκτέλεση των~\eqref{eq:edge_trust_gr}--\eqref{eq:prior_trust_gr}, όλες οι πιθανότητες $p_{ij}$ και $v_j$ θεωρούνται πλέον απολύτως βαθμονομημένες (ισοδύναμα με $T \to \infty$) και εισερχόμαστε στον κυρίως αλγόριθμο.
+
+\section{Κατευθυνόμενα Λογαριθμικά Βάρη \texorpdfstring{$w_{nj}$}{w\_nj}, Πιθανότητα Διαφυγής \texorpdfstring{$P_{\mathrm{esc}}(j)$}{P\_esc(j)} και Τελεστής Ετεροφιλίας}
+
+Συμβολίζουμε με $V_j^{(t)} = \big(V_{j,0}^{(t)}, \dots, V_{j,k-1}^{(t)}\big)^\top \in \Delta^{k-1}$ το διάνυσμα της προσεγγιζόμενης πιθανοτικής κατανομής του κόμβου $j$ στον γύρο $t \ge 0$ (με αρχικοποίηση $V_j^{(0)} = v_j$), το οποίο επιδιώκουμε να συγκλίνει στην πραγματική κατανομή συμμετοχής του κόμβου $j$ στις $k$ κατηγορίες.
+
+\subsection{Τα Ασύμμετρα Κανονικοποιημένα Βάρη \texorpdfstring{$w_{nj}$}{w\_nj} και ο Δείκτης \texorpdfstring{$P_{\mathrm{esc}}(j)$}{P\_esc(j)}}
+
+Για κάθε κόμβο $j \in \mathcal{V}$ με σύνολο γειτόνων $N(j) = \{i \in \mathcal{V} : (i,j) \in \mathcal{E}\}$ και για κάθε γείτονα $n \in N(j)$, ορίζουμε το βάρος επιρροής $w_{nj}$ του γείτονα $n$ προς τον κόμβο $j$ ως:
+\begin{equation}\label{eq:w_nj_gr}
+w_{nj} \triangleq \frac{-\ln(1 - p_{nj})}{-\displaystyle\sum_{i \in N(j)} \ln(1 - p_{ij})}.
+\end{equation}
+\textbf{Κρίσιμη Παρατήρηση Ασυμμετρίας ($w_{ij} \ne w_{ji}$):} Παρότι το γράφημα είναι ακατεύθυντο ($p_{ij} = p_{ji}$), τα βάρη είναι εν γένει κατευθυνόμενα και ασύμμετρα ($w_{ij} \ne w_{ji}$), διότι στο $w_{ij}$ ο παρονομαστής αθροίζει επί όλων των γειτόνων του κόμβου $j$ (ώστε $\sum_{i \in N(j)} w_{ij} = 1$), ενώ στο $w_{ji}$ ο παρονομαστής αθροίζει επί όλων των γειτόνων του κόμβου $i$ (ώστε $\sum_{m \in N(i)} w_{mi} = 1$).
+
+Παράλληλα, ο δείκτης μη-απομόνωσης (πιθανότητα διαφυγής / escape probability) του κόμβου $j$ ορίζεται ως η πιθανότητα να είναι ενεργή τουλάχιστον μία από τις προσπίπτουσες σε αυτόν ακμές:
+\begin{equation}\label{eq:pesc_gr}
+P_{\mathrm{esc}}(j) \triangleq 1 - \prod_{i \in N(j)} (1 - p_{ij}) \in [0, 1].
+\end{equation}
+
+\subsection{Η Δυαδική Μεταβλητή Πολικότητας και η Κανονικοποιημένη Αντιστροφή Ετεροφιλίας}
+
+Κάθε ακμή $(i, j) \in \mathcal{E}$, πέραν της πιθανότητας $p_{ij}$, φέρει μια δυαδική (boolean) μεταβλητή $h_{ij} \in \{0, 1\}$:
+\begin{itemize}
+\item $h_{ij} = 0$: η σχέση μεταξύ $i$ και $j$ είναι \textbf{ομοφιλική} (έλξη / ομοιότητα κατηγορίας).
+\item $h_{ij} = 1$: η σχέση μεταξύ $i$ και $j$ είναι \textbf{ετεροφιλική} (άπωση / αντίθεση κατηγορίας).
+\end{itemize}
+Όταν κατά την επανάληψη στον κόμβο $j$ συγκεντρώνεται η πληροφορία από τους γείτονες $i \in N(j)$, ο κόμβος $j$ «βλέπει» την κατανομή $V_i^{(t)}$ κάθε γείτονα $i$ ως $\tilde{V}_i^{(j,t)}$: αν $h_{ij} = 0$, τη βλέπει αυτούσια· αν $h_{ij} = 1$, αντικαθιστά κάθε τιμή $V_{i,c}^{(t)}$ με το συμπλήρωμά της $1 - V_{i,c}^{(t)}$ και κανονικοποιεί ώστε οι $k$ συνιστώσες να αθροίζουν ξανά στη μονάδα:
+\begin{equation}\label{eq:heterophily_inversion_gr}
+\tilde{V}_i^{(j,t)} \triangleq \begin{cases}
+V_i^{(t)}, & \text{αν } h_{ij} = 0 \quad (\text{ομοφιλική ακμή}),\\[8pt]
+\dfrac{\mathbf{1}_k - V_i^{(t)}}{\displaystyle\sum_{c=0}^{k-1} \big(1 - V_{i,c}^{(t)}\big)} = \dfrac{\mathbf{1}_k - V_i^{(t)}}{k - 1}, & \text{αν } h_{ij} = 1 \quad (\text{ετεροφιλική ακμή}),
+\end{cases}
+\end{equation}
+διότι $\sum_{c=0}^{k-1} (1 - V_{i,c}^{(t)}) = k - \sum_{c=0}^{k-1} V_{i,c}^{(t)} = k - 1$.
+\begin{itemize}
+\item \textbf{Παράδειγμα 1 ($k = 2$):} Αν $V_i = [0.7, 0.3]^\top$ και $h_{ij} = 1$, τότε $\tilde{V}_i^{(j)} = \frac{[1-0.7,\; 1-0.3]^\top}{2 - 1} = [0.3, 0.7]^\top$.
+\item \textbf{Παράδειγμα 2 ($k = 3$):} Αν $V_i = \big[\frac{1}{2}, \frac{1}{4}, \frac{1}{4}\big]^\top$ και $h_{ij} = 1$, τότε $\mathbf{1}_3 - V_i = \big[\frac{1}{2}, \frac{3}{4}, \frac{3}{4}\big]^\top$ με άθροισμα $2$, οπότε μετά την κανονικοποίηση ο κόμβος $j$ βλέπει $\tilde{V}_i^{(j)} = \big[\frac{1}{4}, \frac{3}{8}, \frac{3}{8}\big]^\top$.
+\end{itemize}
+
+\begin{proposition}[Αναλλοιωτότητα Simplex και Φασματική Ιδιότητα του Τελεστή Ετεροφιλίας]\label{prop:simplex_gr}
+Ο τελεστής ετεροφιλικής αντιστροφής $\mathcal{C}(V) \triangleq \frac{\mathbf{1}_k - V}{k - 1}$ απεικονίζει το μοναδιαίο simplex $\Delta^{k-1}$ στον εαυτό του ($\mathcal{C}(\Delta^{k-1}) \subseteq \Delta^{k-1}$). Επιπλέον, γράφοντας κάθε κατανομή ως $V = u + \delta$ όπου $u = \frac{1}{k}\mathbf{1}_k$ και $\sum_{c=0}^{k-1} \delta_c = 0$, ισχύει:
+\begin{equation}\label{eq:eigen_c_gr}
+\mathcal{C}(u + \delta) = u - \frac{1}{k - 1}\delta, \qquad \mathcal{C}\big(\mathcal{C}(u + \delta)\big) = u + \frac{1}{(k - 1)^2}\delta.
+\end{equation}
+Συνεπώς, ο $\mathcal{C}$ έχει ακριβή ιδιοτιμή $\lambda_\perp = -\frac{1}{k-1}$ στον υποχώρο μηδενικού αθροίσματος, διατηρώντας όλες τις πιθανότητες αυστηρά μη-αρνητικές (ώστε η εντροπία Shannon να ορίζεται πάντοτε) και αποκαθιστώντας την αρχική διάταξη κλάσεων σε μονοπάτια δύο διαδοχικών ετεροφιλικών ακμών.
+\end{proposition}
+
+\begin{proof}
+Για κάθε $V \in \Delta^{k-1}$ ισχύει $V_{c} \in [0, 1]$, άρα $1 - V_{c} \ge 0$ και $\sum_{c=0}^{k-1} \frac{1 - V_c}{k - 1} = \frac{k - 1}{k - 1} = 1$, επομένως $\mathcal{C}(V) \in \Delta^{k-1}$. Θέτοντας $V = \frac{1}{k}\mathbf{1}_k + \delta$ με $\mathbf{1}_k^\top \delta = 0$, έχουμε:
+\[
+\mathcal{C}(u + \delta) = \frac{\mathbf{1}_k - \frac{1}{k}\mathbf{1}_k - \delta}{k - 1} = \frac{\frac{k-1}{k}\mathbf{1}_k - \delta}{k - 1} = \frac{1}{k}\mathbf{1}_k - \frac{1}{k - 1}\delta = u - \frac{1}{k - 1}\delta.
+\]
+Εφαρμόζοντας τον $\mathcal{C}$ δεύτερη φορά προκύπτει $\mathcal{C}(\mathcal{C}(u + \delta)) = u + \frac{1}{(k-1)^2}\delta$.
+\end{proof}
+
+\section{Ο Πληροφοριοθεωρητικός Κανόνας Δυναμικής Απόσβεσης \texorpdfstring{$\alpha_j^{(t)}$}{alpha\_j\^(t)}}
+
+Σε κάθε επαναληπτικό βήμα (γύρο) $t \ge 0$ και σε κάθε κόμβο $j \in \mathcal{V}$, έστω $S_j^{(t)} \in \Delta^{k-1}$ η σταθμισμένη εισερχόμενη κατανομή από τους γείτονες του κόμβου $j$:
+\begin{equation}\label{eq:Sj_def_gr}
+S_j^{(t)} \triangleq \sum_{i \in N(j)} w_{ij}\,\tilde{V}_i^{(j,t)}.
+\end{equation}
+Η ανανέωση της κατανομής $V_j$ του κόμβου $j$ εκτελείται μέσω του επαναληπτικού κανόνα τύπου PageRank με δυναμικό συντελεστή απόσβεσης $\alpha_j^{(t)}$ ανά κόμβο και ανά επανάληψη:
+\begin{equation}\label{eq:main_update_gr}
+\boxed{\;V_j^{(t+1)} \leftarrow \left(1 - \alpha_j^{(t)}\right) v_j + \alpha_j^{(t)} \sum_{i \in N(j)} w_{ij}\,\tilde{V}_i^{(j,t)} = \left(1 - \alpha_j^{(t)}\right) v_j + \alpha_j^{(t)} S_j^{(t)}.\;}
+\end{equation}
+
+Για τον υπολογισμό του $\alpha_j^{(t)}$, χρησιμοποιούμε την εντροπία Shannon μιας διακριτής κατανομής $P = (P_0, \dots, P_{k-1})^\top \in \Delta^{k-1}$ (με τη σύμβαση $0 \ln 0 = 0$), χρησιμοποιώντας τον φυσικό λογάριθμο $\ln$ αντί του $\log_2$ χάριν υπολογιστικής αποδοτικότητας:
+\begin{equation}\label{eq:shannon_gr}
+H(P) \triangleq -\sum_{c=0}^{k-1} P_c \ln P_c \in [0, H_{\max}], \qquad \text{όπου } H_{\max} = \ln k.
+\end{equation}
+Συγκεκριμένα, στον κόμβο $j$ και στον γύρο $t$ ορίζουμε:
+\begin{itemize}
+\item $H \triangleq H(v_j) = -\sum_{c=0}^{k-1} v_{j,c} \ln v_{j,c}$: την εντροπία της πρωταρχικής πιθανοτικής κατανομής $v_j$ του κόμβου $j$ (του πολυ-κατηγορικού αναλόγου του πρωταρχικού διανύσματος $x$),
+\item $H' \triangleq H\!\left(S_j^{(t)}\right) = -\sum_{c=0}^{k-1} S_{j,c}^{(t)} \ln S_{j,c}^{(t)}$: την εντροπία της σταθμισμένης εισερχόμενης κατανομής $S_j^{(t)} = \sum_{i \in N(j)} w_{ij}\tilde{V}_i^{(j,t)}$ των γειτόνων του κόμβου $j$ στον γύρο $t$, και
+\item $H_{\max} = \ln k$: τη μέγιστη δυνατή εντροπία, η οποία επιτυγχάνεται αν και μόνο αν η κατανομή είναι η ομοιόμορφη κατανομή πλήρους άγνοιας $u = \left[\frac{1}{k}, \frac{1}{k}, \dots, \frac{1}{k}\right]^\top$.
+\end{itemize}
+
+Ο δυναμικός συντελεστής απόσβεσης $\alpha_j^{(t)}$ ορίζεται από την κλειστή σχέση:
+\begin{equation}\label{eq:alpha_formula_gr}
+\boxed{\;\alpha_j^{(t)} \triangleq \frac{\left(H_{\max} - H'\right) P_{\mathrm{esc}}(j)}{\left(H_{\max} - H'\right) P_{\mathrm{esc}}(j) + \left(H_{\max} - H\right)},\;}
+\end{equation}
+συνοδευόμενη από την ακόλουθη ρητή οριακή συνθήκη πλήρους άγνοιας:
+\begin{equation}\label{eq:boundary_rule_gr}
+\textbf{Οριακή Συνθήκη:} \quad \text{Αν } H = H' = H_{\max}, \quad \text{τότε } V_j^{(t+1)} \leftarrow \left[\frac{1}{k}, \frac{1}{k}, \dots, \frac{1}{k}\right]^\top.
+\end{equation}
+
+\begin{theorem}[Πληροφοριοθεωρητική Θεμελίωση και Οριακή Ακρίβεια του $\alpha_j^{(t)}$]\label{thm:main_gr}
+Για τον δυναμικό κανόνα~\eqref{eq:main_update_gr}--\eqref{eq:boundary_rule_gr} με $H = H(v_j)$ και $H' = H(S_j^{(t)})$ ισχύουν τα εξής:
+\begin{enumerate}[label=(\roman*)]
+\item \textbf{Ταυτότητα Απόκλισης Kullback--Leibler (Negentropy Odds Ratio):} Για κάθε κατανομή $P \in \Delta^{k-1}$, η διαφορά $H_{\max} - H(P)$ ισούται ταυτοτικά με την απόκλιση Kullback--Leibler της $P$ από την ομοιόμορφη κατανομή πλήρους άγνοιας $u = \frac{1}{k}\mathbf{1}_k$:
+\begin{equation}\label{eq:kl_identity_gr}
+H_{\max} - H(P) = \ln k + \sum_{c=0}^{k-1} P_c \ln P_c = \sum_{c=0}^{k-1} P_c \ln\!\left(\frac{P_c}{1/k}\right) = D_{\mathrm{KL}}(P \,\|\, u) \ge 0.
+\end{equation}
+Επομένως, όταν $H < H_{\max}$ και $H' < H_{\max}$, ο λόγος του βάρους δικτύου $\alpha_j^{(t)}$ προς το βάρος αυτο-διατήρησης $1 - \alpha_j^{(t)}$ ισούται με τον λόγο της πληροφορίας KL της γειτονιάς προς την πληροφορία KL του prior, σταθμισμένο με το $P_{\mathrm{esc}}(j)$:
+\begin{equation}\label{eq:odds_kl_gr}
+\frac{\alpha_j^{(t)}}{1 - \alpha_j^{(t)}} = \frac{H_{\max} - H'}{H_{\max} - H}\,P_{\mathrm{esc}}(j) = \frac{D_{\mathrm{KL}}\!\left(S_j^{(t)} \,\middle\|\, u\right)}{D_{\mathrm{KL}}\!\left(v_j \,\middle\|\, u\right)}\,P_{\mathrm{esc}}(j).
+\end{equation}
+\item \textbf{Αναλλοιωτότητα ως προς τη Βάση του Λογαρίθμου:} Η αντικατάσταση του $\log_2$ από τον φυσικό λογάριθμο $\ln$ πολλαπλασιάζει τα $H_{\max}, H, H'$ με την ίδια θετική σταθερά $\ln 2$, η οποία απλοποιείται ταυτοτικά στον αριθμητή και στον παρονομαστή της~\eqref{eq:alpha_formula_gr}, αφήνοντας το $\alpha_j^{(t)}$ απολύτως αμετάβλητο.
+\item \textbf{Ακριβής Συμπλήρωση των Οριακών Καθεστώτων (Και Απουσία Δυναμικού Παγώματος):}
+\begin{itemize}
+\item \textbf{Καθεστώς 1 ($H = H_{\max}$ και $H' = H_{\max}$ --- Πλήρης Άγνοια Κόμβου και Γειτονιάς στον Γύρο $t$):} Εφόσον $D_{\mathrm{KL}}(P \,\|\, u) = 0 \iff P = u$, η συνθήκη $H = H' = H_{\max}$ ισχύει αν και μόνο αν στον γύρο $t$ τόσο το πρωταρχικό διάνυσμα $v_j = u$ όσο και το εισερχόμενο σήμα των γειτόνων $S_j^{(t)} = u$ είναι ομοιόμορφα. Τότε, για οποιαδήποτε τιμή $\alpha \in [0,1]$, ο κυρτός συνδυασμός $(1-\alpha)v_j + \alpha S_j^{(t)} = (1-\alpha)u + \alpha u$ ισούται ταυτοτικά με $u = \big[\frac{1}{k}, \dots, \frac{1}{k}\big]^\top$, καθιστώντας την οριακή συνθήκη~\eqref{eq:boundary_rule_gr} αλγεβρικά ακριβή. Επιπλέον, μόλις σε κάποιον επόμενο γύρο $t' > t$ η πληροφορία φτάσει σε έστω και έναν γείτονα του $j$ ώστε $S_j^{(t')} \ne u$, η εντροπία της γειτονιάς πέφτει αυτόματα σε $H' = H(S_j^{(t')}) < H_{\max}$, οπότε ο κόμβος $j$ εξέρχεται αμέσως από το Καθεστώς~1 και μεταβαίνει στο Καθεστώς~2!
+\item \textbf{Καθεστώς 2 ($H = H_{\max}$ και $H' < H_{\max}$ --- Άγνωστος Κόμβος με Πληροφορημένη Γειτονιά):} Αν ο κόμβος $j$ έχει πλήρη αρχική άγνοια ($v_j = u \implies H_{\max} - H = 0$), αλλά οι γείτονές του διαθέτουν πληροφορία ($H' < H_{\max}$) και $P_{\mathrm{esc}}(j) > 0$, η~\eqref{eq:alpha_formula_gr} δίνει $\alpha_j^{(t)} = 1 \implies V_j^{(t+1)} = S_j^{(t)}$, δηλαδή ο κόμβος υιοθετεί 100\% την κατανομή της γειτονιάς του.
+\item \textbf{Καθεστώς 3 ($H < H_{\max}$ και $H' = H_{\max}$ --- Πληροφορημένος Κόμβος με Αβέβαιη Γειτονιά):} Αν ο κόμβος $j$ διαθέτει αρχική πληροφορία ($H < H_{\max}$), αλλά το εισερχόμενο σήμα των γειτόνων του έχει μέγιστη εντροπία ($H' = H_{\max} \implies H_{\max} - H' = 0$), η~\eqref{eq:alpha_formula_gr} δίνει $\alpha_j^{(t)} = 0 \implies V_j^{(t+1)} = v_j$, προστατεύοντας 100\% την αρχική πεποίθηση του κόμβου από τον θόρυβο της γειτονιάς.
+\end{itemize}
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Το~(i) προκύπτει γράφοντας $H_{\max} - H(P) = \ln k \sum_{c=0}^{k-1} P_c + \sum_{c=0}^{k-1} P_c \ln P_c = \sum_{c=0}^{k-1} P_c \ln(k P_c) = D_{\mathrm{KL}}(P \,\|\, u)$, το οποίο είναι μη-αρνητικό από την ανισότητα Gibbs με ισότητα αν και μόνο αν $P = u$. Διαιρώντας το $\alpha_j^{(t)}$ με το $1 - \alpha_j^{(t)} = \frac{H_{\max} - H}{(H_{\max} - H')P_{\mathrm{esc}}(j) + (H_{\max} - H)}$ λαμβάνουμε την~\eqref{eq:odds_kl_gr}. Το~(ii) έπεται από την ταυτότητα $H_{\log_2}(P) = \frac{1}{\ln 2} H_{\ln}(P)$. Τέλος, το~(iii) έπεται άμεσα από την αυστηρή κοιλότητα της εντροπίας Shannon στο $\Delta^{k-1}$: όταν $H = H' = H_{\max}$, το μοναδικό μέγιστο της εντροπίας επιβάλλει $v_j = S_j^{(t)} = u$, οπότε κάθε κυρτός συνδυασμός τους ισούται με $u$.
+\end{proof}
+
+\section{Σύνοψη Αλγορίθμου και Υπολογιστική Πολυπλοκότητα}
+
+Ο Πίνακας~\ref{tab:algo_gr} συνοψίζει την πλήρη αλγοριθμική διαδικασία. Κάθε επανάληψη απαιτεί χρόνο $O(|\mathcal{E}|\cdot k + |\mathcal{V}|\cdot k)$ και μνήμη $O(|\mathcal{E}| + |\mathcal{V}|\cdot k)$.
+
+\begin{table}[!htbp]
+\centering
+\caption{Αλγόριθμος 1: Πληροφοριοθεωρητική Δυναμική Διάχυση με Βαθμονομημένη Ετεροφιλία}
+\label{tab:algo_gr}
+{\small
+\begin{tabular}{p{0.95\linewidth}}
+\toprule
+\textbf{Είσοδος:} Γράφημα $G=(\mathcal{V},\mathcal{E})$, αριθμός κατηγοριών $k$, αρχικές πιθανότητες ακμών $p_{ij}$ με δείκτες εμπιστοσύνης $T_{ij} \ge 0$, δυαδικές μεταβλητές πολικότητας ακμών $h_{ij} \in \{0,1\}$, πρωταρχικές κατανομές κόμβων $v_j \in \Delta^{k-1}$ με δείκτες εμπιστοσύνης $T_j \ge 0$, ανοχή σύγκλισης $\varepsilon$.\\
+\textbf{Έξοδος:} Προσεγγιζόμενες κατανομές κατηγοριών $V_j \in \Delta^{k-1}$ για κάθε κόμβο $j \in \mathcal{V}$.\\
+\midrule
+\textbf{Προκαταρκτικό Στάδιο (Βαθμονόμηση Εμπιστοσύνης και Βαρών):}\\
+1.\quad Για κάθε ακμή $(i,j) \in \mathcal{E}$: θέσε $p_{ij} \leftarrow p_{ij}\left(1 - e^{-T_{ij}}\right)$.\\
+2.\quad Για κάθε κόμβο $j \in \mathcal{V}$: θέσε $v_j \leftarrow \left(1 - e^{-T_j}\right)v_j + \frac{e^{-T_j}}{k}\mathbf{1}_k$ και υπολόγισε $H_j \leftarrow -\sum_{c=0}^{k-1} v_{j,c}\ln v_{j,c}$.\\
+3.\quad Για κάθε κόμβο $j \in \mathcal{V}$: υπολόγισε $P_{\mathrm{esc}}(j) \leftarrow 1 - \prod_{i \in N(j)}(1 - p_{ij})$ και $w_{nj} \leftarrow \frac{-\ln(1-p_{nj})}{-\sum_{i \in N(j)}\ln(1-p_{ij})}$ $\forall n \in N(j)$.\\
+4.\quad Θέσε $H_{\max} \leftarrow \ln k$ και αρχικοποίησε $V_j^{(0)} \leftarrow v_j$ για κάθε $j \in \mathcal{V}$.\\[4pt]
+\textbf{Κυρίως Επαναληπτικός Βρόχος ($t = 0, 1, 2, \dots$):}\\
+5.\quad \textbf{για κάθε} κόμβο $j \in \mathcal{V}$ \textbf{εκτέλεσε}\\
+6.\quad\quad Για κάθε γείτονα $i \in N(j)$: αν $h_{ij} = 0$ θέσε $\tilde{V}_i^{(j,t)} \leftarrow V_i^{(t)}$, αλλιώς ($h_{ij}=1$) θέσε $\tilde{V}_i^{(j,t)} \leftarrow \frac{\mathbf{1}_k - V_i^{(t)}}{k - 1}$.\\
+7.\quad\quad Υπολόγισε το εισερχόμενο σήμα γειτονιάς $S_j^{(t)} \leftarrow \sum_{i \in N(j)} w_{ij}\,\tilde{V}_i^{(j,t)}$ και την εντροπία $H'_j \leftarrow -\sum_{c=0}^{k-1} S_{j,c}^{(t)}\ln S_{j,c}^{(t)}$.\\
+8.\quad\quad \textbf{αν} $H_j = H_{\max}$ \textbf{και} $H'_j = H_{\max}$ (ή $P_{\mathrm{esc}}(j)=0$ με $H_j = H_{\max}$) \textbf{τότε}\\
+9.\quad\quad\quad Θέσε $V_j^{(t+1)} \leftarrow \big[\frac{1}{k}, \frac{1}{k}, \dots, \frac{1}{k}\big]^\top$.\\
+10.\quad\quad \textbf{αλλιώς}\\
+11.\quad\quad\quad Υπολόγισε $\alpha_j^{(t)} \leftarrow \dfrac{(H_{\max} - H'_j)P_{\mathrm{esc}}(j)}{(H_{\max} - H'_j)P_{\mathrm{esc}}(j) + (H_{\max} - H_j)}$.\\
+12.\quad\quad\quad Ανανέωσε $V_j^{(t+1)} \leftarrow \left(1 - \alpha_j^{(t)}\right)v_j + \alpha_j^{(t)} S_j^{(t)}$.\\
+13.\quad \textbf{μέχρις ότου} $\max_{j \in \mathcal{V}} \|V_j^{(t+1)} - V_j^{(t)}\|_1 < \varepsilon$.\\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\newpage
+% ==============================================================================
+% PART B: ENGLISH VERSION
+% ==============================================================================
+\selectlanguage{english}
+\setcounter{section}{0}
+\setcounter{equation}{0}
+\setcounter{table}{0}
+
+\begin{center}
+\Large \textbf{Part B: English version}
+\end{center}
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\begin{abstract}
+\noindent We formulate a parameter-free, self-consistent mathematical and algorithmic framework for multi-class node classification in undirected stochastic graphs across $k$ classes $\{A_0, A_1, \dots, A_{k-1}\}$. Our framework unifies three fundamental aspects of graph belief propagation: (i)~an initial trust-calibration stage that discounts uncertain edge probabilities and node prior distributions via the exponential reliability factor $1 - e^{-T}$, redistributing residual prior mass uniformly across the $k$ classes according to the Maximum Entropy Principle; (ii)~a boolean edge-polarity mechanism ($h_{ij} \in \{0,1\}$) that handles both homophilic and heterophilic links through a normalized simplex complement transformation; and (iii)~an endogenous, per-node and per-iteration PageRank damping factor $\alpha_j^{(t)}$ derived from Shannon entropy and the node escape probability $P_{\mathrm{esc}}(j)$. We prove that the proposed damping law $\alpha_j^{(t)} = \frac{(H_{\max} - H')P_{\mathrm{esc}}(j)}{(H_{\max} - H')P_{\mathrm{esc}}(j) + (H_{\max} - H)}$—where $H$ is the Shannon entropy of node $j$'s prior distribution $v_j$ (the multi-class counterpart of the seed vector $x$) and $H'$ is the entropy of its aggregated incoming neighborhood distribution $S_j^{(t)} = \sum_{i \in N(j)} w_{ij}\tilde{V}_i^{(j,t)}$—equals the Kullback--Leibler information odds ratio relative to uniform ignorance, is invariant to the choice of logarithm base ($\log_2$ vs.\ $\ln$), and satisfies all boundary conditions of complete ignorance and certainty.
+\end{abstract}
+
+\section{Problem Formulation and Trust-Based Prior Calibration (\texorpdfstring{$T$}{T})}
+
+Consider an undirected graph $G = (\mathcal{V}, \mathcal{E})$ with $n = |\mathcal{V}|$ vertices and $k \ge 2$ target classes $\mathcal{A} = \{A_0, A_1, \dots, A_{k-1}\}$.
+\begin{itemize}
+\item Each vertex $j \in \mathcal{V}$ is associated with an initial prior probability vector $v_j = \big(v_{j,0}, v_{j,1}, \dots, v_{j,k-1}\big)^\top \in \Delta^{k-1}$ (the multi-class counterpart of the seed vector $x$ in reachability diffusion), where $v_{j,c} \in [0,1]$ denotes the prior probability that vertex $j$ belongs to class $A_c$ and $\sum_{c=0}^{k-1} v_{j,c} = 1$.
+\item Each edge $(i, j) \in \mathcal{E}$ carries a probability $p_{ij} = p_{ji} \in [0, 1]$ representing the stochastic degree of homophilic identification or heterophilic opposition between vertices $i$ and $j$, while simultaneously retaining its interpretation as an independent edge-existence probability.
+\end{itemize}
+
+Because initial estimates of $p_{ij}$ and $v_j$ carry varying degrees of confidence in real-world applications, each probability is accompanied by a trust index $T \in [0, \infty)$. Prior to iterative propagation, we execute a one-time calibration step:
+\begin{enumerate}[label=\textbf{\arabic*.}]
+\item \textbf{Edge Probability Calibration:} Each edge probability $p_{ij}$ with trust $T_{ij} \ge 0$ is discounted as
+\begin{equation}\label{eq:edge_trust_en}
+p_{ij} \leftarrow p_{ij}\left(1 - e^{-T_{ij}}\right).
+\end{equation}
+\item \textbf{Node Prior Calibration:} Each component $v_{j,c}$ of the prior vector $v_j$ (with trust $T_j \ge 0$) is scaled by $\left(1 - e^{-T_j}\right)$, and the residual probability mass $1 - \left(1 - e^{-T_j}\right)\sum_{c=0}^{k-1} v_{j,c} = e^{-T_j}$ required for the distribution to sum to $1$ ($100\%$) is divided \textbf{equally} among all $k$ classes:
+\begin{equation}\label{eq:prior_trust_en}
+v_{j,c} \leftarrow v_{j,c}\left(1 - e^{-T_j}\right) + \frac{e^{-T_j}}{k} \quad \forall c \in \{0, \dots, k-1\} \quad \Longleftrightarrow \quad v_j \leftarrow \left(1 - e^{-T_j}\right)v_j + \frac{e^{-T_j}}{k}\mathbf{1}_k.
+\end{equation}
+\end{enumerate}
+
+Once~\eqref{eq:edge_trust_en}--\eqref{eq:prior_trust_en} have been applied, all resulting probabilities $p_{ij}$ and $v_j$ are treated as fully calibrated (equivalent to $T \to \infty$).
+
+\section{Directional Logarithmic Weights \texorpdfstring{$w_{nj}$}{w\_nj}, Escape Probability \texorpdfstring{$P_{\mathrm{esc}}(j)$}{P\_esc(j)}, and Boolean Heterophily Inversion}
+
+Let $V_j^{(t)} = \big(V_{j,0}^{(t)}, \dots, V_{j,k-1}^{(t)}\big)^\top \in \Delta^{k-1}$ denote the estimated class probability distribution of vertex $j$ at iteration $t \ge 0$ (initialized at $V_j^{(0)} = v_j$).
+
+\subsection{Asymmetric Row-Normalized Weights \texorpdfstring{$w_{nj}$}{w\_nj} and Escape Index \texorpdfstring{$P_{\mathrm{esc}}(j)$}{P\_esc(j)}}
+
+For every vertex $j \in \mathcal{V}$ and each neighbor $n \in N(j)$, the transition weight $w_{nj}$ assigned by vertex $j$ to neighbor $n$ is defined by
+\begin{equation}\label{eq:w_nj_en}
+w_{nj} \triangleq \frac{-\ln(1 - p_{nj})}{-\displaystyle\sum_{i \in N(j)} \ln(1 - p_{ij})}.
+\end{equation}
+\textbf{Note on Directional Asymmetry ($w_{ij} \ne w_{ji}$):} In general, $w_{ij} \ne w_{ji}$ because the denominator of $w_{ij}$ sums over the neighborhood $N(j)$ of vertex $j$ (so $\sum_{i \in N(j)} w_{ij} = 1$), whereas the denominator of $w_{ji}$ sums over the neighborhood $N(i)$ of vertex $i$.
+
+The non-isolation index (escape probability) of vertex $j$ is defined as
+\begin{equation}\label{eq:pesc_en}
+P_{\mathrm{esc}}(j) \triangleq 1 - \prod_{i \in N(j)} (1 - p_{ij}) \in [0, 1].
+\end{equation}
+
+\subsection{Boolean Edge Polarity and Simplex Complement Transformation}
+
+In addition to $p_{ij}$, each edge $(i, j) \in \mathcal{E}$ carries a boolean polarity flag $h_{ij} \in \{0, 1\}$ ($0$ for a homophilic relationship, $1$ for a heterophilic relationship). When vertex $j$ aggregates the distribution $V_i^{(t)}$ of neighbor $i \in N(j)$, it observes the effective distribution $\tilde{V}_i^{(j,t)}$:
+\begin{equation}\label{eq:heterophily_inversion_en}
+\tilde{V}_i^{(j,t)} \triangleq \begin{cases}
+V_i^{(t)}, & \text{if } h_{ij} = 0 \quad (\text{homophilic edge}),\\[8pt]
+\dfrac{\mathbf{1}_k - V_i^{(t)}}{\displaystyle\sum_{c=0}^{k-1} \big(1 - V_{i,c}^{(t)}\big)} = \dfrac{\mathbf{1}_k - V_i^{(t)}}{k - 1}, & \text{if } h_{ij} = 1 \quad (\text{heterophilic edge}).
+\end{cases}
+\end{equation}
+For example, if $k = 2$ and $V_i = [0.7, 0.3]^\top$ with $h_{ij} = 1$, vertex $j$ observes $\tilde{V}_i^{(j)} = [0.3, 0.7]^\top$; if $k = 3$ and $V_i = \big[\frac{1}{2}, \frac{1}{4}, \frac{1}{4}\big]^\top$ with $h_{ij} = 1$, then $\mathbf{1}_3 - V_i = \big[\frac{1}{2}, \frac{3}{4}, \frac{3}{4}\big]^\top$, which normalizes to $\tilde{V}_i^{(j)} = \big[\frac{1}{4}, \frac{3}{8}, \frac{3}{8}\big]^\top$.
+
+\begin{propositionEN}[Simplex Preservation and Eigenvalue of Heterophily Inversion]\label{prop:simplex_en}
+The complement operator $\mathcal{C}(V) \triangleq \frac{\mathbf{1}_k - V}{k - 1}$ maps $\Delta^{k-1}$ into itself. Writing $V = u + \delta$ with $u = \frac{1}{k}\mathbf{1}_k$ and $\sum_{c=0}^{k-1} \delta_c = 0$, we have $\mathcal{C}(u + \delta) = u - \frac{1}{k-1}\delta$ and $\mathcal{C}(\mathcal{C}(u + \delta)) = u + \frac{1}{(k-1)^2}\delta$.
+\end{propositionEN}
+
+\begin{proof}
+For any $V \in \Delta^{k-1}$, $1 - V_c \ge 0$ and $\sum_{c=0}^{k-1}\frac{1 - V_c}{k - 1} = \frac{k - 1}{k - 1} = 1$, so $\mathcal{C}(V) \in \Delta^{k-1}$. Substituting $V = \frac{1}{k}\mathbf{1}_k + \delta$ gives $\mathcal{C}(u + \delta) = \frac{(1 - 1/k)\mathbf{1}_k - \delta}{k - 1} = u - \frac{1}{k-1}\delta$, and applying $\mathcal{C}$ a second time yields $u + \frac{1}{(k-1)^2}\delta$.
+\end{proof}
+
+\section{Information-Theoretic Dynamic Per-Node Damping \texorpdfstring{$\alpha_j^{(t)}$}{alpha\_j\^(t)}}
+
+At each iteration $t \ge 0$ and vertex $j \in \mathcal{V}$, let $S_j^{(t)} \triangleq \sum_{i \in N(j)} w_{ij}\,\tilde{V}_i^{(j,t)} \in \Delta^{k-1}$ denote the aggregated incoming neighborhood distribution. Vertex $j$ updates its class distribution via the PageRank-type iteration:
+\begin{equation}\label{eq:main_update_en}
+\boxed{\;V_j^{(t+1)} \leftarrow \left(1 - \alpha_j^{(t)}\right) v_j + \alpha_j^{(t)} \sum_{i \in N(j)} w_{ij}\,\tilde{V}_i^{(j,t)} = \left(1 - \alpha_j^{(t)}\right) v_j + \alpha_j^{(t)} S_j^{(t)}.\;}
+\end{equation}
+
+Using the natural logarithm $\ln$ for computational efficiency, let $H(P) = -\sum_{c=0}^{k-1} P_c \ln P_c$ be the Shannon entropy of a distribution $P \in \Delta^{k-1}$, and let:
+\begin{itemize}
+\item $H \triangleq H(v_j) = -\sum_{c=0}^{k-1} v_{j,c}\ln v_{j,c}$ be the entropy of vertex $j$'s prior distribution $v_j$ (the multi-class counterpart of the seed vector $x$),
+\item $H' \triangleq H\!\left(S_j^{(t)}\right) = -\sum_{c=0}^{k-1} S_{j,c}^{(t)}\ln S_{j,c}^{(t)}$ be the entropy of the incoming neighborhood distribution $S_j^{(t)} = \sum_{i \in N(j)} w_{ij}\tilde{V}_i^{(j,t)}$ at iteration $t$, and
+\item $H_{\max} = \ln k$ be the maximum entropy attained at the uniform distribution $u = \left[\frac{1}{k}, \dots, \frac{1}{k}\right]^\top$.
+\end{itemize}
+
+The dynamic damping factor $\alpha_j^{(t)}$ is defined by
+\begin{equation}\label{eq:alpha_formula_en}
+\boxed{\;\alpha_j^{(t)} \triangleq \frac{\left(H_{\max} - H'\right) P_{\mathrm{esc}}(j)}{\left(H_{\max} - H'\right) P_{\mathrm{esc}}(j) + \left(H_{\max} - H\right)},\;}
+\end{equation}
+subject to the explicit boundary condition:
+\begin{equation}\label{eq:boundary_rule_en}
+\textbf{Boundary Rule:} \quad \text{If } H = H' = H_{\max}, \quad \text{then } V_j^{(t+1)} \leftarrow \left[\frac{1}{k}, \frac{1}{k}, \dots, \frac{1}{k}\right]^\top.
+\end{equation}
+
+\begin{theoremEN}[Information-Theoretic Foundations and Boundary Consistency]\label{thm:main_en}
+For the dynamic iteration~\eqref{eq:main_update_en}--\eqref{eq:boundary_rule_en} with $H = H(v_j)$ and $H' = H(S_j^{(t)})$:
+\begin{enumerate}[label=(\roman*)]
+\item \textbf{Kullback--Leibler Divergence Identity:} For any $P \in \Delta^{k-1}$, $H_{\max} - H(P) = D_{\mathrm{KL}}(P \,\|\, u) \ge 0$, where $u = \frac{1}{k}\mathbf{1}_k$. Hence, whenever $H < H_{\max}$ and $H' < H_{\max}$, the damping-to-retention odds ratio is
+\begin{equation}\label{eq:odds_kl_en}
+\frac{\alpha_j^{(t)}}{1 - \alpha_j^{(t)}} = \frac{H_{\max} - H'}{H_{\max} - H}\,P_{\mathrm{esc}}(j) = \frac{D_{\mathrm{KL}}\!\left(S_j^{(t)} \,\middle\|\, u\right)}{D_{\mathrm{KL}}\!\left(v_j \,\middle\|\, u\right)}\,P_{\mathrm{esc}}(j).
+\end{equation}
+\item \textbf{Base Invariance:} Replacing $\log_2$ with $\ln$ scales $H_{\max}, H, H'$ by $\ln 2$, which cancels in~\eqref{eq:alpha_formula_en}.
+\item \textbf{Exactness of Boundary Regimes (and Absence of Dynamical Freezing):}
+\begin{itemize}
+\item \textbf{Regime 1 ($H = H_{\max}$ and $H' = H_{\max}$ --- Complete Node and Neighborhood Ignorance at Step $t$):} Since $D_{\mathrm{KL}}(P \,\|\, u) = 0 \iff P = u$, the condition $H = H' = H_{\max}$ holds if and only if both $v_j = u$ and $S_j^{(t)} = u$ are uniform at step $t$. Then $(1-\alpha)v_j + \alpha S_j^{(t)} = \frac{1}{k}\mathbf{1}_k$ for every $\alpha \in [0,1]$, making~\eqref{eq:boundary_rule_en} algebraically exact. Moreover, as soon as class information reaches any neighbor of $j$ at a subsequent iteration $t' > t$ so that $S_j^{(t')} \ne u$, its neighborhood entropy drops to $H' = H(S_j^{(t')}) < H_{\max}$, and vertex $j$ immediately transitions out of Regime~1 into Regime~2!
+\item \textbf{Regime 2 ($H = H_{\max}$ and $H' < H_{\max}$ --- Unlabelled Node with Informative Neighborhood):} When $v_j = u$ ($H_{\max} - H = 0$), $H' < H_{\max}$, and $P_{\mathrm{esc}}(j) > 0$, Eq.~\eqref{eq:alpha_formula_en} yields $\alpha_j^{(t)} = 1$ and $V_j^{(t+1)} = S_j^{(t)}$, so an initially unlabelled node fully absorbs its informative neighborhood distribution.
+\item \textbf{Regime 3 ($H < H_{\max}$ and $H' = H_{\max}$ --- Informed Node with Uninformative Neighborhood):} When $H < H_{\max}$ and $H' = H_{\max}$ ($H_{\max} - H' = 0$), Eq.~\eqref{eq:alpha_formula_en} yields $\alpha_j^{(t)} = 0$ and $V_j^{(t+1)} = v_j$, shielding an informed node from uninformative neighborhood noise.
+\end{itemize}
+\end{enumerate}
+\end{theoremEN}
+
+\begin{proof}
+Part~(i) follows from $H_{\max} - H(P) = \sum_{c=0}^{k-1} P_c \ln(k P_c) = D_{\mathrm{KL}}(P \,\|\, u) \ge 0$ by Gibbs' inequality, with equality iff $P = u$. Dividing $\alpha_j^{(t)}$ by $1 - \alpha_j^{(t)}$ yields~\eqref{eq:odds_kl_en}. Part~(ii) follows from $H_{\log_2}(P) = H_{\ln}(P)/\ln 2$. Part~(iii) follows directly from the strict concavity of Shannon entropy on $\Delta^{k-1}$.
+\end{proof}
+
+\section{Algorithmic Summary and Complexity}
+
+Table~\ref{tab:algo_en} summarizes the complete procedure. Each iteration runs in $O(|\mathcal{E}|\cdot k + |\mathcal{V}|\cdot k)$ time and $O(|\mathcal{E}| + |\mathcal{V}|\cdot k)$ space.
+
+\begin{table}[!htbp]
+\centering
+\caption{Algorithm 1: Information-Theoretic Dynamic Diffusion with Trust-Calibrated Heterophily}
+\label{tab:algo_en}
+{\small
+\begin{tabular}{p{0.95\linewidth}}
+\toprule
+\textbf{Input:} Graph $G=(\mathcal{V},\mathcal{E})$, number of classes $k$, initial edge probabilities $p_{ij}$ with trust $T_{ij} \ge 0$, boolean edge polarity flags $h_{ij} \in \{0,1\}$, node priors $v_j \in \Delta^{k-1}$ with trust $T_j \ge 0$, tolerance $\varepsilon$.\\
+\textbf{Output:} Converged class probability distributions $V_j \in \Delta^{k-1}$ for all $j \in \mathcal{V}$.\\
+\midrule
+\textbf{Preprocessing Stage (Trust Calibration and Static Weights):}\\
+1.\quad For each edge $(i,j) \in \mathcal{E}$: set $p_{ij} \leftarrow p_{ij}\left(1 - e^{-T_{ij}}\right)$.\\
+2.\quad For each node $j \in \mathcal{V}$: set $v_j \leftarrow \left(1 - e^{-T_j}\right)v_j + \frac{e^{-T_j}}{k}\mathbf{1}_k$ and compute $H_j \leftarrow -\sum_{c=0}^{k-1} v_{j,c}\ln v_{j,c}$.\\
+3.\quad For each node $j \in \mathcal{V}$: compute $P_{\mathrm{esc}}(j) \leftarrow 1 - \prod_{i \in N(j)}(1 - p_{ij})$ and $w_{nj} \leftarrow \frac{-\ln(1-p_{nj})}{-\sum_{i \in N(j)}\ln(1-p_{ij})}$ $\forall n \in N(j)$.\\
+4.\quad Set $H_{\max} \leftarrow \ln k$ and initialize $V_j^{(0)} \leftarrow v_j$ for all $j \in \mathcal{V}$.\\[4pt]
+\textbf{Iterative Propagation Loop ($t = 0, 1, 2, \dots$):}\\
+5.\quad \textbf{for each} node $j \in \mathcal{V}$ \textbf{do}\\
+6.\quad\quad For each neighbor $i \in N(j)$: if $h_{ij} = 0$ set $\tilde{V}_i^{(j,t)} \leftarrow V_i^{(t)}$, else ($h_{ij}=1$) set $\tilde{V}_i^{(j,t)} \leftarrow \frac{\mathbf{1}_k - V_i^{(t)}}{k - 1}$.\\
+7.\quad\quad Compute incoming neighborhood distribution $S_j^{(t)} \leftarrow \sum_{i \in N(j)} w_{ij}\,\tilde{V}_i^{(j,t)}$ and entropy $H'_j \leftarrow -\sum_{c=0}^{k-1} S_{j,c}^{(t)}\ln S_{j,c}^{(t)}$.\\
+8.\quad\quad \textbf{if} $H_j = H_{\max}$ \textbf{and} $H'_j = H_{\max}$ (or $P_{\mathrm{esc}}(j)=0$ with $H_j = H_{\max}$) \textbf{then}\\
+9.\quad\quad\quad Set $V_j^{(t+1)} \leftarrow \big[\frac{1}{k}, \frac{1}{k}, \dots, \frac{1}{k}\big]^\top$.\\
+10.\quad\quad \textbf{else}\\
+11.\quad\quad\quad Compute $\alpha_j^{(t)} \leftarrow \dfrac{(H_{\max} - H'_j)P_{\mathrm{esc}}(j)}{(H_{\max} - H'_j)P_{\mathrm{esc}}(j) + (H_{\max} - H_j)}$.\\
+12.\quad\quad\quad Update $V_j^{(t+1)} \leftarrow \left(1 - \alpha_j^{(t)}\right)v_j + \alpha_j^{(t)} S_j^{(t)}$.\\
+13.\quad \textbf{until} $\max_{j \in \mathcal{V}} \|V_j^{(t+1)} - V_j^{(t)}\|_1 < \varepsilon$.\\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\end{document}
