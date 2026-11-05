@@ -78,24 +78,31 @@ def _iterate(step: Callable[[np.ndarray], np.ndarray], F0: np.ndarray) -> tuple[
     return F, {"iterations": MAX_ITER, "converged": False, "final_residual": res}
 
 
-DIRECT_SOLVE_MAX_NODES = 300_000
-
-
 def _solve(A: sp.csr_matrix, B: np.ndarray) -> tuple[np.ndarray, dict]:
-    """Solve A X = B exactly (sparse LU) or, for very large systems, by CG per column."""
+    """Solve A X = B for a symmetric positive-definite sparse A.
+
+    Preconditioned conjugate gradients (Jacobi preconditioner, rtol 1e-10) per
+    column; a column that does not converge in 20,000 iterations falls back to an
+    exact sparse LU solve. (PR-7b: exact LU for every system was the bottleneck on
+    dense graphs such as tolokers — about 75 s per LGC solve.)"""
     if A.shape[0] == 0:
         return np.zeros_like(B), {"solver": "empty"}
-    if A.shape[0] <= DIRECT_SOLVE_MAX_NODES:
-        X = spsolve(A.tocsc(), B)
-        X = np.asarray(X).reshape(B.shape)
-        return X, {"solver": "spsolve", "residual": float(np.abs(A @ X - B).max()) if B.size else 0.0}
-    cols, infos = [], []
+    A = A.tocsr()
+    d = A.diagonal()
+    M = sp.diags(np.divide(1.0, d, out=np.ones_like(d), where=d != 0))
+    cols, fallbacks = [], 0
     for j in range(B.shape[1]):
-        x, info = cg(A, B[:, j], rtol=1e-10, maxiter=5000)
-        cols.append(x)
-        infos.append(int(info))
+        b = B[:, j]
+        if not np.any(b):
+            cols.append(np.zeros_like(b))
+            continue
+        x, info = cg(A, b, rtol=1e-10, atol=0.0, maxiter=20_000, M=M)
+        if info != 0:
+            x = spsolve(A.tocsc(), b)
+            fallbacks += 1
+        cols.append(np.asarray(x))
     X = np.column_stack(cols)
-    return X, {"solver": "cg", "cg_info": infos, "residual": float(np.abs(A @ X - B).max())}
+    return X, {"solver": "pcg" if not fallbacks else f"pcg+lu({fallbacks})", "residual": float(np.abs(A @ X - B).max())}
 
 
 # ---------------------------------------------------------------------- B0
@@ -184,10 +191,15 @@ def lgc(graph: GraphData, vault: LabelVault, alpha: float = 0.99, weights: np.nd
 
 def ppr_lp(graph: GraphData, vault: LabelVault, alpha: float = 0.9, weights: np.ndarray | None = None) -> tuple[np.ndarray, dict]:
     """Personalised-PageRank label propagation (training-free APPNP):
-    F = (1 - alpha) (I - alpha P)^-1 Y, P = D^-1 W (exact solve)."""
+    F = (1 - alpha) (I - alpha P)^-1 Y, P = D^-1 W, solved as the symmetric
+    positive-definite system (D - alpha W) F = (1 - alpha) D Y (isolated nodes keep F = (1 - alpha) Y)."""
     Y, _, _ = _one_hot_train(graph, vault)
-    P = _random_walk(adjacency(graph, weights))
-    F, info = _solve((sp.identity(graph.num_nodes) - alpha * P).tocsr(), (1 - alpha) * Y)
+    W = adjacency(graph, weights)
+    d = np.asarray(W.sum(axis=1)).ravel()
+    iso = d == 0
+    A = (sp.diags(np.where(iso, 1.0, d)) - alpha * W).tocsr()
+    B = (1 - alpha) * np.where(iso[:, None], Y, d[:, None] * Y)
+    F, info = _solve(A, B)
     return _to_probs(F), info | {"alpha": alpha, "converged": True}
 
 
