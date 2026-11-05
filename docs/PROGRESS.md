@@ -31,6 +31,8 @@
 
 - PR-5 (B0/B1 baselines, Master Prompt §4): `edsp/baselines/` — majority, train prior, signed vote, feature LR (= Track-B base predictor), harmonic (exact; plain and class-mass-normalised), LGC, PPR-LP (exact solves), LinBP* with MCE, Correct & Smooth on the Track-B base predictor, possible-worlds harmonic; `select_and_predict` chooses hyper-parameters on validation through edsp.selection; `docs/BASELINES.md`; `scripts/baseline_parity.py` + workflow `baseline-parity.yml`; tests incl. test-label invariance for every baseline.
 
+- PR-7 (E1 pipeline): full §5.4 metric set (`edsp/eval/metrics.py`), §5.9 statistics (`edsp/eval/stats_tests.py`: bootstrap CI, Wilcoxon, Holm, Friedman + Nemenyi CD), validation selection by headline metric, 9-point baseline grids (R6), `scripts/run_e1.py`, `scripts/aggregate_e1.py`, workflow `e1.yml` (dispatch: one job per dataset → aggregate → results branch; PR: 1-split smoke run).
+
 ## Remaining
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
@@ -38,7 +40,7 @@
 - `scripts/oracle_upper_bound.py` (E10) and H-SOFT (extension) — not implemented yet.
 - Track-B 2-layer MLP / LightGBM base predictors.
 - LinBP-DCE, signed-Laplacian LP / Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers).
-- PR-7: run-matrix / aggregate workflows, then E1.
+- Dispatch E1 after PR-7 is merged (Actions → e1 → Run workflow), then a results PR with the report.
 
 ## Blockers
 
