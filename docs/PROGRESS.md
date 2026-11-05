@@ -29,13 +29,16 @@
 
 - PR-4b: H-LEARNED decision rule — default `prior-corrected` (train-edge base rate restored by Bayes prior shift), options `val-threshold` and `balanced`; edge-classifier report now compares the three rules with H-ALL0/H-ALL1 on test edges.
 
+- PR-5 (B0/B1 baselines, Master Prompt §4): `edsp/baselines/` — majority, train prior, signed vote, feature LR (= Track-B base predictor), harmonic (exact; plain and class-mass-normalised), LGC, PPR-LP (exact solves), LinBP* with MCE, Correct & Smooth on the Track-B base predictor, possible-worlds harmonic; `select_and_predict` chooses hyper-parameters on validation through edsp.selection; `docs/BASELINES.md`; `scripts/baseline_parity.py` + workflow `baseline-parity.yml`; tests incl. test-label invariance for every baseline.
+
 ## Remaining
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
 - `scripts/oracle_upper_bound.py` (E10) and H-SOFT (extension) — not implemented yet.
 - Track-B 2-layer MLP / LightGBM base predictors.
-- PR-5: B0/B1 baselines with parity (harmonic LP, LGC, PPR-LP, C&S, LinBP).
+- LinBP-DCE, signed-Laplacian LP / Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers).
+- PR-7: run-matrix / aggregate workflows, then E1.
 
 ## Blockers
 

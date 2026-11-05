@@ -1,0 +1,54 @@
+{
+  "note": "REPORTED baseline accuracies used for the PR-5 parity check (Master Prompt \u00a74: parity within 1 point, otherwise 'parity failed' and documented). Never mixed into REPRODUCED columns. The reference 'LP' numbers do not say whether class mass normalisation was used, so both harmonic variants are compared against them.",
+  "tolerance_points": 1.0,
+  "entries": [
+    {
+      "baseline": "harmonic",
+      "dataset": "cora",
+      "split": "public",
+      "accuracy": 68.0,
+      "source": "Yang, Cohen & Salakhutdinov (ICML 2016), Table: label propagation (Zhu et al. 2003) on the Planetoid split; also quoted in Kipf & Welling (ICLR 2017), Table 2",
+      "source_status": "TO VERIFY (value recalled; table not re-checked)"
+    },
+    {
+      "baseline": "harmonic",
+      "dataset": "citeseer",
+      "split": "public",
+      "accuracy": 45.3,
+      "source": "same as above",
+      "source_status": "TO VERIFY (value recalled; table not re-checked)"
+    },
+    {
+      "baseline": "harmonic",
+      "dataset": "pubmed",
+      "split": "public",
+      "accuracy": 63.0,
+      "source": "same as above",
+      "source_status": "TO VERIFY (value recalled; table not re-checked)"
+    },
+    {
+      "baseline": "harmonic_cmn",
+      "dataset": "cora",
+      "split": "public",
+      "accuracy": 68.0,
+      "source": "Yang, Cohen & Salakhutdinov (ICML 2016), Table: label propagation (Zhu et al. 2003) on the Planetoid split; also quoted in Kipf & Welling (ICLR 2017), Table 2",
+      "source_status": "TO VERIFY (value recalled; table not re-checked)"
+    },
+    {
+      "baseline": "harmonic_cmn",
+      "dataset": "citeseer",
+      "split": "public",
+      "accuracy": 45.3,
+      "source": "same as above",
+      "source_status": "TO VERIFY (value recalled; table not re-checked)"
+    },
+    {
+      "baseline": "harmonic_cmn",
+      "dataset": "pubmed",
+      "split": "public",
+      "accuracy": 63.0,
+      "source": "same as above",
+      "source_status": "TO VERIFY (value recalled; table not re-checked)"
+    }
+  ]
+}

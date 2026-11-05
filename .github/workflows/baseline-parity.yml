@@ -1,0 +1,44 @@
+name: baseline-parity
+
+# PR-5 Definition of Done evidence (Master Prompt §7): B0/B1 baselines on the
+# Planetoid splits and the harmonic-LP parity check against REPORTED values,
+# computed in Actions and published as a job summary and an artifact.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "edsp/baselines/**"
+      - "data/PUBLISHED_BASELINES.json"
+      - "edsp/utils/**"
+      - "scripts/baseline_parity.py"
+      - ".github/workflows/baseline-parity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      EDSP_DATA_DIR: ${{ github.workspace }}/.edsp-cache
+      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/baseline_parity/ACQUISITION_LOG.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+      - run: uv sync --frozen --group dev
+      - uses: actions/cache@v4
+        with:
+          path: .edsp-cache
+          key: edsp-raw-${{ hashFiles('data/REGISTRY.json') }}
+          restore-keys: edsp-raw-
+      - run: uv run python scripts/baseline_parity.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: baseline-parity-${{ github.run_id }}
+          path: results/baseline_parity/
+          if-no-files-found: warn
