@@ -17,4 +17,6 @@ jobs:
         with:
           version: latest
       - run: uv sync --frozen --group dev
-      - run: uv run pytest -q tests/unit
+      - run: EDSP_REQUIRE_TORCH=1 uv run pytest -q tests/unit
+      - run: uv run --with ruff ruff check edsp tests
+      - run: uv run --with mypy mypy edsp/core.py
