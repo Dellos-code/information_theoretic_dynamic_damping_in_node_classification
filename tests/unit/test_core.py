@@ -277,9 +277,7 @@ def test_t10_degenerate_nodes():
     assert np.allclose(result.probabilities, [[1, 0], [0.5, 0.5]])
 
 
-@pytest.mark.xfail(reason="LabelVault exists since PR-2; T11 needs the method regimes of PR-4 to run every method in strict mode", strict=True)
-def test_t11_leakage_guard():
-    raise NotImplementedError("LabelVault is intentionally deferred")
+# T11 (leakage guard) lives in tests/unit/test_regimes.py since PR-4.
 
 
 def test_e6_two_node_heterophily():

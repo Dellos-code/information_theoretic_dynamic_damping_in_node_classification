@@ -9,6 +9,8 @@ checked against the *calling module*:
 * ``descriptive_labels()`` only ``edsp.data.stats``; used for descriptive dataset
   statistics (Master Prompt §3.2 "full-label descriptive version"), never by a
   method. Every such access is logged and flagged.
+* ``oracle_labels()``     only ``edsp.regimes.oracle`` *and* only when the
+  environment variable ``ORACLE=1`` is set (H-ORACLE upper bound, §2.3g).
 
 Python cannot make the stored array truly private; the guarantee is enforced by
 the caller check, by the access log and by the T11 leakage test, which runs
@@ -18,6 +20,7 @@ methods in strict mode and asserts that no test-label access happened outside
 
 from __future__ import annotations
 
+import os
 import sys
 from dataclasses import dataclass, field
 
@@ -26,6 +29,7 @@ import numpy as np
 _VAL_PREFIXES = ("edsp.selection", "edsp.eval")
 _TEST_MODULES = ("edsp.eval.evaluate",)
 _DESCRIPTIVE_MODULES = ("edsp.data.stats",)
+_ORACLE_MODULES = ("edsp.regimes.oracle",)
 
 
 class LabelAccessError(PermissionError):
@@ -97,5 +101,16 @@ class LabelVault:
         self._check("descriptive", _DESCRIPTIVE_MODULES)
         return self._labels.copy()
 
+    def oracle_labels(self) -> np.ndarray:
+        if os.environ.get("ORACLE") != "1":
+            caller = self._caller(2)
+            self.access_log.append(AccessRecord("oracle", caller, False))
+            raise LabelAccessError("oracle labels require ORACLE=1 (scripts/oracle_upper_bound.py)")
+        self._check("oracle", _ORACLE_MODULES)
+        return self._labels.copy()
+
+    def oracle_accessed(self) -> bool:
+        return any(r.kind == "oracle" for r in self.access_log)
+
     def test_accesses_outside_evaluate(self) -> list[AccessRecord]:
-        return [r for r in self.access_log if r.kind in {"test", "descriptive"} and not r.allowed]
+        return [r for r in self.access_log if r.kind in {"test", "descriptive", "oracle"} and not r.allowed]
