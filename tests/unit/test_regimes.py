@@ -207,3 +207,55 @@ def test_logreg_separates_and_svd_reconstructs():
     A = rng.normal(size=(50, 4)) @ rng.normal(size=(4, 30))
     US = randomized_svd(A, 4)
     assert np.linalg.norm(US @ np.linalg.pinv(US) @ A - A) < 1e-8 * np.linalg.norm(A)
+
+
+# ------------------------------------------------------------- PR-4b decisions
+def heterophilic_noise_graph(seed: int = 0, n: int = 300, k: int = 3, het: float = 0.9) -> GraphData:
+    """Edges are heterophilic with probability `het`; features carry no signal."""
+    rng = np.random.default_rng(seed)
+    y = rng.integers(0, k, n)
+    rows = []
+    for _ in range(6 * n):
+        i = int(rng.integers(n))
+        pool = np.flatnonzero((y != y[i]) if rng.random() < het else (y == y[i]))
+        j = int(rng.choice(pool))
+        if i != j:
+            rows.append((min(i, j), max(i, j)))
+    edges = np.unique(np.array(rows), axis=0)
+    perm = rng.permutation(n)
+    split = Split("0", np.sort(perm[: n // 2]), np.sort(perm[n // 2 : 3 * n // 4]), np.sort(perm[3 * n // 4 :]), "toy")
+    return GraphData("het-noise", n, edges, k, [split], y, features=rng.normal(size=(n, 4)))
+
+
+def test_prior_correction_restores_heterophilic_base_rate():
+    g = heterophilic_noise_graph()
+    bal = H.h_learned(g, g.vault(0), "B", decision="balanced")
+    cor = H.h_learned(g, g.vault(0), "B", decision="prior-corrected")
+    pi = cor.diagnostics["train_edge_heterophily"]
+    assert pi > 0.8
+    # uninformative features: the balanced rule labels roughly half the edges heterophilic,
+    # the prior-corrected rule recovers the base rate
+    assert bal.diagnostics["predicted_heterophilic_fraction"] < 0.75
+    assert cor.diagnostics["predicted_heterophilic_fraction"] > 0.95
+    # the correction is monotone, so the ranking (and AUC) is unchanged
+    order_raw = np.argsort(cor.raw_score, kind="stable")
+    assert np.all(np.diff(cor.score[order_raw]) >= -1e-12)
+
+
+def test_val_threshold_is_selected_from_grid():
+    g = heterophilic_noise_graph(1)
+    pol = H.h_learned(g, g.vault(0), "A", decision="val-threshold")
+    assert pol.diagnostics["threshold"] in np.round(np.linspace(0.05, 0.95, 19), 2)
+    assert np.array_equal(pol.h, (pol.score >= pol.diagnostics["threshold"]).astype(np.int8))
+
+
+def test_learned_fallbacks_and_invalid_decision():
+    g = toy_graph()
+    y = g._labels.copy()
+    tr = g.splits[0].train_idx
+    y[tr] = 0  # all train-train edges homophilic
+    g2 = GraphData("one-class", g.num_nodes, g.edges, g.num_classes, g.splits, y, features=g.features)
+    pol = H.h_learned(g2, g2.vault(0), "A")
+    assert "H-ALL0" in pol.diagnostics["status"] and not pol.h.any()
+    with pytest.raises(ValueError):
+        H.h_learned(g, g.vault(0), "A", decision="nope")

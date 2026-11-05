@@ -27,6 +27,8 @@
   - T11 now passes: every Track × H × P combination runs in strict vault mode, never touches test/oracle/descriptive labels, and gives bit-identical output when the test labels are changed (`tests/unit/test_regimes.py`).
   - DoD evidence (edge-classifier AUCs): the `edge-classifier` workflow run on the PR (job summary + artifact).
 
+- PR-4b: H-LEARNED decision rule — default `prior-corrected` (train-edge base rate restored by Bayes prior shift), options `val-threshold` and `balanced`; edge-classifier report now compares the three rules with H-ALL0/H-ALL1 on test edges.
+
 ## Remaining
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).

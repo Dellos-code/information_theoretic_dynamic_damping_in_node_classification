@@ -17,7 +17,7 @@ import numpy as np
 
 from edsp.data.graph import GraphData
 from edsp.data.vault import LabelVault
-from edsp.selection import select_by_val_edge_auc
+from edsp.selection import select_by_val_edge_auc, select_threshold_by_val_edge_accuracy
 from edsp.utils.numerics import fit_logreg
 
 from .edge_features import (
@@ -34,7 +34,8 @@ class Polarity:
     keep: np.ndarray | None = None
     confidence: np.ndarray | None = None
     diagnostics: dict = field(default_factory=dict)
-    score: np.ndarray | None = None  # learned P(heterophilic) per edge, H-LEARNED only
+    score: np.ndarray | None = None  # learned P(heterophilic) per edge used for the decision (H-LEARNED)
+    raw_score: np.ndarray | None = None  # class-balanced classifier output before correction (H-LEARNED)
 
 
 def _train_label_array(vault: LabelVault, n: int) -> np.ndarray:
@@ -124,13 +125,26 @@ def h_learned(
     max_dim: int = 64,
     max_train_edges: int = 100_000,
     seed: int = 0,
+    decision: str = "prior-corrected",
 ) -> Polarity:
     """H-LEARNED: class-balanced logistic regression on train-train edges (§2.3c).
 
-    Decision (P(het) >= 0.5) gives h; the confidence max(q, 1 - q) is returned for
-    P-LEARNED. Hyper-parameter l2 is chosen by ROC-AUC on validation edges
-    through :func:`edsp.selection.select_by_val_edge_auc`.
+    The classifier is trained class-balanced (as §2.3c specifies), which makes its
+    output q_raw an estimate of P(het) under EQUAL class priors. ``decision``:
+
+    * ``"prior-corrected"`` (default, PR-4b): restore the train-edge base rate
+      pi = P(het | train-train edge) by the Bayes prior-shift correction
+      logit q = logit q_raw + log(pi / (1 - pi)); uses TRAIN labels only.
+    * ``"val-threshold"``: prior-corrected q, with the decision threshold chosen
+      from a fixed grid by accuracy on validation edges (a selection step).
+    * ``"balanced"``: the PR-4 behaviour, h = 1[q_raw >= 0.5] (kept as a named
+      option; it under-predicts heterophily on strongly heterophilic graphs).
+
+    h = 1[q >= threshold]; the P-LEARNED confidence is max(q, 1 - q). l2 is chosen
+    by ROC-AUC on validation edges (invariant to the correction).
     """
+    if decision not in ("prior-corrected", "val-threshold", "balanced"):
+        raise ValueError("decision must be 'prior-corrected', 'val-threshold' or 'balanced'")
     n, edges = graph.num_nodes, graph.edges
     y = _train_label_array(vault, n)
     u, v = edges[:, 0], edges[:, 1]
@@ -140,10 +154,15 @@ def h_learned(
     train_ids = np.flatnonzero(train_mask)
     if len(train_ids) > max_train_edges:
         train_ids = np.sort(rng.choice(train_ids, max_train_edges, replace=False))
-    diag: dict = {"regime": f"H-LEARNED(track {track})", "train_edges": int(train_mask.sum()), "train_edges_used": len(train_ids)}
-    if len(train_ids) == 0 or len(np.unique(target[train_ids])) < 2:
-        diag["status"] = "not trainable (fewer than two polarity classes on train-train edges); fell back to H-ALL0"
+    diag: dict = {"regime": f"H-LEARNED(track {track}, {decision})", "train_edges": int(train_mask.sum()),
+                  "train_edges_used": len(train_ids), "decision": decision}
+    if len(train_ids) == 0:
+        diag["status"] = "not trainable (no train-train edges); fell back to H-ALL0 with p = 0.5"
         return Polarity(np.zeros(len(u), dtype=np.int8), None, np.full(len(u), 0.5), diag)
+    if len(np.unique(target[train_ids])) < 2:
+        only = int(target[train_ids][0])
+        diag["status"] = f"not trainable (all train-train edges have h = {only}); fell back to H-ALL{only} with p = 0.5"
+        return Polarity(np.full(len(u), only, dtype=np.int8), None, np.full(len(u), 0.5), diag)
 
     if track == "B":
         if graph.features is None:
@@ -174,7 +193,22 @@ def h_learned(
     candidates = [fit_logreg(X_train, y_train, 2, l2=l2, balanced=True) for l2 in l2_grid]
     scores = [predict(m) for m in candidates]
     best, val_aucs = select_by_val_edge_auc(vault, edges, scores)
-    q = scores[best]
+    q_raw = scores[best]
+    pi = float(np.mean(target[train_mask]))
+    threshold = 0.5
+    if decision == "balanced":
+        q = q_raw
+    else:
+        eps = 1e-12
+        qr = np.clip(q_raw, eps, 1 - eps)
+        logit = np.log(qr) - np.log1p(-qr) + np.log(pi) - np.log1p(-pi)
+        q = 1.0 / (1.0 + np.exp(-logit))
+        if decision == "val-threshold":
+            grid = tuple(np.round(np.linspace(0.05, 0.95, 19), 2))
+            threshold, val_accs = select_threshold_by_val_edge_accuracy(vault, edges, q, grid)
+            diag["val_edge_accuracy_by_threshold"] = dict(zip(grid, val_accs, strict=True))
+    h = (q >= threshold).astype(np.int8)
     diag.update({"l2_grid": list(l2_grid), "val_edge_auc": val_aucs, "chosen_l2": l2_grid[best],
-                 "predicted_heterophilic_fraction": float(np.mean(q >= 0.5))})
-    return Polarity((q >= 0.5).astype(np.int8), None, np.maximum(q, 1.0 - q), diag, q)
+                 "train_edge_heterophily": pi, "threshold": threshold,
+                 "predicted_heterophilic_fraction": float(np.mean(h))})
+    return Polarity(h, None, np.maximum(q, 1.0 - q), diag, q, q_raw)

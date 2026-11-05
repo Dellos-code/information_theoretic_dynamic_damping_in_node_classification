@@ -22,7 +22,7 @@ def evaluate(vault: LabelVault, probabilities: np.ndarray) -> dict:
     return {"split_id": vault.split_id, "n_test": len(y), "accuracy": float(np.mean(pred == y)), "nll": nll}
 
 
-def edge_polarity_auc(vault: LabelVault, edges: np.ndarray, het_score: np.ndarray) -> dict:
+def edge_polarity_auc(vault: LabelVault, edges: np.ndarray, het_score: np.ndarray, threshold: float = 0.5) -> dict:
     """ROC-AUC of a P(heterophilic) edge score on test-test edges (H-LEARNED diagnostic)."""
     from edsp.utils.numerics import roc_auc
 
@@ -38,5 +38,6 @@ def edge_polarity_auc(vault: LabelVault, edges: np.ndarray, het_score: np.ndarra
         "test_test_edges": int(mask.sum()),
         "test_edge_heterophily": float(target.mean()) if mask.any() else None,
         "test_edge_auc": roc_auc(target, np.asarray(het_score)[mask]),
-        "test_edge_accuracy": float(np.mean((np.asarray(het_score)[mask] >= 0.5) == target)) if mask.any() else None,
+        "test_edge_accuracy": float(np.mean((np.asarray(het_score)[mask] >= threshold) == target)) if mask.any() else None,
+        "threshold": threshold,
     }
