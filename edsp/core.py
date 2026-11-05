@@ -83,6 +83,7 @@ class EDSPResult:
     oscillation_period: int | None = None
     oscillation_amplitude: float = 0.0
     last_iterates: tuple[np.ndarray, np.ndarray] | None = None
+    last_alpha: np.ndarray | None = None
 
     @property
     def predictions(self) -> np.ndarray:
@@ -249,6 +250,7 @@ def edsp(
         oscillation_period=2 if oscillation else None,
         oscillation_amplitude=oscillation_amplitude,
         last_iterates=(previous_previous if previous_previous is not None else v.copy(), current.copy()),
+        last_alpha=alpha.copy(),
     )
 
 

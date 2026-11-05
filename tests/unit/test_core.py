@@ -58,6 +58,30 @@ def test_t5_regimes_and_toy_examples():
     assert np.allclose(result.probabilities[0], [1, 0], atol=1e-12)
     result = edsp([(0, 1)], [0.5], [0], [[0.5, 0.5], [0, 1]], max_iter=1)
     assert np.allclose(result.probabilities[0], result.probabilities[1], atol=1e-12)
+    for p in (0.1, 0.5, 0.9):
+        result = edsp([(0, 1)], [p], [0], [[0.5, 0.5], [0, 1]], max_iter=1)
+        assert np.allclose(result.probabilities[0], result.probabilities[1])
+
+
+def test_p1_alpha_ratio():
+    result = edsp([(0, 1)], [0.4], [0], [[0.8, 0.2], [0.2, 0.8]], max_iter=1)
+    alpha = result.last_alpha[0]
+    lhs = alpha / (1 - alpha)
+    rhs = kl_to_uniform([[0.2, 0.8]])[0] / kl_to_uniform([[0.8, 0.2]])[0] * result.p_esc[0]
+    assert np.isclose(lhs, rhs)
+
+
+def test_d1_one_hot_alpha_bound():
+    for p_esc in (0.01, 0.2, 0.9, 1.0):
+        p = 1 - (1 - p_esc)
+        result = edsp([(0, 1)], [p], [0], [[1, 0], [0, 1]], max_iter=1)
+        assert np.all(result.last_alpha <= 0.5 + 1e-12)
+
+
+def test_t6_calibration_kl_monotone():
+    trusts = [0.0, 0.5, 1.0, 2.0, np.inf]
+    values = [kl_to_uniform(trust_calibrate([[1, 0]], [[0.5]], trust, np.inf)[0])[0] for trust in trusts]
+    assert np.all(np.diff(values) >= -1e-12)
 
 
 def test_t6_trust():
@@ -80,6 +104,18 @@ def test_t8_iterates_stay_in_simplex(prior, iterations):
     result = edsp([(0, 1)], [0.5], [0], np.vstack([prior, prior]), max_iter=iterations)
     assert np.all(result.probabilities >= 0)
     assert np.allclose(result.probabilities.sum(axis=1), 1)
+
+
+def test_t8_random_graphs():
+    rng = np.random.default_rng(7)
+    for k in (2, 5, 20):
+        n = 50
+        edges = rng.integers(0, n, size=(120, 2))
+        edges = edges[edges[:, 0] != edges[:, 1]]
+        result = edsp(edges, rng.uniform(0.01, 0.9, len(edges)), rng.integers(0, 2, len(edges)),
+                      rng.dirichlet(np.ones(k), size=n), max_iter=4)
+        assert np.all(result.probabilities >= 0)
+        assert np.allclose(result.probabilities.sum(axis=1), 1)
 
 
 def test_t9_backend_reference_is_deterministic():
@@ -117,7 +153,7 @@ def test_t9_torch_adapter_parity_when_available():
 
 
 def test_t10_degenerate_nodes():
-    result = edsp([], [], [], [[1, 0], [0.5, 0.5]], max_iter=1)
+    result = edsp([(0, 1)], [0.0], [0], [[1, 0], [0.5, 0.5]], max_iter=1)
     assert np.allclose(result.probabilities, [[1, 0], [0.5, 0.5]])
 
 
