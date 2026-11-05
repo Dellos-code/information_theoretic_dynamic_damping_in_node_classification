@@ -33,6 +33,8 @@
 
 - PR-7 (E1 pipeline): full §5.4 metric set (`edsp/eval/metrics.py`), §5.9 statistics (`edsp/eval/stats_tests.py`: bootstrap CI, Wilcoxon, Holm, Friedman + Nemenyi CD), validation selection by headline metric, 9-point baseline grids (R6), `scripts/run_e1.py`, `scripts/aggregate_e1.py`, workflow `e1.yml` (dispatch: one job per dataset → aggregate → results branch; PR: 1-split smoke run).
 
+- E1 (Track-A, 16 datasets, 1,743 run records) completed: `docs/E1_REPORT.md`, `results/aggregates/e1/`. EDSP-tuned: 0 wins / 4 ties / 10 losses vs LGC; ≈ harmonic LP (H1 supported for harmonic, not for LGC); H2 supported only for minesweeper; H7: non-convergence 3/134 (Planetoid public splits), no oscillation, GS and damped fixed points coincide.
+
 ## Remaining
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
@@ -40,7 +42,8 @@
 - `scripts/oracle_upper_bound.py` (E10) and H-SOFT (extension) — not implemented yet.
 - Track-B 2-layer MLP / LightGBM base predictors.
 - LinBP-DCE, signed-Laplacian LP / Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers).
-- Dispatch E1 after PR-7 is merged (Actions → e1 → Run workflow), then a results PR with the report.
+- Store per-node predictions in run records (for §5.7) and re-score E1.
+- PR-3 (acquisition for C3a/C4/C5), then E2 (signed, relation-typed and probabilistic graphs).
 
 ## Blockers
 
