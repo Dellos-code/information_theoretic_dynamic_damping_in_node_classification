@@ -1,12 +1,59 @@
-"""Model selection: may read validation labels (rule R3), never test labels."""
+"""Model selection: may read validation labels (rule R3), never test labels.
+
+Validation labels never leave this module: callers pass candidate predictions
+and receive the index of the chosen candidate plus validation scores.
+"""
 
 from __future__ import annotations
 
 import numpy as np
+from scipy.special import log_softmax
 
 from edsp.data.vault import LabelVault
+from edsp.utils.numerics import fit_temperature, roc_auc
 
 
 def validation_accuracy(vault: LabelVault, probabilities: np.ndarray) -> float:
     idx, y = vault.val_labels()
     return float(np.mean(np.asarray(probabilities)[idx].argmax(axis=1) == y))
+
+
+def _train_val_labels(vault: LabelVault, n: int) -> tuple[np.ndarray, np.ndarray]:
+    tr_idx, tr_y = vault.train_labels()
+    va_idx, va_y = vault.val_labels()
+    y = np.full(n, -1, dtype=np.int64)
+    y[tr_idx] = tr_y
+    y[va_idx] = va_y
+    is_val = np.zeros(n, dtype=bool)
+    is_val[va_idx] = True
+    return y, is_val
+
+
+def select_by_val_edge_auc(vault: LabelVault, edges: np.ndarray, candidate_scores: list[np.ndarray]) -> tuple[int, list[float]]:
+    """Choose the candidate P(heterophilic) scores with the best ROC-AUC on
+    train-val and val-val edges (Master Prompt §2.3c)."""
+    n = int(edges.max()) + 1 if len(edges) else 0
+    n = max(n, int(max(vault.train_idx.max(initial=-1), vault.val_idx.max(initial=-1))) + 1)
+    y, is_val = _train_val_labels(vault, n)
+    u, v = edges[:, 0], edges[:, 1]
+    mask = (y[u] >= 0) & (y[v] >= 0) & (is_val[u] | is_val[v])
+    target = y[u[mask]] != y[v[mask]]
+    aucs = [roc_auc(target, np.asarray(s)[mask]) for s in candidate_scores]
+    finite = [a if np.isfinite(a) else -np.inf for a in aucs]
+    return int(np.argmax(finite)), aucs
+
+
+def select_by_val_accuracy(vault: LabelVault, candidate_probs: list[np.ndarray]) -> tuple[int, list[float]]:
+    accs = [validation_accuracy(vault, p) for p in candidate_probs]
+    return int(np.argmax(accs)), accs
+
+
+def val_temperature(vault: LabelVault, logits: np.ndarray) -> float:
+    idx, y = vault.val_labels()
+    return fit_temperature(np.asarray(logits)[idx], y)
+
+
+def val_nll(vault: LabelVault, logits: np.ndarray, temperature: float = 1.0) -> float:
+    idx, y = vault.val_labels()
+    lp = log_softmax(np.asarray(logits)[idx] / temperature, axis=1)
+    return float(-np.mean(lp[np.arange(len(y)), y]))

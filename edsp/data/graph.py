@@ -38,6 +38,7 @@ class GraphData:
     features: np.ndarray | None = None
     edge_attr: np.ndarray | None = None
     edge_sign: np.ndarray | None = None
+    edge_relation: np.ndarray | None = None  # (m,) int relation id, for H-RELATION (§2.3f)
     multilabel: bool = False
     meta: dict = field(default_factory=dict)
 

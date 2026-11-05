@@ -11,3 +11,4 @@ data/ACQUISITION_LOG.jsonl
 results/dataset_stats/
 .mypy_cache/
 .ruff_cache/
+results/edge_classifier/

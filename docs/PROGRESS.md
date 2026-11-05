@@ -23,13 +23,19 @@
 
 - PR-2b: owner delegated the three pre-registration decisions; `docs/PREREGISTRATION.md` approved (H7 descriptive, secondary last-two-iterates column, minesweeper labelled and excluded from real-world aggregates) and frozen at the PR-2b merge commit.
 
+- PR-4 (regimes, Master Prompt §2): `edsp/regimes/` — Track-A/Track-B priors and trusts, P-CONST/P-NATIVE/P-COUNT/P-SIGNMAG/P-LEARNED, H-TRAINONLY(b1–b4)/H-NATIVE/H-LEARNED/H-ALL0/H-ALL1/H-RELATION, H-ORACLE isolated in `edsp/regimes/oracle.py` behind `ORACLE=1`; `edsp/methods.run_edsp`; selection helpers that keep validation labels inside `edsp.selection`; `edge_polarity_auc` in `edsp.eval.evaluate`; numpy/scipy logistic regression, temperature scaling, randomized SVD and ROC-AUC in `edsp/utils/numerics.py`.
+  - T11 now passes: every Track × H × P combination runs in strict vault mode, never touches test/oracle/descriptive labels, and gives bit-identical output when the test labels are changed (`tests/unit/test_regimes.py`).
+  - DoD evidence (edge-classifier AUCs): the `edge-classifier` workflow run on the PR (job summary + artifact).
+
 ## Remaining
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
-- PR-4: train-only regimes and a passing leakage guard (T11).
+- `scripts/oracle_upper_bound.py` (E10) and H-SOFT (extension) — not implemented yet.
+- Track-B 2-layer MLP / LightGBM base predictors.
+- PR-5: B0/B1 baselines with parity (harmonic LP, LGC, PPR-LP, C&S, LinBP).
 
 ## Blockers
 
-- T11 cannot run until the regimes (PR-4) exist; it is explicitly marked xfail rather than stubbed.
+- New dependencies (scikit-learn, LightGBM, PyG) cannot be locked from the Claude session because download.pytorch.org is unreachable there; `uv lock` must run in Actions or a Copilot session.
 - snap.stanford.edu (ogbn-proteins) is unreachable from the development session; the loader is first exercised by `dataset-stats.yml` with `include_large=true`.

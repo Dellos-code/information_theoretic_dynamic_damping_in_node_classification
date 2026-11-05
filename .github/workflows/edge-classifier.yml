@@ -1,0 +1,44 @@
+name: edge-classifier
+
+# PR-4 Definition of Done evidence (Master Prompt §7): H-LEARNED edge-classifier
+# AUCs per dataset and track, computed in Actions and published as a job summary
+# and an artifact.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "edsp/regimes/**"
+      - "edsp/selection/**"
+      - "edsp/utils/**"
+      - "scripts/edge_classifier_report.py"
+      - ".github/workflows/edge-classifier.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      EDSP_DATA_DIR: ${{ github.workspace }}/.edsp-cache
+      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/edge_classifier/ACQUISITION_LOG.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+      - run: uv sync --frozen --group dev
+      - uses: actions/cache@v4
+        with:
+          path: .edsp-cache
+          key: edsp-raw-${{ hashFiles('data/REGISTRY.json') }}
+          restore-keys: edsp-raw-
+      - run: uv run python scripts/edge_classifier_report.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: edge-classifier-${{ github.run_id }}
+          path: results/edge_classifier/
+          if-no-files-found: warn

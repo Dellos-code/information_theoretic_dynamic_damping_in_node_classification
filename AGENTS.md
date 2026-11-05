@@ -22,6 +22,11 @@ The governing prompt is committed at `docs/MASTER_PROMPT.md`.
 - Keep tuning budgets equal across methods and validation-only.
 - Mark unverified items `TO VERIFY` and record evidence.
 
+## Running EDSP
+
+- `from edsp.methods import run_edsp; run = run_edsp(graph, split, config)`; configurations and the zero-tuning default are documented in `edsp/regimes/inputs.py`.
+- H-ORACLE is reachable only with `ORACLE=1` through `edsp.regimes.oracle`; never import it in method code.
+
 ## Definition of done for PR-1
 
 The canonical NumPy/SciPy implementation, backend parity, T1–T11 tests, E1–E7 toy examples, and the 1M-edge benchmark are present and validated. T11 remains explicitly xfailed/skipped until LabelVault and the regimes are delivered by PR-2/PR-4.
