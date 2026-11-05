@@ -7,7 +7,10 @@ Track-B (feature prior): a base predictor is trained on train nodes only. PR-4
 implements the logistic-regression base predictor (numpy/scipy); the 2-layer MLP
 and LightGBM base predictors of §2.1 are listed as not yet implemented in
 docs/PROGRESS.md. The l2 strength is chosen by validation accuracy and the
-temperature by validation NLL, both through :mod:`edsp.selection`. Trusts:
+temperature by validation NLL, both through :mod:`edsp.selection`. PR-4b: the grid
+is l2 in {1e-3, ..., 100} x {standardised, raw} features (standardising sparse
+bag-of-words features hurt on Planetoid), and features are no longer reduced
+below 20,000 dimensions. Trusts:
 T_j = tau * (ln k - H(prior_j)) / ln k; with ``train_onehot=True`` train nodes
 are overwritten by their one-hot label with T = infinity.
 """
@@ -45,8 +48,9 @@ def track_b_priors(
     *,
     tau: float = 1.0,
     train_onehot: bool = False,
-    l2_grid: tuple[float, ...] = (0.01, 0.1, 1.0, 10.0),
-    max_dim: int = 256,
+    l2_grid: tuple[float, ...] = (1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0),
+    standardize_grid: tuple[bool, ...] = (True, False),
+    max_dim: int = 20_000,
     seed: int = 0,
 ) -> tuple[np.ndarray, np.ndarray, dict]:
     if graph.features is None:
@@ -54,7 +58,8 @@ def track_b_priors(
     k = graph.num_classes
     X = reduce_features(graph.features, max_dim, seed)
     idx, y = vault.train_labels()
-    models = [fit_logreg(X[idx], y, k, l2=l2, balanced=False) for l2 in l2_grid]
+    combos = [(l2, s) for s in standardize_grid for l2 in l2_grid]
+    models = [fit_logreg(X[idx], y, k, l2=l2, balanced=False, standardize=s) for l2, s in combos]
     logits = [m.logits(X) for m in models]
     probs = [softmax(lg, axis=1) for lg in logits]
     best, val_accs = select_by_val_accuracy(vault, probs)
@@ -66,8 +71,8 @@ def track_b_priors(
         v[idx, y] = 1.0
         trust[idx] = math.inf
     info = {
-        "track": "B", "base_model": "logistic-regression", "l2_grid": list(l2_grid), "val_accuracy": val_accs,
-        "chosen_l2": l2_grid[best], "temperature": T, "val_nll_calibrated": val_nll(vault, logits[best], T),
+        "track": "B", "base_model": "logistic-regression", "grid": [{"l2": a, "standardize": b} for a, b in combos],
+        "val_accuracy": val_accs, "chosen": {"l2": combos[best][0], "standardize": combos[best][1]}, "temperature": T, "val_nll_calibrated": val_nll(vault, logits[best], T),
         "tau": tau, "train_onehot": train_onehot, "feature_dim": int(X.shape[1]),
     }
     return v, trust, info

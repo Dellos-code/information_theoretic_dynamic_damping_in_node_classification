@@ -52,10 +52,11 @@ def fit_logreg(
     l2: float = 1.0,
     balanced: bool = True,
     max_iter: int = 300,
+    standardize: bool = True,
 ) -> LogReg:
     X = np.asarray(X, dtype=np.float64)
     y = np.asarray(y, dtype=np.int64)
-    scaler = Standardizer.fit(X)
+    scaler = Standardizer.fit(X) if standardize else Standardizer(np.zeros(X.shape[1]), np.ones(X.shape[1]))
     Z = scaler.transform(X)
     n, d = Z.shape
     if balanced:

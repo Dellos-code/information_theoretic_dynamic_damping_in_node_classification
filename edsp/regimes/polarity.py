@@ -121,7 +121,7 @@ def h_learned(
     vault: LabelVault,
     track: str,
     *,
-    l2_grid: tuple[float, ...] = (0.01, 0.1, 1.0, 10.0),
+    l2_grid: tuple[float, ...] = (1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0),
     max_dim: int = 64,
     max_train_edges: int = 100_000,
     seed: int = 0,
