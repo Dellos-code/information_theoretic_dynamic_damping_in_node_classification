@@ -1,8 +1,8 @@
 """The single entry point that reads test labels (Master Prompt §2.7, rule R3).
 
-PR-2 provides the access boundary and basic metrics; the full metric set of
-§5.4 (macro-F1, balanced accuracy, ROC-AUC, AP, NLL, Brier, ECE) lands with the
-evaluation PRs.
+Metrics: accuracy, macro-F1, balanced accuracy, ROC-AUC (binary; one-vs-rest
+macro for k > 2), average precision (binary), NLL, Brier, ECE (15 equal-width
+bins) and adaptive ECE (15 equal-mass bins) — see edsp.eval.metrics.
 """
 
 from __future__ import annotations
@@ -13,13 +13,13 @@ from edsp.data.vault import LabelVault
 
 
 def evaluate(vault: LabelVault, probabilities: np.ndarray) -> dict:
-    """Score node-level class probabilities (n, k) on the vault's test nodes."""
+    """Score node-level class probabilities (n, k) on the vault's test nodes
+    with the full metric set of Master Prompt §5.4."""
+    from edsp.eval.metrics import classification_metrics
+
     idx, y = vault.test_labels()
     probs = np.asarray(probabilities)[idx]
-    pred = probs.argmax(axis=1)
-    eps = 1e-12
-    nll = float(-np.mean(np.log(np.clip(probs[np.arange(len(y)), y], eps, 1.0))))
-    return {"split_id": vault.split_id, "n_test": len(y), "accuracy": float(np.mean(pred == y)), "nll": nll}
+    return {"split_id": vault.split_id, **classification_metrics(y, probs, vault.num_classes)}
 
 
 def edge_polarity_auc(vault: LabelVault, edges: np.ndarray, het_score: np.ndarray, threshold: float = 0.5) -> dict:

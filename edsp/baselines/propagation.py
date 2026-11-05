@@ -25,7 +25,7 @@ from scipy.sparse.linalg import cg, eigsh, spsolve
 from edsp.data.graph import GraphData
 from edsp.data.vault import LabelVault
 from edsp.regimes.priors import track_b_priors
-from edsp.selection import select_by_val_accuracy
+from edsp.selection import select_by_val_metric
 
 MAX_ITER = 1000
 TOL = 1e-6
@@ -258,10 +258,12 @@ def possible_worlds_harmonic(graph: GraphData, vault: LabelVault, p: np.ndarray,
 
 # ----------------------------------------------------------- registry + selection
 GRIDS: dict[str, dict[str, list]] = {
-    "lgc": {"alpha": [0.5, 0.9, 0.99]},
-    "ppr_lp": {"alpha": [0.5, 0.8, 0.9, 0.95]},
+    # 9 points each, matching the 3 x 3 Correct & Smooth grid and the 9-config
+    # EDSP-tuned grid (rule R6: equal tuning budgets).
+    "lgc": {"alpha": [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 0.999]},
+    "ppr_lp": {"alpha": [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 0.999]},
     "correct_and_smooth": {"alpha_correct": [0.5, 0.8, 0.95], "alpha_smooth": [0.5, 0.8, 0.95]},
-    "linbp": {"scale": [0.1, 0.5, 0.9]},
+    "linbp": {"scale": [0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95]},
 }
 
 BASELINES: dict[str, tuple[str, str, Callable]] = {
@@ -279,9 +281,9 @@ BASELINES: dict[str, tuple[str, str, Callable]] = {
 }
 
 
-def select_and_predict(name: str, graph: GraphData, vault: LabelVault) -> tuple[np.ndarray, dict]:
+def select_and_predict(name: str, graph: GraphData, vault: LabelVault, metric: str = "accuracy") -> tuple[np.ndarray, dict]:
     """Run baseline ``name`` over its validation grid (GRIDS) and keep the best by
-    validation accuracy (edsp.selection). Grids are identical in size class to the
+    the validation value of ``metric`` (edsp.selection). Grids are identical in size class to the
     EDSP tuning space; the zero-tuning setting is the function default."""
     fn = BASELINES[name][2]
     grid = GRIDS.get(name)
@@ -293,6 +295,6 @@ def select_and_predict(name: str, graph: GraphData, vault: LabelVault) -> tuple[
     keys = list(grid)
     combos = [dict(zip(keys, vals, strict=True)) for vals in itertools.product(*grid.values())]
     outs = [fn(graph, vault, **c, **extra) for c in combos]
-    best, accs = select_by_val_accuracy(vault, [o[0] for o in outs])
+    best, scores = select_by_val_metric(vault, [o[0] for o in outs], metric)
     probs, info = outs[best]
-    return probs, info | {"grid": combos, "val_accuracy": accs, "chosen": combos[best]}
+    return probs, info | {"grid": combos, "selection_metric": metric, "val_scores": scores, "chosen": combos[best]}

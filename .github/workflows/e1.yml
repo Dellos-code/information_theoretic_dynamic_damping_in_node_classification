@@ -1,0 +1,113 @@
+name: e1
+
+# Suite E1 (Master Prompt §7): Track-A EDSP vs B0/B1 Track-A baselines on all
+# registered real datasets with a single-label loader. workflow_dispatch runs the
+# full suite (one job per dataset), aggregates the run records and pushes them,
+# with the aggregate tables, to a new branch results/e1-<run_id>. On pull
+# requests a 1-split smoke run checks the pipeline end to end.
+
+on:
+  workflow_dispatch:
+    inputs:
+      datasets:
+        description: "Space-separated dataset names (empty = all single-label datasets)"
+        default: ""
+      max_splits:
+        description: "Limit splits per dataset (empty = all)"
+        default: ""
+  pull_request:
+    paths:
+      - "scripts/run_e1.py"
+      - "scripts/aggregate_e1.py"
+      - "edsp/eval/**"
+      - ".github/workflows/e1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      datasets: ${{ steps.p.outputs.datasets }}
+      extra: ${{ steps.p.outputs.extra }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo 'datasets=["cora","chameleon-filtered","sampson"]' >> "$GITHUB_OUTPUT"
+            echo 'extra=--max-splits 1 --h7-splits 1' >> "$GITHUB_OUTPUT"
+          else
+            if [ -n "${{ inputs.datasets }}" ]; then
+              LIST=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1].split()))' "${{ inputs.datasets }}")
+            else
+              LIST=$(python3 -c 'import json; d=json.load(open("data/REGISTRY.json"))["datasets"]; print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins")))')
+            fi
+            echo "datasets=$LIST" >> "$GITHUB_OUTPUT"
+            if [ -n "${{ inputs.max_splits }}" ]; then echo "extra=--max-splits ${{ inputs.max_splits }}" >> "$GITHUB_OUTPUT"; else echo "extra=" >> "$GITHUB_OUTPUT"; fi
+          fi
+
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        dataset: ${{ fromJSON(needs.plan.outputs.datasets) }}
+    env:
+      EDSP_DATA_DIR: ${{ github.workspace }}/.edsp-cache
+      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/runs/e1/ACQUISITION_LOG-${{ matrix.dataset }}.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+      - run: uv sync --frozen --group dev
+      - uses: actions/cache@v4
+        with:
+          path: .edsp-cache
+          key: edsp-raw-${{ hashFiles('data/REGISTRY.json') }}
+          restore-keys: edsp-raw-
+      - run: uv run python scripts/run_e1.py --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e1-runs-${{ matrix.dataset }}
+          path: results/runs/e1/
+          if-no-files-found: warn
+
+  aggregate:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+      - run: uv sync --frozen --group dev
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: e1-runs-*
+          path: results/runs/e1
+          merge-multiple: true
+      - run: uv run python scripts/aggregate_e1.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e1-aggregate-${{ github.run_id }}
+          path: |
+            results/runs/e1/
+            results/aggregates/e1/
+      - name: Push results branch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "results/e1-${{ github.run_id }}"
+          git add -f results/runs/e1 results/aggregates/e1
+          git commit -m "E1 results from Actions run ${{ github.run_id }} (commit ${{ github.sha }})"
+          git push origin "results/e1-${{ github.run_id }}"

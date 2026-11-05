@@ -62,6 +62,22 @@ def select_threshold_by_val_edge_accuracy(
     return float(thresholds[best]), accs
 
 
+def validation_score(vault: LabelVault, probabilities: np.ndarray, metric: str = "accuracy") -> float:
+    """Validation value of a §5.4 metric (higher is better); NaN without validation nodes."""
+    from edsp.eval.metrics import classification_metrics
+
+    idx, y = vault.val_labels()
+    if len(idx) == 0:
+        return float("nan")
+    return float(classification_metrics(y, np.asarray(probabilities)[idx], vault.num_classes)[metric])
+
+
+def select_by_val_metric(vault: LabelVault, candidate_probs: list[np.ndarray], metric: str = "accuracy") -> tuple[int, list[float]]:
+    scores = [validation_score(vault, p, metric) for p in candidate_probs]
+    finite = [s if np.isfinite(s) else -np.inf for s in scores]
+    return int(np.argmax(finite)), scores
+
+
 def select_by_val_accuracy(vault: LabelVault, candidate_probs: list[np.ndarray]) -> tuple[int, list[float]]:
     accs = [validation_accuracy(vault, p) for p in candidate_probs]
     return int(np.argmax(accs)), accs
