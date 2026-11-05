@@ -2,6 +2,8 @@
 
 This repository implements the EDSP evaluation specified in the Master Prompt. The Master Prompt is the governing specification; rules R1–R8 apply to every change.
 
+The governing prompt is committed at `docs/MASTER_PROMPT.md`.
+
 ## Scope and commands
 
 - Python >= 3.11; use `uv` when available.

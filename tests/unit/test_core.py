@@ -36,7 +36,8 @@ def test_t2_complement_involution_scaling(p):
 @settings(max_examples=500)
 @given(distributions())
 def test_t3_kl_identity(p):
-    assert np.isclose(kl_to_uniform(p), math.log(len(p)) - entropy(p)[0])
+    direct = np.sum(np.where(p > 0, p * np.log(len(p) * p), 0.0))
+    assert np.isclose(kl_to_uniform(p), direct)
 
 
 @settings(max_examples=500)
@@ -115,3 +116,34 @@ def test_e7_cycle_runs_without_hidden_damping():
     edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
     result = edsp(edges, [0.9] * 4, [1] * 4, [[0.9, 0.1]] * 4, max_iter=20)
     assert result.iterations == 20
+    assert result.oscillation and result.oscillation_period == 2
+    assert result.oscillation_amplitude > 0
+
+
+@pytest.mark.parametrize("p, expected_converged", [(0.5, True), (0.9, False)])
+def test_oscillation_one_homophilic_edge(p, expected_converged):
+    result = edsp([(0, 1)], [p], [0], [[0.9, 0.1], [0.1, 0.9]])
+    assert result.converged is expected_converged
+    assert result.oscillation is (p == 0.9)
+    if p == 0.5:
+        assert 250 <= result.iterations <= 270
+
+
+@pytest.mark.parametrize("p", [0.5, 0.7, 0.9])
+def test_oscillation_four_cycle(p):
+    edges = [(0, 1), (1, 2), (2, 3), (3, 0)]
+    result = edsp(edges, [p] * 4, [1] * 4, [[0.9, 0.1]] * 4)
+    assert result.oscillation
+
+
+def test_one_hot_priors_cycle():
+    result = edsp([(0, 1)], [0.9], [0], [[1, 0], [0, 1]])
+    assert result.oscillation
+
+
+def test_diagnostics_are_bounded():
+    result = edsp([(0, 1)], [0.9], [0], [[0.9, 0.1], [0.1, 0.9]], max_iter=100)
+    assert sorted(result.alpha_histograms) == [1, 5, 100]
+    assert len(result.regime_trace) == result.iterations
+    assert len(result.entropy_trace) == result.iterations
+    assert not hasattr(result, "delta_trace")
