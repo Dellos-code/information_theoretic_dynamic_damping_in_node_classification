@@ -43,6 +43,25 @@ def select_by_val_edge_auc(vault: LabelVault, edges: np.ndarray, candidate_score
     return int(np.argmax(finite)), aucs
 
 
+def select_threshold_by_val_edge_accuracy(
+    vault: LabelVault, edges: np.ndarray, score: np.ndarray, thresholds: tuple[float, ...]
+) -> tuple[float, list[float]]:
+    """Choose the decision threshold on a P(heterophilic) score by accuracy on
+    train-val and val-val edges; ties go to the threshold closest to 0.5."""
+    n = int(edges.max()) + 1 if len(edges) else 0
+    n = max(n, int(max(vault.train_idx.max(initial=-1), vault.val_idx.max(initial=-1))) + 1)
+    y, is_val = _train_val_labels(vault, n)
+    u, v = edges[:, 0], edges[:, 1]
+    mask = (y[u] >= 0) & (y[v] >= 0) & (is_val[u] | is_val[v])
+    if not mask.any():
+        return 0.5, [float("nan")] * len(thresholds)
+    target = y[u[mask]] != y[v[mask]]
+    s = np.asarray(score)[mask]
+    accs = [float(np.mean((s >= t) == target)) for t in thresholds]
+    best = max(range(len(thresholds)), key=lambda i: (accs[i], -abs(thresholds[i] - 0.5)))
+    return float(thresholds[best]), accs
+
+
 def select_by_val_accuracy(vault: LabelVault, candidate_probs: list[np.ndarray]) -> tuple[int, list[float]]:
     accs = [validation_accuracy(vault, p) for p in candidate_probs]
     return int(np.argmax(accs)), accs
