@@ -21,9 +21,10 @@
   - Loaders: cora, citeseer, pubmed, amazon-computers, amazon-photo, coauthor-cs, coauthor-physics, wikics, roman-empire, amazon-ratings, minesweeper, tolokers, questions, chameleon-filtered, squirrel-filtered, sampson, ogbn-proteins (the last one untested on the real archive until its first Actions run).
   - DoD evidence: the `dataset-stats` workflow run on the PR (job summary + artifact). Numbers are cited only from that run.
 
+- PR-2b: owner delegated the three pre-registration decisions; `docs/PREREGISTRATION.md` approved (H7 descriptive, secondary last-two-iterates column, minesweeper labelled and excluded from real-world aggregates) and frozen at the PR-2b merge commit.
+
 ## Remaining
 
-- Owner decisions in docs/PREREGISTRATION.md (H7 replacement, non-convergence column, minesweeper), then freeze it.
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
 - PR-4: train-only regimes and a passing leakage guard (T11).

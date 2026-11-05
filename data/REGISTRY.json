@@ -158,8 +158,9 @@
       "domain": "synthetic-grid benchmark (Platonov et al.)",
       "license": "MIT",
       "split": "official 10 splits",
-      "notes": "Platonov et al. construct minesweeper as a grid game; it is an established benchmark, not a SYNTHETIC-SUBSTITUTE in the R4 sense \u2014 flagged for the owner",
-      "status": "registered"
+      "notes": "Constructed grid game (Platonov et al. 2023), not an observed network. Kept as an established benchmark, labelled 'constructed benchmark' and excluded from real-world aggregates (docs/PREREGISTRATION.md \u00a73).",
+      "status": "registered",
+      "constructed_benchmark": true
     },
     "tolokers": {
       "cell": "C2",
