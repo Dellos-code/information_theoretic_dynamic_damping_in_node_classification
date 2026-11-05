@@ -7,9 +7,15 @@
 - Added the Python package scaffold and literal NumPy EDSP-canonical implementation.
 - Added PR-1 unit/property/toy/benchmark coverage, including explicit T11 xfail.
 - Added the ambiguity register.
-- Locked dependencies with `uv.lock`; CI and Copilot setup workflows run the unit suite.
-- Validation: `19 passed, 1 skipped (torch unavailable on this host), 1 xfailed (T11)`; canonical oscillation regression and bounded diagnostics pass.
-- PR-1b fix-up: canonical period-2 diagnostics, GS/damped variants, native torch iteration, CPU torch dependency declaration, expanded §1.8 coverage, CI/Docker/benchmark updates.
+- Regenerated `uv.lock` with `uv lock` (no manual lockfile edits).
+- PR-1b follow-up: torch test gating via `EDSP_REQUIRE_TORCH`, CI sets `EDSP_REQUIRE_TORCH=1`, GS sweep uses CSR offsets, canonical rejects `beta != 1`, regime diagnostics use H/H'/Hmax definitions, and GS diagnostics are now computed (not fabricated).
+- Added §1.8 follow-up coverage: explicit Regime 1/3 tests, E7 specified setup (unlabelled 4-cycle with one non-uniform start), case (b) `p=0.3` convergence check, and P1/D1 hypothesis tests.
+- Added `scripts/findings_pr1b.py`, JSONL findings records at `results/runs/findings_pr1b.jsonl`, and regenerated `docs/FINDINGS.md` with final states and `||Φ(V)-V||_1`.
+- Validation:
+  - `uv sync --frozen --group dev && uv run pytest -q tests/unit`
+  - `24 passed, 1 xfailed in 5.43s`
+  - `uv run --with ruff ruff check edsp tests`
+  - `uv run --with mypy mypy edsp/core.py`
 
 ## Remaining
 
@@ -20,4 +26,7 @@
 
 - T11 cannot run until LabelVault (PR-2) and regimes (PR-4) exist; it is explicitly marked xfail rather than stubbed.
 - No datasets were downloaded, per session scope.
-- `uv lock` and torch parity are not run locally because the CPU wheel index is unavailable for this host architecture; CI remains the validation target.
+
+## PR-2 handoff (no implementation started here)
+
+- Implement dataset registry/loaders, LabelVault strict access isolation, dataset statistics/evidence records, and preregistration.

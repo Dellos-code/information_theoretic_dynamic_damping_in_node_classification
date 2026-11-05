@@ -2,6 +2,7 @@
 
 from .core import (
     EDSPResult,
+    canonical_phi,
     edsp,
     edsp_damped,
     edsp_gs,
@@ -14,6 +15,7 @@ from .torch_backend import edsp_torch
 
 __all__ = [
     "EDSPResult",
+    "canonical_phi",
     "edsp",
     "edsp_damped",
     "edsp_gs",

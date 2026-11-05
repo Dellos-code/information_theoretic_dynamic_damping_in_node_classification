@@ -48,6 +48,17 @@ def heterophily_complement(values: np.ndarray) -> np.ndarray:
     return (1.0 - p) / (k - 1)
 
 
+def _regimes_from_entropies(base_entropy: np.ndarray, aggregate_entropy: np.ndarray, hmax: float) -> np.ndarray:
+    tol = _EPS * hmax
+    h_is_max = np.abs(hmax - base_entropy) <= tol
+    hp_is_max = np.abs(hmax - aggregate_entropy) <= tol
+    regime = np.full(base_entropy.shape[0], 4, dtype=np.int8)
+    regime[h_is_max & hp_is_max] = 1
+    regime[h_is_max & ~hp_is_max] = 2
+    regime[~h_is_max & hp_is_max] = 3
+    return regime
+
+
 def trust_calibrate(
     priors: np.ndarray,
     probabilities: np.ndarray,
@@ -84,6 +95,7 @@ class EDSPResult:
     oscillation_amplitude: float = 0.0
     last_iterates: tuple[np.ndarray, np.ndarray] | None = None
     last_alpha: np.ndarray | None = None
+    phi_residual_l1: float = 0.0
 
     @property
     def predictions(self) -> np.ndarray:
@@ -116,6 +128,80 @@ def _directed_edges(
     return directed[order], dp[order], dh[order]
 
 
+def _phi_step(
+    current: np.ndarray,
+    v: np.ndarray,
+    source: np.ndarray,
+    target: np.ndarray,
+    h: np.ndarray,
+    weights: np.ndarray,
+    den: np.ndarray,
+    p_esc: np.ndarray,
+    base_entropy: np.ndarray,
+    hmax: float,
+    k: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    transformed = np.where(
+        h[:, None] == 0,
+        current[source],
+        (1.0 - current[source]) / (k - 1),
+    )
+    aggregate = np.zeros_like(current)
+    np.add.at(aggregate, target, weights[:, None] * transformed)
+    aggregate[den == 0] = 1.0 / k
+    aggregate_entropy = entropy(aggregate)
+    numerator = (hmax - aggregate_entropy) * p_esc
+    denominator = numerator + (hmax - base_entropy)
+    alpha = np.divide(numerator, denominator, out=np.zeros(current.shape[0]), where=denominator > _BOUNDARY)
+    boundary = (
+        ((np.abs(hmax - base_entropy) <= _EPS * hmax) & (np.abs(hmax - aggregate_entropy) <= _EPS * hmax))
+        | ((p_esc == 0) & (np.abs(hmax - base_entropy) <= _EPS * hmax))
+    )
+    next_values = (1.0 - alpha[:, None]) * v + alpha[:, None] * aggregate
+    next_values[boundary] = 1.0 / k
+    next_values = np.maximum(next_values, 0.0)
+    next_values /= next_values.sum(axis=1, keepdims=True)
+    regime = _regimes_from_entropies(base_entropy, aggregate_entropy, hmax)
+    return next_values, alpha, regime
+
+
+def canonical_phi(
+    edges: Iterable[tuple[int, int]] | np.ndarray,
+    probabilities: Iterable[float] | np.ndarray,
+    heterophily: Iterable[int] | np.ndarray,
+    priors: np.ndarray,
+    state: np.ndarray,
+    *,
+    prior_trust: np.ndarray | float = np.inf,
+    edge_trust: np.ndarray | float = np.inf,
+) -> np.ndarray:
+    """Apply one canonical Jacobi update Φ to a supplied state."""
+    v, p, _ = trust_calibrate(priors, np.asarray(probabilities), prior_trust, edge_trust)
+    n, k = v.shape
+    edges, p, h = _directed_edges(n, np.asarray(edges), p, np.asarray(heterophily))
+    source, target = edges[:, 0], edges[:, 1]
+    log_odds = -np.log1p(-p)
+    den = np.bincount(target, weights=log_odds, minlength=n)
+    weights = np.divide(log_odds, den[target], out=np.zeros_like(log_odds), where=den[target] > 0)
+    p_esc = -np.expm1(-den)
+    base_entropy = entropy(v)
+    hmax = math.log(k)
+    next_values, _, _ = _phi_step(
+        _as_probabilities(np.asarray(state)),
+        v,
+        source,
+        target,
+        h,
+        weights,
+        den,
+        p_esc,
+        base_entropy,
+        hmax,
+        k,
+    )
+    return next_values
+
+
 def edsp(
     edges: Iterable[tuple[int, int]] | np.ndarray,
     probabilities: Iterable[float] | np.ndarray,
@@ -134,6 +220,8 @@ def edsp(
     """Run canonical EDSP or one of the explicitly named iteration variants."""
     if variant not in {"EDSP-canonical", "EDSP-GS", "EDSP-damped"}:
         raise ValueError(f"unknown EDSP variant: {variant}")
+    if variant == "EDSP-canonical" and not np.isclose(beta, 1.0):
+        raise ValueError("EDSP-canonical requires beta=1")
     if not 0 < beta <= 1:
         raise ValueError("beta must be in (0, 1]")
     if order not in {"id", "random"}:
@@ -158,61 +246,64 @@ def edsp(
     oscillation = False
     oscillation_amplitude = 0.0
     previous_previous: np.ndarray | None = None
+    counts = np.bincount(target, minlength=n)
+    offsets = np.empty(n + 1, dtype=np.int64)
+    offsets[0] = 0
+    np.cumsum(counts, out=offsets[1:])
 
     for iteration in range(1, max_iter + 1):
         if variant == "EDSP-GS":
             update_order = np.arange(n) if order == "id" else rng.permutation(n)
             next_values = current.copy()
+            alpha = np.zeros(n)
+            aggregate_entropy = np.zeros(n)
             for target_node in update_order:
-                incoming = np.flatnonzero(target == target_node)
-                if incoming.size:
+                start = offsets[target_node]
+                end = offsets[target_node + 1]
+                incoming = slice(start, end)
+                if end > start:
                     transformed = np.where(
-                        h[incoming, None] == 0,
-                        next_values[source[incoming]],
-                        (1.0 - next_values[source[incoming]]) / (k - 1),
+                        h[incoming, None] == 0, next_values[source[incoming]], (1.0 - next_values[source[incoming]]) / (k - 1)
                     )
                     aggregate_node = np.sum(weights[incoming, None] * transformed, axis=0)
                 else:
                     aggregate_node = np.full(k, 1.0 / k)
                 aggregate_entropy_node = float(entropy(aggregate_node)[0])
+                aggregate_entropy[target_node] = aggregate_entropy_node
                 numerator_node = (hmax - aggregate_entropy_node) * p_esc[target_node]
                 denominator_node = numerator_node + (hmax - base_entropy[target_node])
-                alpha_node = 0.0 if denominator_node <= _BOUNDARY else numerator_node / denominator_node
+                alpha_node = 0.0 if denominator_node <= _BOUNDARY else float(numerator_node / denominator_node)
+                alpha[target_node] = alpha_node
                 boundary_node = (
                     (abs(hmax - base_entropy[target_node]) <= _EPS * hmax
                      and abs(hmax - aggregate_entropy_node) <= _EPS * hmax)
                     or (p_esc[target_node] == 0 and abs(hmax - base_entropy[target_node]) <= _EPS * hmax)
                 )
                 value = (1 - alpha_node) * v[target_node] + alpha_node * aggregate_node
-                next_values[target_node] = np.full(k, 1.0 / k) if boundary_node else value / value.sum()
-            alpha = np.zeros(n)
-            regime = np.full(n, 4, dtype=np.int8)
+                if boundary_node:
+                    next_values[target_node] = np.full(k, 1.0 / k)
+                else:
+                    value = np.maximum(value, 0.0)
+                    total = float(value.sum())
+                    next_values[target_node] = value / total if total > 0 else np.full(k, 1.0 / k)
+            regime = _regimes_from_entropies(base_entropy, aggregate_entropy, hmax)
         else:
-            transformed = np.where(
-                h[:, None] == 0,
-                current[source],
-                (1.0 - current[source]) / (k - 1),
+            proposed, alpha, regime = _phi_step(
+                current,
+                v,
+                source,
+                target,
+                h,
+                weights,
+                den,
+                p_esc,
+                base_entropy,
+                hmax,
+                k,
             )
-            aggregate = np.zeros_like(current)
-            np.add.at(aggregate, target, weights[:, None] * transformed)
-            aggregate[den == 0] = 1.0 / k
-            aggregate_entropy = entropy(aggregate)
-            numerator = (hmax - aggregate_entropy) * p_esc
-            denominator = numerator + (hmax - base_entropy)
-            alpha = np.divide(numerator, denominator, out=np.zeros(n), where=denominator > _BOUNDARY)
-            boundary = (
-                ((np.abs(hmax - base_entropy) <= _EPS * hmax) & (np.abs(hmax - aggregate_entropy) <= _EPS * hmax))
-                | ((p_esc == 0) & (np.abs(hmax - base_entropy) <= _EPS * hmax))
-            )
-            proposed = (1.0 - alpha[:, None]) * v + alpha[:, None] * aggregate
-            proposed[boundary] = 1.0 / k
             next_values = (1 - beta) * current + beta * proposed
             next_values = np.maximum(next_values, 0.0)
             next_values /= next_values.sum(axis=1, keepdims=True)
-            regime = np.full(n, 4, dtype=np.int8)
-            regime[np.isclose(alpha, 0.0)] = 3
-            regime[np.isclose(alpha, 1.0)] = 2
-            regime[boundary] = 1
         residual = float(np.max(np.sum(np.abs(next_values - current), axis=1)))
         if previous_previous is not None and iteration <= max_iter and iteration >= 3:
             period_two_distance = float(np.max(np.sum(np.abs(next_values - previous_previous), axis=1)))
@@ -230,6 +321,8 @@ def edsp(
         if residual < epsilon:
             converged = True
             break
+
+    phi_next, _, _ = _phi_step(current, v, source, target, h, weights, den, p_esc, base_entropy, hmax, k)
 
     return EDSPResult(
         probabilities=current,
@@ -251,6 +344,7 @@ def edsp(
         oscillation_amplitude=oscillation_amplitude,
         last_iterates=(previous_previous if previous_previous is not None else v.copy(), current.copy()),
         last_alpha=alpha.copy(),
+        phi_residual_l1=float(np.max(np.sum(np.abs(phi_next - current), axis=1))),
     )
 
 
