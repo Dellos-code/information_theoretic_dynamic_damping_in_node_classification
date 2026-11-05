@@ -1,0 +1,53 @@
+name: dataset-stats
+
+# PR-2 Definition of Done evidence (Master Prompt §7): downloads the registered
+# datasets OUTSIDE the agent session, computes §3.2 statistics, compares them
+# with data/PUBLISHED_STATS.json and publishes the result as a job summary and
+# an artifact (results + append-only acquisition log).
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_large:
+        description: "Also process ogbn-proteins (~40M edges)"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "edsp/data/**"
+      - "data/**"
+      - "scripts/dataset_stats.py"
+      - ".github/workflows/dataset-stats.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      EDSP_DATA_DIR: ${{ github.workspace }}/.edsp-cache
+      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/dataset_stats/ACQUISITION_LOG.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+      - run: uv sync --frozen --group dev
+      - uses: actions/cache@v4
+        with:
+          path: .edsp-cache
+          key: edsp-raw-${{ hashFiles('data/REGISTRY.json') }}
+          restore-keys: edsp-raw-
+      - name: Compute dataset statistics
+        run: |
+          EXTRA=""
+          if [ "${{ inputs.include_large }}" = "true" ]; then EXTRA="--include-large"; fi
+          uv run python scripts/dataset_stats.py $EXTRA
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dataset-stats-${{ github.run_id }}
+          path: results/dataset_stats/
+          if-no-files-found: warn

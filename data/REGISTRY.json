@@ -1,0 +1,474 @@
+{
+  "version": 1,
+  "note": "Ranked REAL candidates per Master Prompt \u00a73.1. 'routes' are tried in order by edsp.data.acquisition; every attempt is logged to data/ACQUISITION_LOG.jsonl. Status values: registered (loader exists), planned (no loader yet), EXHAUSTED (all routes failed, see log).",
+  "cells": {
+    "C1": "Homophilic",
+    "C2": "Heterophilic",
+    "C3a": "Mixed by relation type",
+    "C3b": "Mixed by sign (= C5)",
+    "C3c": "Mixed by local structure (top-5 C1/C2 by std of local homophily; determined from dataset_stats)",
+    "C3d": "Structured compatibility (far from I and (J-I)/(k-1); determined from dataset_stats)",
+    "C4": "Native probabilistic edges + labels",
+    "C5": "Native signed edges + labels",
+    "C6": "Featureless (C4/C5 graphs + every C1/C2 graph in Track-A)",
+    "C7": "Large-scale",
+    "C8": "Binary vs high-k, imbalance",
+    "C9": "Real label noise (search pending)",
+    "C10": "Many components / isolated nodes",
+    "C11": "Domain coverage"
+  },
+  "datasets": {
+    "cora": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/kimiyoung/planetoid/master/data/{file}"
+      ],
+      "loader": "planetoid",
+      "metric": "accuracy",
+      "domain": "citation",
+      "license": "TO VERIFY (no explicit license in kimiyoung/planetoid)",
+      "split": "public + 10x random 60/20/20",
+      "notes": "",
+      "status": "registered"
+    },
+    "citeseer": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/kimiyoung/planetoid/master/data/{file}"
+      ],
+      "loader": "planetoid",
+      "metric": "accuracy",
+      "domain": "citation",
+      "license": "TO VERIFY",
+      "split": "public + 10x random 60/20/20",
+      "notes": "15 padded isolated nodes (torch_geometric convention), excluded from splits",
+      "status": "registered"
+    },
+    "pubmed": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/kimiyoung/planetoid/master/data/{file}"
+      ],
+      "loader": "planetoid",
+      "metric": "accuracy",
+      "domain": "citation",
+      "license": "TO VERIFY",
+      "split": "public + 10x random 60/20/20",
+      "notes": "",
+      "status": "registered"
+    },
+    "amazon-computers": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/shchur/gnn-benchmark/master/data/npz/{file}"
+      ],
+      "loader": "shchur_npz",
+      "metric": "accuracy",
+      "domain": "co-purchase",
+      "license": "TO VERIFY",
+      "split": "10x random 60/20/20 (tunedGNN convention TO VERIFY)",
+      "notes": "",
+      "status": "registered"
+    },
+    "amazon-photo": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/shchur/gnn-benchmark/master/data/npz/{file}"
+      ],
+      "loader": "shchur_npz",
+      "metric": "accuracy",
+      "domain": "co-purchase",
+      "license": "TO VERIFY",
+      "split": "10x random 60/20/20 (tunedGNN convention TO VERIFY)",
+      "notes": "",
+      "status": "registered"
+    },
+    "coauthor-cs": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/shchur/gnn-benchmark/master/data/npz/{file}"
+      ],
+      "loader": "shchur_npz",
+      "metric": "accuracy",
+      "domain": "co-authorship",
+      "license": "TO VERIFY",
+      "split": "10x random 60/20/20 (tunedGNN convention TO VERIFY)",
+      "notes": "",
+      "status": "registered"
+    },
+    "coauthor-physics": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/shchur/gnn-benchmark/master/data/npz/{file}"
+      ],
+      "loader": "shchur_npz",
+      "metric": "accuracy",
+      "domain": "co-authorship",
+      "license": "TO VERIFY",
+      "split": "10x random 60/20/20 (tunedGNN convention TO VERIFY)",
+      "notes": "",
+      "status": "registered"
+    },
+    "wikics": {
+      "cell": "C1",
+      "routes": [
+        "https://raw.githubusercontent.com/pmernyei/wiki-cs-dataset/master/dataset/{file}"
+      ],
+      "loader": "wikics",
+      "metric": "accuracy",
+      "domain": "web/wiki",
+      "license": "MIT (TO VERIFY)",
+      "split": "official 20 train/val masks, 1 test mask",
+      "notes": "",
+      "status": "registered"
+    },
+    "roman-empire": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/yandex-research/heterophilous-graphs/main/data/{file}"
+      ],
+      "loader": "heterophilous_npz",
+      "metric": "accuracy",
+      "domain": "language",
+      "license": "MIT (yandex-research/heterophilous-graphs)",
+      "split": "official 10 splits",
+      "notes": "",
+      "status": "registered"
+    },
+    "amazon-ratings": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/yandex-research/heterophilous-graphs/main/data/{file}"
+      ],
+      "loader": "heterophilous_npz",
+      "metric": "accuracy",
+      "domain": "co-purchase",
+      "license": "MIT",
+      "split": "official 10 splits",
+      "notes": "",
+      "status": "registered"
+    },
+    "minesweeper": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/yandex-research/heterophilous-graphs/main/data/{file}"
+      ],
+      "loader": "heterophilous_npz",
+      "metric": "roc_auc",
+      "domain": "synthetic-grid benchmark (Platonov et al.)",
+      "license": "MIT",
+      "split": "official 10 splits",
+      "notes": "Platonov et al. construct minesweeper as a grid game; it is an established benchmark, not a SYNTHETIC-SUBSTITUTE in the R4 sense \u2014 flagged for the owner",
+      "status": "registered"
+    },
+    "tolokers": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/yandex-research/heterophilous-graphs/main/data/{file}"
+      ],
+      "loader": "heterophilous_npz",
+      "metric": "roc_auc",
+      "domain": "crowdsourcing",
+      "license": "MIT",
+      "split": "official 10 splits",
+      "notes": "",
+      "status": "registered"
+    },
+    "questions": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/yandex-research/heterophilous-graphs/main/data/{file}"
+      ],
+      "loader": "heterophilous_npz",
+      "metric": "roc_auc",
+      "domain": "Q&A",
+      "license": "MIT",
+      "split": "official 10 splits",
+      "notes": "",
+      "status": "registered"
+    },
+    "chameleon-filtered": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/yandex-research/heterophilous-graphs/main/data/{file}"
+      ],
+      "loader": "heterophilous_npz",
+      "metric": "accuracy",
+      "domain": "web/wiki",
+      "license": "MIT",
+      "split": "official 10 splits",
+      "notes": "",
+      "status": "registered"
+    },
+    "squirrel-filtered": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/yandex-research/heterophilous-graphs/main/data/{file}"
+      ],
+      "loader": "heterophilous_npz",
+      "metric": "accuracy",
+      "domain": "web/wiki",
+      "license": "MIT",
+      "split": "official 10 splits",
+      "notes": "",
+      "status": "registered"
+    },
+    "sampson": {
+      "cell": "C5",
+      "routes": [
+        "https://raw.githubusercontent.com/bavla/Nets/master/data/Pajek/esna/{file}"
+      ],
+      "loader": "sampson",
+      "metric": "accuracy (leave-one-out case study)",
+      "domain": "social/signed",
+      "license": "TO VERIFY (Pajek ESNA datasets, Batagelj & Mrvar)",
+      "split": "leave-one-out",
+      "notes": "Sampson_T4: 18 novices, 4 factions; the 25-node network has no faction labels",
+      "status": "registered"
+    },
+    "ogbn-proteins": {
+      "cell": "C4",
+      "routes": [
+        "http://snap.stanford.edu/ogb/data/nodeproppred/{file}"
+      ],
+      "loader": "ogbn_proteins",
+      "metric": "mean ROC-AUC over 112 tasks",
+      "domain": "biology/PPI",
+      "license": "CC0 (TO VERIFY)",
+      "split": "official species split",
+      "notes": "loader untested on the real archive until its first Actions run; raw layout TO VERIFY",
+      "status": "registered"
+    },
+    "ogbn-arxiv": {
+      "cell": "C1",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "symmetrised",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "ogbn-products": {
+      "cell": "C1/C7",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "arxiv-year": {
+      "cell": "C2",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "LINKX; Google Drive routes TO VERIFY",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "snap-patents": {
+      "cell": "C2/C7",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "LINKX",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "pokec": {
+      "cell": "C2/C7",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "LINKX",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "genius": {
+      "cell": "C2",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "LINKX; ROC-AUC",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "twitch-gamers": {
+      "cell": "C2/C7",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "LINKX",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "penn94": {
+      "cell": "C2",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "LINKX/FB100",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "texas": {
+      "cell": "C2",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "appendix only",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "cornell": {
+      "cell": "C2",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "appendix only",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "wisconsin": {
+      "cell": "C2",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "appendix only",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "yelpchi": {
+      "cell": "C3a",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "CARE-GNN repo / DGL FraudDataset",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "amazon-fraud": {
+      "cell": "C3a",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "CARE-GNN repo / DGL FraudDataset",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "uncertain-dblp": {
+      "cell": "C4",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "Dallachiesa et al.; rebuild from 2012 DBLP XML",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "us-patent-assignee": {
+      "cell": "C4",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "source TO VERIFY",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "string-raw": {
+      "cell": "C4",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "STRING + GO-slim, URLs TO VERIFY",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "congress-signed": {
+      "cell": "C5",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "Neal, figshare 10.6084/m9.figshare.8096429",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "bitcoin-otc": {
+      "cell": "C5",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "SNAP + REV2 labels",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "bitcoin-alpha": {
+      "cell": "C5",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "SNAP + REV2 labels",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "wiki-rfa": {
+      "cell": "C5",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "Mercado et al. melopeo/GL",
+      "status": "planned (PR-3 acquisition)"
+    },
+    "highland-tribes": {
+      "cell": "C5",
+      "routes": [],
+      "loader": null,
+      "metric": "TO VERIFY",
+      "domain": "TO VERIFY",
+      "license": "TO VERIFY",
+      "split": "TO VERIFY",
+      "notes": "labels TO VERIFY",
+      "status": "planned (PR-3 acquisition)"
+    }
+  }
+}

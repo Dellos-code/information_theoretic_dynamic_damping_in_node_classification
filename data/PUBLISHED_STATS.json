@@ -1,0 +1,19 @@
+{
+  "note": "Reference values for the PR-2 Definition of Done (Master Prompt §7: reproduce published homophily/LI within 0.01 or document the discrepancy). Values are REPORTED, not reproduced. 'source_status' says whether the citation has been checked against the paper.",
+  "tolerance": 0.01,
+  "datasets": {
+    "roman-empire": {"edge_homophily": 0.05, "adjusted_homophily": -0.05, "label_informativeness": 0.11, "source": "Platonov et al., ICLR 2023 (as quoted in Master Prompt §3.1 C2)", "source_status": "quoted in Master Prompt; page/table TO VERIFY"},
+    "amazon-ratings": {"edge_homophily": 0.38, "adjusted_homophily": 0.14, "label_informativeness": 0.04, "source": "Platonov et al., ICLR 2023 (Master Prompt §3.1)", "source_status": "quoted in Master Prompt; page/table TO VERIFY"},
+    "minesweeper": {"edge_homophily": 0.68, "adjusted_homophily": 0.01, "label_informativeness": 0.00, "source": "Platonov et al., ICLR 2023 (Master Prompt §3.1)", "source_status": "quoted in Master Prompt; page/table TO VERIFY"},
+    "tolokers": {"edge_homophily": 0.59, "adjusted_homophily": 0.09, "label_informativeness": 0.01, "source": "Platonov et al., ICLR 2023 (Master Prompt §3.1)", "source_status": "quoted in Master Prompt; page/table TO VERIFY"},
+    "questions": {"edge_homophily": 0.84, "adjusted_homophily": 0.02, "label_informativeness": 0.00, "source": "Platonov et al., ICLR 2023 (Master Prompt §3.1)", "source_status": "quoted in Master Prompt; page/table TO VERIFY"},
+    "cora": {"edge_homophily": 0.81, "adjusted_homophily": 0.77, "label_informativeness": 0.59, "source": "Platonov et al., NeurIPS 2023, dataset characteristics table", "source_status": "TO VERIFY (values recalled, citation not yet checked)"},
+    "citeseer": {"edge_homophily": 0.74, "adjusted_homophily": 0.67, "label_informativeness": 0.45, "source": "Platonov et al., NeurIPS 2023", "source_status": "TO VERIFY (values recalled, citation not yet checked)"},
+    "pubmed": {"edge_homophily": 0.80, "adjusted_homophily": 0.69, "label_informativeness": 0.41, "source": "Platonov et al., NeurIPS 2023", "source_status": "TO VERIFY (values recalled, citation not yet checked)"},
+    "amazon-computers": {"edge_homophily": 0.78, "source": "commonly reported edge homophily (e.g. heterophily surveys)", "source_status": "TO VERIFY (value recalled, citation not yet checked)"},
+    "amazon-photo": {"edge_homophily": 0.83, "source": "commonly reported edge homophily", "source_status": "TO VERIFY (value recalled, citation not yet checked)"},
+    "coauthor-cs": {"edge_homophily": 0.81, "source": "commonly reported edge homophily", "source_status": "TO VERIFY (value recalled, citation not yet checked)"},
+    "coauthor-physics": {"edge_homophily": 0.93, "source": "commonly reported edge homophily", "source_status": "TO VERIFY (value recalled, citation not yet checked)"},
+    "wikics": {"edge_homophily": 0.65, "source": "commonly reported edge homophily", "source_status": "TO VERIFY (value recalled, citation not yet checked)"}
+  }
+}

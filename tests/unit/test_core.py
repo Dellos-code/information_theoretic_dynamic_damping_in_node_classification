@@ -277,7 +277,7 @@ def test_t10_degenerate_nodes():
     assert np.allclose(result.probabilities, [[1, 0], [0.5, 0.5]])
 
 
-@pytest.mark.xfail(reason="Deferred to PR-2 LabelVault and PR-4 train-only regimes", strict=True)
+@pytest.mark.xfail(reason="LabelVault exists since PR-2; T11 needs the method regimes of PR-4 to run every method in strict mode", strict=True)
 def test_t11_leakage_guard():
     raise NotImplementedError("LabelVault is intentionally deferred")
 

@@ -5,3 +5,9 @@ __pycache__/
 .hypothesis/
 *.pyc
 !results/runs/
+
+# PR-2: produced by local/dev runs; authoritative copies come from GitHub Actions artifacts
+data/ACQUISITION_LOG.jsonl
+results/dataset_stats/
+.mypy_cache/
+.ruff_cache/
