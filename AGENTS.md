@@ -9,12 +9,13 @@ The governing prompt is committed at `docs/MASTER_PROMPT.md`.
 - Python >= 3.11; use `uv` when available.
 - Unit/property tests: `pytest -q tests/unit`
 - Toy examples and the 1M-edge benchmark are the only execution targets for PR-0/PR-1.
-- Never download datasets or run full experiment matrices in an agent session; use GitHub Actions for heavy work.
+- Never download datasets or run full experiment matrices in an agent session; use GitHub Actions for heavy work (`dataset-stats.yml` for statistics, later `fetch-data.yml` / `run-matrix.yml`).
+- Dataset statistics: `uv run python scripts/dataset_stats.py` (set `EDSP_DATA_DIR` for the raw-file cache). Sources and their verification status live in `data/REGISTRY.json`.
 
 ## Non-negotiable rules
 
 - No fabricated numbers. Every result must be traceable to a logged run.
-- Preserve test-label isolation. Test labels may only be accessed inside `edsp.eval.evaluate`.
+- Preserve test-label isolation. Test labels may only be accessed inside `edsp.eval.evaluate`; validation labels only inside `edsp.selection` / `edsp.eval`. Methods get labels exclusively through `GraphData.vault(split).train_labels()`; never read `GraphData._labels` or `LabelVault._labels` directly.
 - Keep `EDSP-canonical` literal. Record ambiguities in `docs/SPEC_AMBIGUITIES.md`; implement alternatives only as named variants.
 - Treat honest negative, non-convergent, and not-run outcomes as results.
 - Use real data first; never substitute synthetic data without the audited exhaustion procedure.
