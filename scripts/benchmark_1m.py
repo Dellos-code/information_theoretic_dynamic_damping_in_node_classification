@@ -22,7 +22,7 @@ def main() -> None:
     priors[one_hot] = 0.0
     priors[one_hot, rng.integers(0, k, size=len(one_hot))] = 1.0
     started = time.perf_counter()
-    result = edsp(edges, p, h, priors, max_iter=50)
+    result = edsp(edges, p, h, priors, epsilon=0.0, max_iter=50)
     elapsed = time.perf_counter() - started
     peak_rss_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
     print(

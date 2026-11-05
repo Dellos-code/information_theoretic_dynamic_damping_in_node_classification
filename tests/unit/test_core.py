@@ -2,7 +2,8 @@ import math
 
 import numpy as np
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from edsp import edsp, entropy, heterophily_complement, kl_to_uniform, trust_calibrate
 
@@ -36,7 +37,8 @@ def test_t2_complement_involution_scaling(p):
 @settings(max_examples=500)
 @given(distributions())
 def test_t3_kl_identity(p):
-    direct = np.sum(np.where(p > 0, p * np.log(len(p) * p), 0.0))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        direct = np.sum(np.where(p > 0, p * np.log(len(p) * p), 0.0))
     assert np.isclose(kl_to_uniform(p), direct)
 
 
@@ -81,20 +83,37 @@ def test_t8_iterates_stay_in_simplex(prior, iterations):
 
 
 def test_t9_backend_reference_is_deterministic():
-    kwargs = dict(edges=[(0, 1), (1, 2)], probabilities=[0.2, 0.7], heterophily=[0, 1],
-                  priors=[[1, 0], [0.5, 0.5], [0, 1]], max_iter=3)
+    kwargs = {"edges": [(0, 1), (1, 2)], "probabilities": [0.2, 0.7], "heterophily": [0, 1],
+                  "priors": [[1, 0], [0.5, 0.5], [0, 1]], "max_iter": 3}
     assert np.array_equal(edsp(**kwargs).probabilities, edsp(**kwargs).probabilities)
 
 
 def test_t9_torch_adapter_parity_when_available():
-    torch = pytest.importorskip("torch")
+    import torch
+
     from edsp import edsp_torch
 
-    kwargs = dict(edges=[(0, 1)], probabilities=[0.5], heterophily=[1],
-                  priors=[[1, 0], [0.5, 0.5]], max_iter=2)
-    result = edsp(**kwargs)
-    torch_result = edsp_torch(**kwargs)
-    assert torch.allclose(torch_result["probabilities"], torch.from_numpy(result.probabilities), atol=1e-10)
+    rng = np.random.default_rng(42)
+    for k in (2, 5, 20):
+        n = 55
+        edges = rng.integers(0, n, size=(100, 2))
+        edges = edges[edges[:, 0] != edges[:, 1]]
+        probabilities = rng.uniform(0.01, 0.9, len(edges))
+        heterophily = rng.integers(0, 2, len(edges))
+        priors = rng.dirichlet(np.ones(k), size=n)
+        priors[0] = np.eye(k)[0]
+        kwargs = {
+            "edges": edges,
+            "probabilities": probabilities,
+            "heterophily": heterophily,
+            "priors": priors,
+            "max_iter": 4,
+        }
+        result = edsp(**kwargs)
+        torch_result = edsp_torch(**kwargs)
+        assert torch.allclose(
+            torch_result["probabilities"], torch.from_numpy(result.probabilities), atol=1e-10
+        )
 
 
 def test_t10_degenerate_nodes():

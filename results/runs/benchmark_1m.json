@@ -1,16 +1,16 @@
 {
-  "run_id": "pr1-1m-edge-2026-11-04",
-  "git_sha": "f7f5aff",
-  "config_hash": "sha256:439adbd7aabf4f764cc0d6f7c4e70b2e35dab408df7a1b646a62fc852c2892ac",
+  "run_id": "pr1b-1m-edge-2026-11-05",
+  "git_sha": "76735fd",
+  "config_hash": "sha256:037a1b15582304a64a458be69e3e5d144db6b3f54d0f3104a24cdbec0e581a81",
   "dataset_hash": "not_applicable",
   "seed": 0,
   "split_id": "not_applicable",
   "runner_type": "agent-session",
-  "wall_clock_seconds": 1.088918,
-  "peak_rss": null,
+  "wall_clock_seconds": 10.483954,
+  "peak_rss": "358.1 MiB",
   "n_nodes": 100000,
   "n_edges": 999987,
-  "iterations": 1,
+  "iterations": 50,
   "converged": false,
   "notes": "Generated graph benchmark only; no dataset was downloaded."
 }

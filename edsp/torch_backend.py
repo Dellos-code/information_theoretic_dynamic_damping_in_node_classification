@@ -2,22 +2,31 @@
 
 from __future__ import annotations
 
-import numpy as np
-
 
 def edsp_torch(*args, **kwargs):
     """Run EDSP natively with torch tensor operations."""
     import torch  # type: ignore[import-not-found]
 
-    from .core import _as_probabilities
-
     edges, probabilities, heterophily, priors = args[:4] if len(args) >= 4 else (
         kwargs["edges"], kwargs["probabilities"], kwargs["heterophily"], kwargs["priors"]
     )
+    prior_trust = kwargs.get("prior_trust", float("inf"))
+    edge_trust = kwargs.get("edge_trust", float("inf"))
     epsilon = kwargs.get("epsilon", 1e-6)
     max_iter = kwargs.get("max_iter", 1000)
-    v = torch.as_tensor(_as_probabilities(np.asarray(priors)), dtype=torch.float64)
+    v = torch.as_tensor(priors, dtype=torch.float64)
+    if v.ndim == 1:
+        v = v.unsqueeze(0)
+    v = v.clamp_min(0)
+    v = v / v.sum(1, keepdim=True).clamp_min(1e-300)
     p = torch.as_tensor(probabilities, dtype=torch.float64)
+    prior_trust_tensor = torch.as_tensor(prior_trust, dtype=torch.float64)
+    edge_trust_tensor = torch.as_tensor(edge_trust, dtype=torch.float64)
+    prior_decay = torch.exp(-prior_trust_tensor)
+    edge_decay = torch.exp(-edge_trust_tensor)
+    v = (1 - prior_decay) * v + prior_decay / v.shape[1]
+    p = p * (1 - edge_decay)
+    p = p.clamp(0, 1 - 1e-12)
     h = torch.as_tensor(heterophily, dtype=torch.int64)
     edge = torch.as_tensor(edges, dtype=torch.long).reshape(-1, 2)
     if edge.numel():
@@ -33,7 +42,7 @@ def edsp_torch(*args, **kwargs):
     weights = torch.where(den[target] > 0, log_odds / den[target], torch.zeros_like(log_odds))
     p_esc = -torch.expm1(-den)
     base_entropy = -(torch.where(v > 0, v * torch.log(v), torch.zeros_like(v))).sum(1)
-    hmax = float(np.log(k))
+    hmax = float(torch.log(torch.tensor(k, dtype=torch.float64)))
     current = v.clone()
     converged = False
     residual = 0.0
