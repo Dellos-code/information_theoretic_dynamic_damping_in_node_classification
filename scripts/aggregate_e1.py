@@ -34,8 +34,10 @@ EXCLUDED_FROM_RANKS = {"sampson"}
 def load(run_dir: Path) -> list[dict]:
     recs = []
     for f in sorted(run_dir.glob("*.jsonl")):
+        if f.name.startswith("ACQUISITION_LOG"):
+            continue
         recs += [json.loads(line) for line in f.read_text().splitlines() if line.strip()]
-    return recs
+    return [r for r in recs if r.get("suite") == "E1"]
 
 
 def main() -> int:
