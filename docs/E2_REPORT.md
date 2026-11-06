@@ -7,7 +7,7 @@ their own polarity information:
 |---|---|---|---|---|
 | wiki-editor (Mercado et al. 2019; 20,198 nodes, labelled LCC) | C5 signed | H-NATIVE (edge signs) | accuracy | ranked |
 | amazon-fraud (CARE-GNN; 11,944 nodes, 3 relations) | C3a relation-typed | H-RELATION (one polarity per relation combination, learned on train–train edges) | ROC-AUC | ranked |
-| yelpchi (CARE-GNN; 45,954 nodes, 3,846,979 edges) | C3a relation-typed | H-RELATION | ROC-AUC | **missing** — see §4 |
+| yelpchi (CARE-GNN; 45,954 nodes, 3,846,979 edges) | C3a relation-typed | H-RELATION | ROC-AUC | ranked |
 | wiki-rfa, wiki-elec (SNAP) | C5 signed | H-NATIVE | accuracy | case studies: the label is decided by the incoming votes (§3.1 C5.3), excluded from ranks |
 | sampson (18 nodes) | C5 signed | H-NATIVE | accuracy | case study (leave-one-out), excluded from ranks |
 
@@ -20,10 +20,14 @@ for signed graphs that runs without a GNN). GNN baselines for signed graphs
 (SGCN, SDGNN, SiGAT) and fraud graphs (CARE-GNN, PC-GNN, BWGNN, GAGA) need PR-6
 (torch) and are **not** in this report.
 
-**Provenance (R1).** 648 run records in `results/runs/e2/` from Actions run
+**Provenance (R1).** 744 run records in `results/runs/e2/`: every dataset except
+YelpChi from Actions run
 [42214156507](https://github.com/Dellos-code/information_theoretic_dynamic_damping_in_node_classification/actions/runs/42214156507)
-(commit 2ff5600). Tables: `results/aggregates/e2/E2_SUMMARY.md`; every number below
-is copied from it.
+(commit 2ff5600); YelpChi (`yelpchi.part00–09.jsonl`, one CI job per split) from run
+[42257945936](https://github.com/Dellos-code/information_theoretic_dynamic_damping_in_node_classification/actions/runs/42257945936)
+(commit a2bc659 of PR-9, which differs from 2ff5600 only by the split-chunking of the
+runner and workflow). Tables: `results/aggregates/e2/E2_SUMMARY.md`; every number
+below is copied from it.
 
 ## 1. Results (mean ± std over 10 splits, ×100)
 
@@ -31,23 +35,25 @@ is copied from it.
 |---|---|---|---|---|---|
 | wiki-editor [acc] | 86.15 ± 0.65 | 86.12 ± 0.67 | LGC 76.54 ± 0.48 | 84.33 ± 0.63 | **86.43 ± 0.42** |
 | amazon-fraud [AUC] | 80.95 ± 1.14 | **82.87 ± 1.13** | LGC 82.68 ± 1.02 | — | — |
+| yelpchi [AUC] | 61.75 ± 1.13 | 62.60 ± 0.41 | **LGC 63.54 ± 0.33** | — | — |
 | wiki-elec† [acc] | 80.54 ± 1.45 | 80.58 ± 1.42 | harmonic+CMN 60.58 ± 2.55 | 78.09 ± 1.43 | **81.66 ± 0.78** |
 | wiki-rfa† [acc] | 72.22 ± 1.22 | 72.23 ± 1.18 | harmonic+CMN 64.12 ± 2.23 | 71.73 ± 1.57 | **76.59 ± 0.81** |
 | sampson† [acc] | **66.67** | **66.67** | harmonic+CMN 50.00 | **66.67** | 61.11 |
 
 † case studies, not ranked.
 
-Wilcoxon over splits, Holm across datasets (real, ranked datasets only — here
-wiki-editor and amazon-fraud):
+Wilcoxon over splits, Holm across datasets (real, ranked datasets only —
+wiki-editor, amazon-fraud, yelpchi):
 
 | EDSP-tuned vs | win | tie | loss |
 |---|---|---|---|
-| harmonic, harmonic+CMN, LGC | 1 (wiki-editor) | 1 (amazon-fraud) | 0 |
-| PPR-LP, LinBP-MCE, train prior | 2 | 0 | 0 |
+| harmonic, harmonic+CMN, LGC | 1 (wiki-editor) | 1 (amazon-fraud) | 1 (yelpchi) |
+| PPR-LP | 2 (wiki-editor, amazon-fraud) | 0 | 1 (yelpchi) |
+| LinBP-MCE, train prior | 3 | 0 | 0 |
 | signed_vote | 1 (wiki-editor) | 0 | 0 |
 | signed_lgc | 0 | 0 | 1 (wiki-editor, −0.31 points) |
 
-The Friedman ranks over two datasets (p = 0.165) are not informative and are not
+Friedman over three datasets: p = 0.055, Nemenyi CD = 6.06 — not informative, not
 reported as a result.
 
 ## 2. Accuracy by local homophily (§5.7)
@@ -61,6 +67,11 @@ Accuracy ×100, pooled over splits.
 | wiki-elec† | 1,122 | **64.4** / 97.3 | 61.5 / 98.4 | 4.3 / 98.7 | 19.4 / 89.9 | 0.3 / 99.1 |
 | wiki-rfa† | 657 | **70.0** / 86.8 | 70.2 / 94.9 | 6.8 / 98.5 | 13.1 / 98.6 | 2.6 / 97.8 |
 | amazon-fraud | 2,979 | 1.7 / 99.8 | — | 0.0 / 100.0 | 0.0 / 100.0 | 0.1 / 100.0 |
+| yelpchi | 23,368 | 0.4 / 99.7 | — | 0.1 / 99.9 | 0.1 / 99.9 | 0.1 / 99.9 |
+
+On yelpchi EDSP-**default** (fixed H-RELATION, no tuning) is the only method that
+classifies some heterophilic nodes (5.2 %), at the price of the homophilic ones
+(97.2 %); its ROC-AUC is the lowest of the propagation methods except LinBP.
 
 ## 3. Reading
 
@@ -73,9 +84,13 @@ Accuracy ×100, pooled over splits.
   same information (signs + train labels); signed_lgc is better on the
   homophilic side (wiki-rfa high-h nodes 94.9 vs 86.8), i.e. EDSP loses accuracy
   on the nodes that plain propagation already gets right.
-- **Relation-typed fraud graph (amazon-fraud):** EDSP-tuned has the best mean
+- **Relation-typed fraud graphs:** on amazon-fraud EDSP-tuned has the best mean
   ROC-AUC (82.87 vs LGC 82.68) but the difference is a tie; it is significantly
-  better than PPR-LP and LinBP. Neither EDSP nor any baseline classifies the
+  better than PPR-LP and LinBP. On yelpchi it loses to LGC (62.60 vs 63.54),
+  PPR-LP and harmonic, and beats LinBP (58.18). Every label-only method here is
+  far from what the published fraud detectors (CARE-GNN, PC-GNN, BWGNN, GAGA)
+  report on YelpChi; those use node features, so they belong to the PR-6 / Track-B
+  comparison, not to this table. Neither EDSP nor any baseline classifies the
   heterophilic (fraud-adjacent) nodes: low-h accuracy ≤ 1.7 %. With labels only, the
   per-relation polarities learned from train–train edges carry little
   information beyond the base rate.
@@ -90,14 +105,11 @@ Accuracy ×100, pooled over splits.
 - **H7:** no non-convergence and no oscillation on any E2 graph; GS and damped
   fixed points coincide.
 
-## 4. Missing / limitations
+## 4. Limitations
 
-- **YelpChi:** its job ran 116 minutes and the runner was killed ("lost
-  communication with the server"), which on GitHub-hosted runners (16 GB RAM)
-  indicates memory exhaustion; no record was saved. A diagnostic re-run with a
-  memory cap and progress logging is under way; YelpChi results will be added to
-  this report, or reported as NOT-RUN with the cause.
-- Only two ranked datasets so far; any claim about "signed graphs in general"
+- YelpChi's first job (one job for all 10 splits) exceeded the GitHub job budget;
+  the records here come from the re-run with one job per split (PR-9).
+- Only three ranked datasets; any claim about "signed graphs in general"
   needs Bitcoin OTC / Alpha and the Congress networks (acquisition pending).
 - GNN baselines for signed and fraud graphs (PR-6) and Track-B (features) are not
   run.
