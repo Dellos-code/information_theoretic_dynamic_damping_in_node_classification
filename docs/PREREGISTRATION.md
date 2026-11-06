@@ -105,6 +105,22 @@ Results are PERTURBED-REAL, kept under `results/perturbed/`, never ranked with
 real data. Already run when written: only pipeline smoke tests on cora
 (≤ 2 seeds × 2 splits, conditions global:h=0.1 and permutation:h=0.1).
 
+### A4 (2026-11-06, results PR of E1-rerun / E2 / MIX) — confirmatory mixing run
+
+Reason: the A2 test could not reject at α = 0.05 by construction (9 pairs, Holm
+over 22 conditions: smallest adjusted p = 0.086); see docs/MIX_REPORT.md §0. The
+MIX run of A2 (seeds 0–2) is therefore exploratory, and its results were known
+when this amendment was written.
+Confirmatory run: the same 5 base graphs and 22 conditions, the same methods and
+grids, **re-wiring seeds 10–19** (never used before) × the first 3 splits = 30
+paired runs per condition (`mix.yml` with seeds = 10, seed_offset = 10).
+Test: per condition, two-sided Wilcoxon signed-rank over the 30 pairs, EDSP-tuned
+vs the baseline (harmonic, harmonic+CMN, LGC, PPR-LP, LinBP-MCE) with the highest
+mean headline metric in that condition of the confirmatory run; Holm over the 22
+conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
+condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
+§1 are confirmed only where the confirmatory test gives a win.
+
 ### A3 (2026-11-06, PR-8) — stratified accuracy bins
 
 §5.7 specifies local-homophily bins of width 0.1 and per-degree bins; PR-3 had

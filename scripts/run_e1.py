@@ -119,6 +119,8 @@ def main() -> int:
     ap.add_argument("--perturb", nargs="*", default=None,
                     help="PERTURBED-REAL mixing specs (edsp.data.perturb), e.g. global:h=0.3 uniform")
     ap.add_argument("--perturb-seeds", type=int, default=3)
+    ap.add_argument("--perturb-seed-offset", type=int, default=0,
+                    help="first re-wiring seed (confirmatory runs use fresh seeds, PREREGISTRATION A4)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
@@ -130,7 +132,8 @@ def main() -> int:
     sha = git_sha()
     failures = 0
     jobs = [(b, None, 0) for b in names] if not args.perturb else [
-        (b, spec, s) for b in names for spec in args.perturb for s in range(args.perturb_seeds)]
+        (b, spec, s) for b in names for spec in args.perturb
+        for s in range(args.perturb_seed_offset, args.perturb_seed_offset + args.perturb_seeds)]
     loaded: dict = {}
     for base, spec, pseed in jobs:
         if base not in loaded:
