@@ -1,16 +1,21 @@
 name: e1
 
-# Suite E1 (Master Prompt §7): Track-A EDSP vs B0/B1 Track-A baselines on all
-# registered real datasets with a single-label loader. workflow_dispatch runs the
-# full suite (one job per dataset), aggregates the run records and pushes them,
-# with the aggregate tables, to a new branch results/e1-<run_id>. On pull
-# requests a 1-split smoke run checks the pipeline end to end.
+# Suites E1 / E2 (Master Prompt §7). E1: Track-A EDSP vs B0/B1 Track-A baselines on
+# all registered real single-label datasets. E2: the native-polarity graphs — signed
+# (H-NATIVE; + signed_vote, signed_lgc) and relation-typed (H-RELATION) — i.e. the
+# registry cells C3a and C5. workflow_dispatch runs the chosen suite (one job per
+# dataset), aggregates the run records and pushes them, with the aggregate tables,
+# to a new branch results/<suite>-<run_id>. On pull requests a 1-split smoke run
+# checks the pipeline end to end.
 
 on:
   workflow_dispatch:
     inputs:
+      suite:
+        description: "E1 or E2"
+        default: "E1"
       datasets:
-        description: "Space-separated dataset names (empty = all single-label datasets)"
+        description: "Space-separated dataset names (empty = every dataset of the suite)"
         default: ""
       max_splits:
         description: "Limit splits per dataset (empty = all)"
@@ -20,6 +25,7 @@ on:
       - "scripts/run_e1.py"
       - "scripts/aggregate_e1.py"
       - "edsp/eval/**"
+      - "edsp/baselines/**"
       - ".github/workflows/e1.yml"
 
 permissions:
@@ -31,18 +37,21 @@ jobs:
     outputs:
       datasets: ${{ steps.p.outputs.datasets }}
       extra: ${{ steps.p.outputs.extra }}
+      suite: ${{ steps.p.outputs.suite }}
     steps:
       - uses: actions/checkout@v4
       - id: p
         run: |
+          SUITE="${{ inputs.suite || 'E1' }}"
+          echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo 'datasets=["cora","chameleon-filtered","sampson"]' >> "$GITHUB_OUTPUT"
+            echo 'datasets=["cora","chameleon-filtered","sampson","wiki-editor","amazon-fraud"]' >> "$GITHUB_OUTPUT"
             echo 'extra=--max-splits 1 --h7-splits 1' >> "$GITHUB_OUTPUT"
           else
             if [ -n "${{ inputs.datasets }}" ]; then
               LIST=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1].split()))' "${{ inputs.datasets }}")
             else
-              LIST=$(python3 -c 'import json; d=json.load(open("data/REGISTRY.json"))["datasets"]; print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins")))')
+              LIST=$(python3 -c 'import json,sys; d=json.load(open("data/REGISTRY.json"))["datasets"]; e2=lambda v: v.get("cell") in ("C3a","C5"); print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins" and (e2(v) if sys.argv[1]=="E2" else not e2(v) or k=="sampson"))))' "$SUITE")
             fi
             echo "datasets=$LIST" >> "$GITHUB_OUTPUT"
             if [ -n "${{ inputs.max_splits }}" ]; then echo "extra=--max-splits ${{ inputs.max_splits }}" >> "$GITHUB_OUTPUT"; else echo "extra=" >> "$GITHUB_OUTPUT"; fi
@@ -58,7 +67,8 @@ jobs:
         dataset: ${{ fromJSON(needs.plan.outputs.datasets) }}
     env:
       EDSP_DATA_DIR: ${{ github.workspace }}/.edsp-cache
-      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/runs/e1/ACQUISITION_LOG-${{ matrix.dataset }}.jsonl
+      SUITE: ${{ needs.plan.outputs.suite }}
+      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/runs/acq/ACQUISITION_LOG-${{ matrix.dataset }}.jsonl
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -70,20 +80,25 @@ jobs:
           path: .edsp-cache
           key: edsp-raw-${{ hashFiles('data/REGISTRY.json') }}
           restore-keys: edsp-raw-
-      - run: uv run python scripts/run_e1.py --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }}
+      - run: |
+          OUT=results/runs/$(echo "$SUITE" | tr '[:upper:]' '[:lower:]')
+          uv run python scripts/run_e1.py --suite "$SUITE" --out "$OUT" --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }}
+          mkdir -p "$OUT" && cp results/runs/acq/*.jsonl "$OUT"/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: e1-runs-${{ matrix.dataset }}
-          path: results/runs/e1/
+          name: runs-${{ matrix.dataset }}
+          path: results/runs/
           if-no-files-found: warn
 
   aggregate:
-    needs: run
+    needs: [plan, run]
     if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      SUITE: ${{ needs.plan.outputs.suite }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -92,22 +107,23 @@ jobs:
       - run: uv sync --frozen --group dev
       - uses: actions/download-artifact@v4
         with:
-          pattern: e1-runs-*
-          path: results/runs/e1
+          pattern: runs-*
+          path: results/runs
           merge-multiple: true
-      - run: uv run python scripts/aggregate_e1.py
+      - run: uv run python scripts/aggregate_e1.py --suite "$SUITE"
       - uses: actions/upload-artifact@v4
         with:
-          name: e1-aggregate-${{ github.run_id }}
+          name: aggregate-${{ github.run_id }}
           path: |
-            results/runs/e1/
-            results/aggregates/e1/
+            results/runs/
+            results/aggregates/
       - name: Push results branch
         if: github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "results/e1-${{ github.run_id }}"
-          git add -f results/runs/e1 results/aggregates/e1
-          git commit -m "E1 results from Actions run ${{ github.run_id }} (commit ${{ github.sha }})"
-          git push origin "results/e1-${{ github.run_id }}"
+          S=$(echo "$SUITE" | tr '[:upper:]' '[:lower:]')
+          git checkout -b "results/$S-${{ github.run_id }}"
+          git add -f "results/runs/$S" "results/aggregates/$S"
+          git commit -m "$SUITE results from Actions run ${{ github.run_id }} (commit ${{ github.sha }})"
+          git push origin "results/$S-${{ github.run_id }}"

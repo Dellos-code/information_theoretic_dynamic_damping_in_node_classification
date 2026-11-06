@@ -25,27 +25,32 @@ sys.path.insert(0, str(ROOT))
 
 from edsp.eval.stats_tests import bootstrap_ci, friedman_nemenyi, holm, wilcoxon_paired
 
-METHODS = ["EDSP-default", "EDSP-tuned", "majority", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote"]
+METHODS = ["EDSP-default", "EDSP-tuned", "majority", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote", "signed_lgc"]
 RANKED = ["EDSP-default", "EDSP-tuned", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp"]
-BASELINES = ["harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "train_prior"]
-EXCLUDED_FROM_RANKS = {"sampson"}
+BASELINES = ["harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "train_prior", "signed_vote", "signed_lgc"]
+# case studies (tiny or label-leaking by construction, Master Prompt §3.1 C5.3): reported, never ranked
+EXCLUDED_FROM_RANKS = {"sampson", "wiki-rfa", "wiki-elec"}
 
 
-def load(run_dir: Path) -> list[dict]:
+def load(run_dir: Path, suite: str = "E1") -> list[dict]:
     recs = []
     for f in sorted(run_dir.glob("*.jsonl")):
         if f.name.startswith("ACQUISITION_LOG"):
             continue
         recs += [json.loads(line) for line in f.read_text().splitlines() if line.strip()]
-    return [r for r in recs if r.get("suite") == "E1"]
+    return [r for r in recs if r.get("suite") == suite]
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runs", default=str(ROOT / "results" / "runs" / "e1"))
-    ap.add_argument("--out", default=str(ROOT / "results" / "aggregates" / "e1"))
+    ap.add_argument("--suite", default="E1")
+    ap.add_argument("--runs", default=None)
+    ap.add_argument("--out", default=None)
     args = ap.parse_args()
-    recs = load(Path(args.runs))
+    s = args.suite.lower()
+    args.runs = args.runs or str(ROOT / "results" / "runs" / s)
+    args.out = args.out or str(ROOT / "results" / "aggregates" / s)
+    recs = load(Path(args.runs), args.suite)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     not_run = [r for r in recs if r.get("method") == "NOT-RUN"]
@@ -64,7 +69,9 @@ def main() -> int:
         return {s: rec["metrics"][key] for s, rec in by.get((ds, m), {}).items()}
 
     agg: dict = {"git_sha": shas, "runners": runners, "datasets": {}, "not_run": not_run}
-    md = ["# E1 — Track-A EDSP vs B0/B1 Track-A baselines", "",
+    title = {"E1": "E1 — Track-A EDSP vs B0/B1 Track-A baselines",
+             "E2": "E2 — native-polarity graphs (signed, relation-typed): Track-A EDSP vs Track-A baselines"}
+    md = ["# " + title.get(args.suite, args.suite), "",
           (f"Run records: {len(recs)} (git {', '.join(shas)}; runners {', '.join(runners)}). "
           "Headline metric per dataset in brackets; mean ± std over splits (×100). "
           "Rows marked † are constructed benchmarks or case studies and are excluded from real-world aggregates."), "",
@@ -170,19 +177,40 @@ def main() -> int:
             return "—" if v is None else f"{v:.3f}"
         md.append(f"| {ds} | {f(x['non_converged_rate'])} | {f(x['oscillation_rate'])} | {f(x['moving_fraction'])} | {f(x['gs_damped_l1_mean'])} | {f(x['gs_damped_l1_p95'])} | {x['h7_splits']} |")
     agg["h7"] = h7
+    # stratified accuracy by local homophily (Master Prompt §5.7), pooled over splits
+    strat_methods = ["EDSP-default", "EDSP-tuned", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote"]
+    have = [d for d in datasets if any("stratified" in r["metrics"] for r in by.get((d, "EDSP-tuned"), {}).values())]
+    if have:
+        md += ["", "## Test accuracy by local-homophily bin (pooled over splits, ×100)", "",
+               ("Bins of each node's local homophily over all its labelled neighbours: "
+                "[0, .2), [.2, .4), [.4, .6), [.6, .8), [.8, 1]. Descriptive (full labels define the bins, "
+                "never the predictions). Cell: accuracy (test nodes)."), "",
+               "| dataset | method | " + " | ".join(f"bin {i}" for i in range(5)) + " |", "|---|---|" + "---|" * 5]
+        agg["stratified"] = {}
+        for ds in have:
+            agg["stratified"][ds] = {}
+            for m in strat_methods:
+                rs = [r["metrics"]["stratified"] for r in by.get((ds, m), {}).values() if "stratified" in r["metrics"]]
+                if not rs:
+                    continue
+                c = np.sum([r["count"] for r in rs], axis=0)
+                k = np.sum([r["correct"] for r in rs], axis=0)
+                agg["stratified"][ds][m] = {"count": c.tolist(), "correct": k.tolist()}
+                cells = [f"{100 * k[i] / c[i]:.1f} ({c[i]})" if c[i] else "—" for i in range(len(c))]
+                md.append(f"| {ds} | {m} | " + " | ".join(cells) + " |")
     if not_run:
         md += ["", "## Not run", ""] + [f"- {r['dataset']} split {r['split']}: {r['reason']}" for r in not_run]
 
     text = "\n".join(md) + "\n"
-    (out / "E1_SUMMARY.md").write_text(text)
-    (out / "e1_aggregates.json").write_text(json.dumps(agg, indent=2, default=float) + "\n")
+    (out / f"{args.suite}_SUMMARY.md").write_text(text)
+    (out / f"{s}_aggregates.json").write_text(json.dumps(agg, indent=2, default=float) + "\n")
     tex = ["\\begin{tabular}{l" + "r" * len(RANKED) + "}", "\\toprule", "Dataset & " + " & ".join(m.replace("_", "\\_") for m in RANKED) + " \\\\", "\\midrule"]
     for ds in datasets:
         r = agg["datasets"][ds]["methods"]
         tex.append(ds + (" (constructed)" if meta[ds][1] else "") + " & " + " & ".join(
             f"{r[m]['mean']:.1f}$\\pm${r[m]['std']:.1f}" if m in r else "--" for m in RANKED) + " \\\\")
     tex += ["\\bottomrule", "\\end{tabular}"]
-    (out / "e1_headline.tex").write_text("\n".join(tex) + "\n")
+    (out / f"{s}_headline.tex").write_text("\n".join(tex) + "\n")
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
             fh.write(text)
