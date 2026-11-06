@@ -17,6 +17,9 @@ on:
       datasets:
         description: "Space-separated dataset names (empty = every dataset of the suite)"
         default: ""
+      chunks:
+        description: "Datasets run as one job per split range, as name:n_splits:splits_per_job"
+        default: "yelpchi:10:1 amazon-fraud:10:2 questions:10:2 coauthor-physics:10:2"
       max_splits:
         description: "Limit splits per dataset (empty = all)"
         default: ""
@@ -45,7 +48,7 @@ jobs:
           SUITE="${{ inputs.suite || 'E1' }}"
           echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo 'datasets=["cora","chameleon-filtered","sampson","wiki-editor","amazon-fraud"]' >> "$GITHUB_OUTPUT"
+            echo 'datasets=[{"dataset":"cora","range":"","tag":"cora"},{"dataset":"chameleon-filtered","range":"","tag":"chameleon-filtered"},{"dataset":"sampson","range":"","tag":"sampson"},{"dataset":"wiki-editor","range":"","tag":"wiki-editor"},{"dataset":"amazon-fraud","range":"0:1","tag":"amazon-fraud-00"}]' >> "$GITHUB_OUTPUT"
             echo 'extra=--max-splits 1 --h7-splits 1' >> "$GITHUB_OUTPUT"
           else
             if [ -n "${{ inputs.datasets }}" ]; then
@@ -53,6 +56,21 @@ jobs:
             else
               LIST=$(python3 -c 'import json,sys; d=json.load(open("data/REGISTRY.json"))["datasets"]; e2=lambda v: v.get("cell") in ("C3a","C5"); print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins" and (e2(v) if sys.argv[1]=="E2" else not e2(v) or k=="sampson"))))' "$SUITE")
             fi
+            CH="${{ inputs.chunks }}"
+            LIST=$(python3 -c '
+          import json, sys
+          names, chunks = json.loads(sys.argv[1]), {}
+          for c in sys.argv[2].split():
+              n, total, size = c.split(":")
+              chunks[n] = (int(total), int(size))
+          inc = []
+          for n in names:
+              if n in chunks:
+                  total, size = chunks[n]
+                  inc += [{"dataset": n, "range": f"{a}:{min(a + size, total)}", "tag": f"{n}-{a:02d}"} for a in range(0, total, size)]
+              else:
+                  inc.append({"dataset": n, "range": "", "tag": n})
+          print(json.dumps(inc))' "$LIST" "$CH")
             echo "datasets=$LIST" >> "$GITHUB_OUTPUT"
             if [ -n "${{ inputs.max_splits }}" ]; then echo "extra=--max-splits ${{ inputs.max_splits }}" >> "$GITHUB_OUTPUT"; else echo "extra=" >> "$GITHUB_OUTPUT"; fi
           fi
@@ -64,11 +82,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dataset: ${{ fromJSON(needs.plan.outputs.datasets) }}
+        include: ${{ fromJSON(needs.plan.outputs.datasets) }}
     env:
       EDSP_DATA_DIR: ${{ github.workspace }}/.edsp-cache
       SUITE: ${{ needs.plan.outputs.suite }}
-      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/runs/acq/ACQUISITION_LOG-${{ matrix.dataset }}.jsonl
+      EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/runs/acq/ACQUISITION_LOG-${{ matrix.tag }}.jsonl
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -85,12 +103,13 @@ jobs:
           # start from an empty output directory: committed records of earlier runs
           # must never be mixed with this run's records (rule R1)
           rm -rf "$OUT" results/runs/acq
-          uv run python scripts/run_e1.py --suite "$SUITE" --out "$OUT" --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }}
+          uv run python scripts/run_e1.py --suite "$SUITE" --out "$OUT" --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }} \
+            ${{ matrix.range && format('--split-range {0}', matrix.range) || '' }}
           mkdir -p "$OUT" && cp results/runs/acq/*.jsonl "$OUT"/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: runs-${{ matrix.dataset }}
+          name: runs-${{ matrix.tag }}
           path: results/runs/
           if-no-files-found: warn
 
