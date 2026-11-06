@@ -61,7 +61,7 @@ def local_homophily(edges: np.ndarray, y: np.ndarray, n: int) -> np.ndarray:
     return out
 
 
-def local_homophily_bins(g: GraphData, n_bins: int = 5) -> np.ndarray:
+def local_homophily_bins(g: GraphData, n_bins: int = 10) -> np.ndarray:
     """Descriptive bin (0..n_bins-1, -1 = undefined) of each node's full-label local
     homophily, for the stratified accuracy of Master Prompt §5.7. Uses descriptive
     labels (allowed only in this module); the bins are never inputs to a method."""
@@ -72,6 +72,18 @@ def local_homophily_bins(g: GraphData, n_bins: int = 5) -> np.ndarray:
     out = np.full(g.num_nodes, -1, dtype=np.int64)
     ok = ~np.isnan(loc)
     out[ok] = np.minimum((loc[ok] * n_bins).astype(np.int64), n_bins - 1)
+    return out
+
+
+DEGREE_BINS = 11  # bin 0: degree 0; bin b >= 1: 2^(b-1) <= degree < 2^b; last bin open-ended
+
+
+def degree_bins(g: GraphData) -> np.ndarray:
+    """Logarithmic degree bin of each node (label-free), for §5.7 per-degree accuracy."""
+    deg = np.bincount(g.edges.ravel(), minlength=g.num_nodes)
+    out = np.zeros(g.num_nodes, dtype=np.int64)
+    pos = deg > 0
+    out[pos] = np.minimum(np.floor(np.log2(deg[pos])).astype(np.int64) + 1, DEGREE_BINS - 1)
     return out
 
 

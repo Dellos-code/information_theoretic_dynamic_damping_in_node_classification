@@ -43,8 +43,9 @@ def edge_polarity_auc(vault: LabelVault, edges: np.ndarray, het_score: np.ndarra
     }
 
 
-def stratified_accuracy(vault: LabelVault, probabilities: np.ndarray, bins: np.ndarray, n_bins: int = 5) -> dict:
-    """Test accuracy per local-homophily bin (Master Prompt §5.7): {"count": [...], "correct": [...]}."""
+def stratified_accuracy(vault: LabelVault, probabilities: np.ndarray, bins: np.ndarray, n_bins: int = 10) -> dict:
+    """Test accuracy per bin (Master Prompt §5.7): {"n_bins", "count": [...], "correct": [...]}.
+    Test nodes with bin -1 (undefined) are not counted."""
     idx, y = vault.test_labels()
     pred = np.asarray(probabilities)[idx].argmax(axis=1)
     b = np.asarray(bins)[idx]

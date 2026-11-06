@@ -6,9 +6,10 @@ checked against the *calling module*:
 * ``train_labels()``      any caller.
 * ``val_labels()``        only modules under ``edsp.selection`` or ``edsp.eval``.
 * ``test_labels()``       only ``edsp.eval.evaluate``.
-* ``descriptive_labels()`` only ``edsp.data.stats``; used for descriptive dataset
-  statistics (Master Prompt §3.2 "full-label descriptive version"), never by a
-  method. Every such access is logged and flagged.
+* ``descriptive_labels()`` only ``edsp.data.stats`` and ``edsp.data.perturb``; used
+  for descriptive dataset statistics (Master Prompt §3.2 "full-label descriptive
+  version") and as the data-generating process of the PERTURBED-REAL mixing sweep,
+  never by a method. Every such access is logged and flagged.
 * ``oracle_labels()``     only ``edsp.regimes.oracle`` *and* only when the
   environment variable ``ORACLE=1`` is set (H-ORACLE upper bound, §2.3g).
 
@@ -28,7 +29,7 @@ import numpy as np
 
 _VAL_PREFIXES = ("edsp.selection", "edsp.eval")
 _TEST_MODULES = ("edsp.eval.evaluate",)
-_DESCRIPTIVE_MODULES = ("edsp.data.stats",)
+_DESCRIPTIVE_MODULES = ("edsp.data.stats", "edsp.data.perturb")
 _ORACLE_MODULES = ("edsp.regimes.oracle",)
 
 

@@ -372,6 +372,8 @@ def test_stratified_accuracy_and_bins():
     bins = S.local_homophily_bins(g, n_bins=2)
     # local homophily: 1, .5, .5, .5, .5, 1 -> bins 1,1,1,1,1,1 (0.5*2 = 1)
     assert bins.tolist() == [1, 1, 1, 1, 1, 1]
+    assert S.local_homophily_bins(g).tolist() == [9, 5, 5, 5, 5, 9]
+    assert S.degree_bins(g).tolist() == [1, 2, 2, 2, 2, 1]
     probs = np.tile([1.0, 0.0], (n, 1))
     out = stratified_accuracy(g.vault(0), probs, bins, n_bins=2)
     assert sum(out["count"]) == 4 and sum(out["correct"]) == 2
