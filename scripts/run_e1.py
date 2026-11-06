@@ -116,6 +116,8 @@ def main() -> int:
     ap.add_argument("--h7-splits", type=int, default=3)
     ap.add_argument("--gs-max-iter", type=int, default=300)
     ap.add_argument("--suite", default="E1")
+    ap.add_argument("--split-range", default=None,
+                    help="START:STOP — run only splits[START:STOP] (one CI job per range on large graphs)")
     ap.add_argument("--perturb", nargs="*", default=None,
                     help="PERTURBED-REAL mixing specs (edsp.data.perturb), e.g. global:h=0.3 uniform")
     ap.add_argument("--perturb-seeds", type=int, default=3)
@@ -146,8 +148,12 @@ def main() -> int:
         relation = g.edge_relation is not None
         bins = (local_homophily_bins(g, 10), degree_bins(g))
         dhash = g.content_hash()
-        path = out / f"{name}.jsonl"
         splits = g.splits[: args.max_splits] if args.max_splits else g.splits
+        first = 0
+        if args.split_range:
+            first, stop = (int(x) for x in args.split_range.split(":"))
+            splits = splits[first:stop]
+        path = out / (f"{name}.jsonl" if not args.split_range else f"{name}.part{first:02d}.jsonl")
 
         pert = g.meta["canonicalization"]["perturbation"] if spec is not None else None
 
@@ -166,14 +172,15 @@ def main() -> int:
         # descriptive dataset statistics used to form the empirical mixed cells
         # C3c (local-homophily spread) and C3d (structured compatibility), §3.1
         t0 = time.perf_counter()
-        ls = label_stats(g, train_split=None) if not g.multilabel else {}
-        emit({"split": None, "method": "DATASET-STATS", "cell": entry.get("cell"),
-              "stats": {key: ls.get(key) for key in ("edge_homophily", "adjusted_homophily", "label_informativeness",
-                                                    "local_homophily_std", "compatibility_distances")}
-              | {"num_classes": g.num_classes, "num_nodes": g.num_nodes, "num_edges": len(g.edges),
-                 "components": int(connected_components(adjacency(g), directed=False)[0])}}, t0)
+        ls = label_stats(g, train_split=None) if not g.multilabel and first == 0 else {}
+        if first == 0:  # once per dataset, also when it is run in split chunks
+            emit({"split": None, "method": "DATASET-STATS", "cell": entry.get("cell"),
+                  "stats": {key: ls.get(key) for key in ("edge_homophily", "adjusted_homophily", "label_informativeness",
+                                                        "local_homophily_std", "compatibility_distances")}
+                  | {"num_classes": g.num_classes, "num_nodes": g.num_nodes, "num_edges": len(g.edges),
+                     "components": int(connected_components(adjacency(g), directed=False)[0])}}, t0)
 
-        for si, split in enumerate(splits):
+        for si, split in enumerate(splits, start=first):
             sid = split.split_id
             try:
                 # ---------------- EDSP-default (+ secondary column, H7 diagnostics)
