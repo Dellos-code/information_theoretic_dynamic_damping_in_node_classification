@@ -39,7 +39,10 @@
 
 - PR-8 (mixing): stratified accuracy with §5.7 bins (10 local-homophily bins of width 0.1 + 11 degree bins); a DATASET-STATS record per dataset; empirical mixed cells C3c / C3d in the E1/E2 aggregate (PREREGISTRATION A1); PERTURBED-REAL mixing sweep — `edsp/data/perturb.py` (global, beta, uniform, logistic-map chaos, regional, class-community, permutation-structured mixing), `run_e1.py --perturb`, `scripts/aggregate_mix.py`, workflow `mix.yml` (PREREGISTRATION A2).
 
+- Results (2026-11-06): E1 re-run with §5.7 bins and C3c/C3d (docs/E1_REPORT.md), E2 on signed and relation-typed graphs (docs/E2_REPORT.md; YelpChi pending), exploratory MIX sweep (docs/MIX_REPORT.md); PREREGISTRATION A4 fixes the confirmatory MIX run.
+
 ## Remaining
+- Confirmatory MIX run (A4); YelpChi in E2.
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
