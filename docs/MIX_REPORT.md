@@ -5,7 +5,7 @@ graphs; only the edges are re-drawn by `edsp/data/perturb.py` to a controlled
 mixing pattern. These numbers never enter the E1/E2 tables or ranks.
 
 **Status.** §1–3 are the exploratory run (A2); §4 is the confirmatory run (A4),
-which confirms all 18 exploratory wins and none of the near-misses.
+which confirms all 17 exploratory wins and none of the near-misses.
 
 **Design (PREREGISTRATION A2).** Base graphs: cora (k = 7), citeseer (6),
 amazon-ratings (5), roman-empire (18), wiki-editor (2; its edge signs are dropped,
@@ -131,7 +131,7 @@ over the 22 conditions of each base graph, α = 0.05):
 | **total (110 conditions)** | **17** | **10** | **83** | |
 
 Verdicts on the exploratory findings of §1:
-- **Confirmed (all 18 exploratory 9-of-9 wins):** every one of the 15 wiki-editor
+- **Confirmed (all 17 exploratory 9-of-9 wins):** every one of the 14 wiki-editor
   and 3 amazon-ratings conditions listed in §1 is a significant win in the
   confirmatory run, with effect sizes close to the exploratory ones.
 - **Not confirmed:** wiki-editor regional with 200 regions (+2.4, p = 0.077, tie)
