@@ -51,7 +51,7 @@ def main() -> int:
         g = load(name)
         for split in args.splits:
             for bname, (group, track, _) in BASELINES.items():
-                if bname == "signed_vote" and g.edge_sign is None:
+                if bname.startswith("signed") and g.edge_sign is None:
                     continue
                 t0 = time.perf_counter()
                 try:
