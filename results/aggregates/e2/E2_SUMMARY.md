@@ -1,6 +1,6 @@
 # E2 — native-polarity graphs (signed, relation-typed): Track-A EDSP vs Track-A baselines
 
-Run records: 648 (git 2ff560079252; runners actions-run-42214156507). Headline metric per dataset in brackets; mean ± std over splits (×100). Rows marked † are constructed benchmarks or case studies and are excluded from real-world aggregates.
+Run records: 744 (git 2ff560079252, a2bc65936cab; runners actions-run-42214156507, actions-run-42257945936). Headline metric per dataset in brackets; mean ± std over splits (×100). Rows marked † are constructed benchmarks or case studies and are excluded from real-world aggregates.
 
 | dataset [metric] | splits | EDSP-default | EDSP-tuned | majority | train_prior | harmonic | harmonic_cmn | lgc | ppr_lp | linbp | signed_vote | signed_lgc |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -9,6 +9,7 @@ Run records: 648 (git 2ff560079252; runners actions-run-42214156507). Headline m
 | wiki-editor [accuracy] | 10 | 86.15 ± 0.65 | 86.12 ± 0.67 | 63.09 ± 0.00 | 63.09 ± 0.00 | 73.63 ± 0.64 | 76.08 ± 0.47 | 76.54 ± 0.48 | 73.41 ± 0.48 | 72.78 ± 0.60 | 84.33 ± 0.63 | **86.43 ± 0.42** |
 | wiki-elec† [accuracy] | 10 | 80.54 ± 1.45 | 80.58 ± 1.42 | 52.69 ± 0.00 | 52.69 ± 0.00 | 55.85 ± 0.92 | 60.58 ± 2.55 | 59.20 ± 0.76 | 56.75 ± 1.08 | 56.75 ± 1.05 | 78.09 ± 1.43 | **81.66 ± 0.78** |
 | wiki-rfa† [accuracy] | 10 | 72.22 ± 1.22 | 72.23 ± 1.18 | 51.87 ± 0.00 | 51.87 ± 0.00 | 60.81 ± 2.15 | 64.12 ± 2.23 | 63.99 ± 1.29 | 61.27 ± 1.47 | 61.22 ± 1.59 | 71.73 ± 1.57 | **76.59 ± 0.81** |
+| yelpchi [roc_auc] | 10 | 61.75 ± 1.13 | 62.60 ± 0.41 | 50.00 ± 0.00 | 50.00 ± 0.00 | 62.98 ± 0.41 | 62.98 ± 0.41 | **63.54 ± 0.33** | 63.50 ± 0.39 | 58.18 ± 0.39 | — | — |
 
 ## Pre-registered secondary column: EDSP-default on non-converged runs
 
@@ -19,6 +20,7 @@ Run records: 648 (git 2ff560079252; runners actions-run-42214156507). Headline m
 | wiki-editor | 0 / 10 | — | — |
 | wiki-elec | 0 / 10 | — | — |
 | wiki-rfa | 0 / 10 | — | — |
+| yelpchi | 0 / 10 | — | — |
 
 ## EDSP-tuned vs each baseline: win / tie / loss
 
@@ -26,28 +28,28 @@ Per dataset: two-sided Wilcoxon signed-rank over splits on the headline metric; 
 
 | baseline | win | tie | loss | datasets (W / L) |
 |---|---|---|---|---|
-| harmonic | 1 | 1 | 0 | W: wiki-editor; L: — |
-| harmonic_cmn | 1 | 1 | 0 | W: wiki-editor; L: — |
-| lgc | 1 | 1 | 0 | W: wiki-editor; L: — |
-| ppr_lp | 2 | 0 | 0 | W: amazon-fraud, wiki-editor; L: — |
-| linbp | 2 | 0 | 0 | W: amazon-fraud, wiki-editor; L: — |
-| train_prior | 2 | 0 | 0 | W: amazon-fraud, wiki-editor; L: — |
+| harmonic | 1 | 1 | 1 | W: wiki-editor; L: yelpchi |
+| harmonic_cmn | 1 | 1 | 1 | W: wiki-editor; L: yelpchi |
+| lgc | 1 | 1 | 1 | W: wiki-editor; L: yelpchi |
+| ppr_lp | 2 | 0 | 1 | W: amazon-fraud, wiki-editor; L: yelpchi |
+| linbp | 3 | 0 | 0 | W: amazon-fraud, wiki-editor, yelpchi; L: — |
+| train_prior | 3 | 0 | 0 | W: amazon-fraud, wiki-editor, yelpchi; L: — |
 | signed_vote | 1 | 0 | 0 | W: wiki-editor; L: — |
 | signed_lgc | 0 | 0 | 1 | W: —; L: wiki-editor |
 
 ## Friedman / Nemenyi (real-world datasets, headline metric)
 
-Datasets: 2; Friedman p = 0.165; Nemenyi CD (α = 0.05) = 7.42.
+Datasets: 3; Friedman p = 0.0548; Nemenyi CD (α = 0.05) = 6.06.
 
 | method | average rank |
 |---|---|
-| EDSP-tuned | 1.50 |
-| lgc | 2.50 |
-| harmonic_cmn | 3.75 |
-| EDSP-default | 4.00 |
-| harmonic | 4.25 |
-| ppr_lp | 5.50 |
-| linbp | 6.50 |
+| lgc | 2.00 |
+| EDSP-tuned | 2.67 |
+| harmonic_cmn | 3.83 |
+| harmonic | 3.83 |
+| ppr_lp | 4.33 |
+| EDSP-default | 4.67 |
+| linbp | 6.67 |
 | train_prior | 8.00 |
 
 ## Calibration (mean over splits; lower is better)
@@ -59,6 +61,7 @@ Datasets: 2; Friedman p = 0.165; Nemenyi CD (α = 0.05) = 7.42.
 | wiki-editor | 0.409 | 0.080 | 0.412 | 0.080 | lgc: 0.522 / 0.084 |
 | wiki-elec | 0.476 | 0.127 | 0.475 | 0.127 | linbp: 0.687 / 0.062 |
 | wiki-rfa | 0.589 | 0.098 | 0.587 | 0.098 | lgc: 0.652 / 0.050 |
+| yelpchi | 0.434 | 0.048 | 0.401 | 0.010 | harmonic_cmn: 0.405 / 0.012 |
 
 ## H7 (descriptive): convergence and fixed-point non-uniqueness
 
@@ -69,6 +72,7 @@ Datasets: 2; Friedman p = 0.165; Nemenyi CD (α = 0.05) = 7.42.
 | wiki-editor | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 3 |
 | wiki-elec | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 3 |
 | wiki-rfa | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 3 |
+| yelpchi | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 | 3 |
 
 ## Test accuracy by local homophily (descriptive, full labels; bin i = [i/10, (i+1)/10)), pooled over splits (×100)
 
@@ -114,6 +118,12 @@ Cell: accuracy (number of test nodes). Bins are never method inputs.
 | wiki-rfa | linbp | 5.4 (167) | 0.0 (114) | 2.1 (376) | 5.5 (729) | 18.4 (936) | 70.7 (1616) | 93.8 (1487) | 98.3 (845) | 98.7 (376) | 95.2 (294) |
 | wiki-rfa | signed_vote | 94.0 (167) | 67.5 (114) | 64.1 (376) | 50.8 (729) | 46.5 (936) | 71.2 (1616) | 83.7 (1487) | 91.1 (845) | 93.1 (376) | 62.2 (294) |
 | wiki-rfa | signed_lgc | 91.0 (167) | 65.8 (114) | 62.2 (376) | 45.4 (729) | 44.9 (936) | 80.5 (1616) | 91.8 (1487) | 96.8 (845) | 98.1 (376) | 85.0 (294) |
+| yelpchi | EDSP-default | 2.3 (4768) | 3.8 (13645) | 11.8 (4955) | 15.2 (1866) | 37.7 (576) | 60.4 (737) | 86.9 (3705) | 91.3 (15543) | 97.5 (84971) | 98.6 (53003) |
+| yelpchi | EDSP-tuned | 0.4 (4768) | 0.2 (13645) | 0.9 (4955) | 2.4 (1866) | 18.8 (576) | 66.8 (737) | 96.5 (3705) | 99.1 (15543) | 99.9 (84971) | 99.5 (53003) |
+| yelpchi | harmonic_cmn | 0.0 (4768) | 0.0 (13645) | 0.2 (4955) | 1.9 (1866) | 17.2 (576) | 65.3 (737) | 97.2 (3705) | 99.8 (15543) | 100.0 (84971) | 99.9 (53003) |
+| yelpchi | lgc | 0.1 (4768) | 0.1 (13645) | 0.4 (4955) | 5.7 (1866) | 33.7 (576) | 66.8 (737) | 94.7 (3705) | 99.5 (15543) | 99.9 (84971) | 99.9 (53003) |
+| yelpchi | ppr_lp | 0.0 (4768) | 0.0 (13645) | 0.2 (4955) | 3.4 (1866) | 23.8 (576) | 69.2 (737) | 96.1 (3705) | 99.7 (15543) | 100.0 (84971) | 99.9 (53003) |
+| yelpchi | linbp | 0.0 (4768) | 0.0 (13645) | 0.2 (4955) | 3.3 (1866) | 25.2 (576) | 68.9 (737) | 96.1 (3705) | 99.7 (15543) | 100.0 (84971) | 99.9 (53003) |
 
 ## Test accuracy by degree (bin 0: isolated; bin b: 2^(b-1) ≤ deg < 2^b; last bin open), pooled over splits (×100)
 
@@ -159,3 +169,9 @@ Cell: accuracy (number of test nodes). Bins are never method inputs.
 | wiki-rfa | linbp | — | 58.3 (127) | 45.1 (368) | 45.5 (684) | 41.5 (832) | 60.3 (1021) | 73.1 (1668) | 71.9 (1490) | 59.1 (565) | 58.9 (168) | 76.5 (17) |
 | wiki-rfa | signed_vote | — | 70.9 (127) | 67.9 (368) | 69.9 (684) | 68.4 (832) | 74.7 (1021) | 75.3 (1668) | 75.8 (1490) | 60.0 (565) | 54.2 (168) | 76.5 (17) |
 | wiki-rfa | signed_lgc | — | 77.2 (127) | 89.9 (368) | 93.9 (684) | 82.2 (832) | 80.8 (1021) | 74.5 (1668) | 71.9 (1490) | 56.6 (565) | 53.0 (168) | 76.5 (17) |
+| yelpchi | EDSP-default | 76.5 (51) | 76.2 (143) | 73.5 (400) | 71.6 (1220) | 77.8 (2847) | 78.3 (7185) | 78.2 (18437) | 81.6 (39424) | 86.3 (79924) | 87.5 (34189) | — |
+| yelpchi | EDSP-tuned | 76.5 (51) | 64.3 (143) | 71.2 (400) | 73.8 (1220) | 78.4 (2847) | 80.5 (7185) | 83.2 (18437) | 85.4 (39424) | 86.4 (79924) | 87.5 (34189) | — |
+| yelpchi | harmonic_cmn | 23.5 (51) | 79.0 (143) | 73.8 (400) | 77.0 (1220) | 83.9 (2847) | 82.2 (7185) | 83.2 (18437) | 85.4 (39424) | 86.4 (79924) | 87.5 (34189) | — |
+| yelpchi | lgc | 76.5 (51) | 77.6 (143) | 77.0 (400) | 73.3 (1220) | 81.6 (2847) | 82.1 (7185) | 83.7 (18437) | 85.4 (39424) | 86.4 (79924) | 87.5 (34189) | — |
+| yelpchi | ppr_lp | 76.5 (51) | 77.6 (143) | 78.8 (400) | 75.3 (1220) | 83.0 (2847) | 82.1 (7185) | 83.6 (18437) | 85.4 (39424) | 86.4 (79924) | 87.5 (34189) | — |
+| yelpchi | linbp | 76.5 (51) | 77.6 (143) | 79.0 (400) | 75.6 (1220) | 83.1 (2847) | 82.1 (7185) | 83.6 (18437) | 85.4 (39424) | 86.4 (79924) | 87.5 (34189) | — |
