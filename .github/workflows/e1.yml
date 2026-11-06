@@ -85,7 +85,11 @@ jobs:
           # start from an empty output directory: committed records of earlier runs
           # must never be mixed with this run's records (rule R1)
           rm -rf "$OUT" results/runs/acq
-          uv run python scripts/run_e1.py --suite "$SUITE" --out "$OUT" --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }}
+          free -m; nproc
+          ( while true; do echo "[mem] $(date +%T) $(free -m | awk '/Mem:/{print "used="$3"MB avail="$7"MB"}')"; sleep 60; done ) &
+          ulimit -v 14000000
+          uv run python -X faulthandler -u scripts/run_e1.py --suite "$SUITE" --out "$OUT" --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }} 2>&1 | tee run.log
+          exit ${PIPESTATUS[0]}
           mkdir -p "$OUT" && cp results/runs/acq/*.jsonl "$OUT"/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()

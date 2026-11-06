@@ -159,6 +159,7 @@ def main() -> int:
                                    "peak_rss_mib": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}}
             with open(path, "a") as fh:
                 fh.write(json.dumps(rec, default=float) + "\n")
+                print(f"  {rec['method']} {rec.get('split')} {time.perf_counter() - t0:.0f}s maxrss={__import__('resource').getrusage(0).ru_maxrss // 1024}MB", flush=True)
 
         # descriptive dataset statistics used to form the empirical mixed cells
         # C3c (local-homophily spread) and C3d (structured compatibility), §3.1
