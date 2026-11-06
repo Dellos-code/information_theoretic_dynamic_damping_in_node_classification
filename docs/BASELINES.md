@@ -10,7 +10,7 @@ workflow run on the PR that introduced them.
 | majority | majority class | B0 | A | `edsp/baselines/propagation.py` | — | n/a |
 | train_prior | train class prior | B0 | A | same | — | n/a |
 | signed_vote | Σ sign·1[y=c] over train neighbours | B0 | A | same | — | n/a (signed graphs only) |
-| signed_lgc | Label spreading with the signed normalised adjacency on centred one-hot labels (Kunegis et al. 2010; signed-Laplacian LP family of Mercado et al. 2019) | B1 | A | 9-point α grid (as LGC) | — | n/a (signed graphs only) |
+| signed_lgc | Label spreading with the signed normalised adjacency on centred one-hot labels (Kunegis et al. 2010; signed-Laplacian LP family of Mercado et al. 2019) | B1 | A | same | α, 9-point grid (as LGC) | n/a (signed graphs only) |
 | feature_lr | logistic regression on node features (= Track-B base predictor, temperature-scaled) | B0 | B | `edsp/regimes/priors.py` | l2 × standardise | n/a |
 | harmonic | Zhu et al. 2003, exact solve, uncovered components uniform | B1 | A | `propagation.py` | — | Planetoid public vs "LP" of Yang et al. 2016 — see workflow; reference TO VERIFY |
 | harmonic_cmn | harmonic + class mass normalisation | B1 | A | same | — | same reference |
