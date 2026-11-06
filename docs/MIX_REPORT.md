@@ -4,6 +4,9 @@
 graphs; only the edges are re-drawn by `edsp/data/perturb.py` to a controlled
 mixing pattern. These numbers never enter the E1/E2 tables or ranks.
 
+**Status.** §1–3 are the exploratory run (A2); §4 is the confirmatory run (A4),
+which confirms all 18 exploratory wins and none of the near-misses.
+
 **Design (PREREGISTRATION A2).** Base graphs: cora (k = 7), citeseer (6),
 amazon-ratings (5), roman-empire (18), wiki-editor (2; its edge signs are dropped,
 so it is an unsigned graph here). 22 conditions:
@@ -107,8 +110,46 @@ citeseer beta m=0.2 c=0.5 (+0.5, 6 of 9).
 - The k = 2 vs k > 2 pattern matches the theory: with two classes "not my
   neighbour's class" determines the class, with five it leaves four candidates.
 
-## 4. Confirmatory follow-up (PREREGISTRATION A4)
+## 4. Confirmatory run (PREREGISTRATION A4)
 
 Same 22 conditions × 5 base graphs, **fresh re-wiring seeds 10–19** × 3 splits = 30
-paired runs per condition (smallest Holm-adjusted p ≈ 22 × 2/2³⁰ ≪ 0.05); test and
-decision rule fixed in A4 before that run starts.
+paired runs per condition; test and decision rule fixed in A4 (commit 8264821)
+before the run. 30,800 records in `results/perturbed/confirmatory/runs/`, Actions
+run [42231639173](https://github.com/Dellos-code/information_theoretic_dynamic_damping_in_node_classification/actions/runs/42231639173);
+tables in `results/perturbed/confirmatory/aggregates/MIX_SUMMARY.md`.
+
+EDSP-tuned vs the best baseline per condition (two-sided Wilcoxon, 30 pairs, Holm
+over the 22 conditions of each base graph, α = 0.05):
+
+| base | win | tie | loss | wins |
+|---|---|---|---|---|
+| wiki-editor (k = 2) | **14** | 3 | 5 | global h = 0.1–0.4 (+0.6 to +0.7); beta (0.2, 0.5) +5.5, (0.5, 0.5) +13.7, (0.5, 5) +7.3, (0.8, 0.5) +1.9; uniform +9.2; logistic +11.7; regional 20 +12.0; community +7.9; permutation h = 0.1 / 0.3 +0.6 / +0.8 |
+| amazon-ratings (k = 5) | **3** | 6 | 13 | global h = 0 +1.3; beta (0.2, 0.5) +7.8; beta (0.5, 0.5) +1.6 |
+| citeseer (k = 6) | 0 | 1 | 21 | — |
+| cora (k = 7) | 0 | 0 | 22 | — |
+| roman-empire (k = 18) | 0 | 0 | 22 | — |
+| **total (110 conditions)** | **17** | **10** | **83** | |
+
+Verdicts on the exploratory findings of §1:
+- **Confirmed (all 18 exploratory 9-of-9 wins):** every one of the 15 wiki-editor
+  and 3 amazon-ratings conditions listed in §1 is a significant win in the
+  confirmatory run, with effect sizes close to the exploratory ones.
+- **Not confirmed:** wiki-editor regional with 200 regions (+2.4, p = 0.077, tie)
+  and citeseer beta (0.2, 0.5) (−0.2, tie).
+- **Losses are now significant** where the exploratory run could only show them
+  descriptively: on homophilic mixing (global h ≥ 0.5) harmonic+CMN or LGC beats
+  EDSP by 0.4–6.4 points on cora, citeseer, roman-empire and wiki-editor (exact tie
+  at h = 1 on wiki-editor); on amazon-ratings the differences are ≤ 0.1 points
+  (five ties, one loss). On structured heterophily with k > 2 (community,
+  permutation) LinBP beats it by 5.4–36.2 points.
+- The two ties at global h = 0 and h = 1 on wiki-editor are exact (every method that
+  can use the edges is perfect or identical there).
+
+**What the sweep supports, stated narrowly.** On perturbed versions of real graphs,
+Track-A EDSP-tuned beats every label-only propagation baseline in our set when
+(a) there are two classes and the mixing is heterophilic or heterogeneous
+(14 of 20 non-trivial wiki-editor conditions), and (b) with five classes, only under
+strong heterophily (h = 0) or U-shaped heterogeneous mixing. Its gains under
+heterogeneous mixing come from H-LEARNED exploiting structure that the
+generator's locality rule makes visible (§3). It loses in every other condition we
+tried, including all conditions on cora, citeseer and roman-empire.
