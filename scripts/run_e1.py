@@ -2,12 +2,13 @@
 
 For each dataset and split (all official / registered splits):
   * EDSP-default  — zero-tuning default of §2.5 (Track-A, P-CONST(0.5),
-                    H-TRAINONLY(b1), T_L = inf; H-NATIVE on signed graphs).
+                    H-TRAINONLY(b1), T_L = inf; H-NATIVE on signed graphs,
+                    H-RELATION on relation-typed graphs — suite E2).
   * EDSP-tuned    — best of 9 registered configurations by the validation value
                     of the dataset's headline metric (rule R6: same 9-point budget
                     as the tuned baselines).
   * baselines     — majority, train_prior, harmonic, harmonic_cmn, lgc, ppr_lp,
-                    linbp (+ signed_vote on signed graphs), validation-selected.
+                    linbp (+ signed_vote, signed_lgc on signed graphs), validation-selected.
 Pre-registered extras (docs/PREREGISTRATION.md):
   * secondary column for non-converged EDSP runs: mean of the last two iterates;
   * H7 descriptive outcome: convergence, oscillation, and on the first
@@ -39,7 +40,8 @@ from edsp.baselines import BASELINES, select_and_predict
 from edsp.core import edsp
 from edsp.data.loaders import load
 from edsp.data.registry import dataset_entry, datasets_with_loader
-from edsp.eval.evaluate import evaluate
+from edsp.data.stats import local_homophily_bins
+from edsp.eval.evaluate import evaluate, stratified_accuracy
 from edsp.regimes import build_inputs
 from edsp.regimes.inputs import _polarity
 from edsp.selection import validation_score
@@ -61,13 +63,20 @@ def headline(name: str) -> str:
     return "roc_auc" if "roc" in m.lower() else "accuracy"
 
 
-def default_config(signed: bool) -> dict:
-    h = {"name": "native"} if signed else {"name": "trainonly", "fill": "b1"}
-    return {"track": "A", "p": {"name": "const", "p0": 0.5}, "h": h, "T_L": math.inf}
+def _native_h(signed: bool, relation: bool) -> dict:
+    if signed:
+        return {"name": "native"}
+    if relation:
+        return {"name": "relation"}
+    return {"name": "trainonly", "fill": "b1"}
 
 
-def tuned_grid(signed: bool) -> list[dict]:
-    hs = ([{"name": "native"}] if signed else [{"name": "trainonly", "fill": "b1"}]) + [{"name": "learned"}, {"name": "all1"}]
+def default_config(signed: bool, relation: bool = False) -> dict:
+    return {"track": "A", "p": {"name": "const", "p0": 0.5}, "h": _native_h(signed, relation), "T_L": math.inf}
+
+
+def tuned_grid(signed: bool, relation: bool = False) -> list[dict]:
+    hs = [_native_h(signed, relation), {"name": "learned"}, {"name": "all1"}]
     return [{"track": "A", "p": {"name": "const", "p0": p0}, "h": h, "T_L": math.inf} for h in hs for p0 in P_GRID]
 
 
@@ -78,6 +87,10 @@ def config_hash(cfg: dict) -> str:
 def run_core(inputs, variant: str = "EDSP-canonical", **kw):
     return edsp(inputs.edges, inputs.probabilities, inputs.heterophily, inputs.priors,
                 prior_trust=inputs.prior_trust, edge_trust=inputs.edge_trust, variant=variant, **kw)
+
+
+def scored(vault, probs, bins) -> dict:
+    return evaluate(vault, probs) | {"stratified": stratified_accuracy(vault, probs, bins)}
 
 
 def edsp_diagnostics(res) -> dict:
@@ -97,8 +110,10 @@ def main() -> int:
     ap.add_argument("--max-splits", type=int, default=None)
     ap.add_argument("--h7-splits", type=int, default=3)
     ap.add_argument("--gs-max-iter", type=int, default=300)
-    ap.add_argument("--out", default=str(ROOT / "results" / "runs" / "e1"))
+    ap.add_argument("--suite", default="E1")
+    ap.add_argument("--out", default=None)
     args = ap.parse_args()
+    args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
     names = args.datasets or [d for d in datasets_with_loader() if d != "ogbn-proteins"]
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -110,12 +125,14 @@ def main() -> int:
         g = load(name)
         metric = headline(name)
         signed = g.edge_sign is not None
+        relation = g.edge_relation is not None
+        bins = local_homophily_bins(g)
         dhash = g.content_hash()
         path = out / f"{name}.jsonl"
         splits = g.splits[: args.max_splits] if args.max_splits else g.splits
 
         def emit(rec: dict, t0: float, path: Path = path, name: str = name, dhash: str = dhash, metric: str = metric) -> None:
-            rec |= {"suite": "E1", "dataset": name, "headline_metric": metric,
+            rec |= {"suite": args.suite, "dataset": name, "headline_metric": metric,
                     "constructed_benchmark": bool(dataset_entry(name).get("constructed_benchmark", False)),
                     "run_record": {"git_sha": sha, "runner_type": runner, "dataset_hash": dhash,
                                    "config_hash": config_hash(rec.get("config")),
@@ -130,11 +147,11 @@ def main() -> int:
                 # ---------------- EDSP-default (+ secondary column, H7 diagnostics)
                 t0 = time.perf_counter()
                 vault = g.vault(sid)
-                cfg = default_config(signed)
+                cfg = default_config(signed, relation)
                 inp = build_inputs(g, vault, cfg)
                 res = run_core(inp)
                 rec = {"split": sid, "method": "EDSP-default", "track": "A", "config": cfg,
-                       "metrics": evaluate(vault, res.probabilities), "diagnostics": edsp_diagnostics(res),
+                       "metrics": scored(vault, res.probabilities, bins), "diagnostics": edsp_diagnostics(res),
                        "regime_diagnostics": {k: v for k, v in inp.diagnostics.items() if k != "priors"}}
                 if not res.converged:
                     rec["metrics_mean_last_two"] = evaluate(vault, 0.5 * (res.last_iterates[0] + res.last_iterates[1]))
@@ -145,12 +162,12 @@ def main() -> int:
                     t0 = time.perf_counter()
                     gs = run_core(inp, "EDSP-GS", max_iter=args.gs_max_iter)
                     emit({"split": sid, "method": "EDSP-GS", "track": "A", "config": cfg | {"variant": "EDSP-GS", "max_iter": args.gs_max_iter},
-                          "metrics": evaluate(vault, gs.probabilities), "diagnostics": edsp_diagnostics(gs)}, t0)
+                          "metrics": scored(vault, gs.probabilities, bins), "diagnostics": edsp_diagnostics(gs)}, t0)
                     t0 = time.perf_counter()
                     dm = run_core(inp, "EDSP-damped", beta=0.5)
                     dist = np.abs(gs.probabilities - dm.probabilities).sum(axis=1)
                     emit({"split": sid, "method": "EDSP-damped(0.5)", "track": "A", "config": cfg | {"variant": "EDSP-damped", "beta": 0.5},
-                          "metrics": evaluate(vault, dm.probabilities), "diagnostics": edsp_diagnostics(dm),
+                          "metrics": scored(vault, dm.probabilities, bins), "diagnostics": edsp_diagnostics(dm),
                           "h7_gs_vs_damped_l1": {"mean": float(dist.mean()), "p95": float(np.quantile(dist, 0.95)),
                                                  "gs_converged": bool(gs.converged), "damped_converged": bool(dm.converged)}}, t0)
 
@@ -158,7 +175,7 @@ def main() -> int:
                 t0 = time.perf_counter()
                 pol_cache: dict[str, object] = {}
                 cands = []
-                for c in tuned_grid(signed):
+                for c in tuned_grid(signed, relation):
                     key = json.dumps(c["h"], sort_keys=True)
                     if key not in pol_cache:
                         pol_cache[key] = _polarity(g, vault, c["h"], "A")
@@ -168,23 +185,23 @@ def main() -> int:
                 best = int(np.argmax([s if np.isfinite(s) else -np.inf for _, _, s in cands]))
                 c, r, _ = cands[best]
                 emit({"split": sid, "method": "EDSP-tuned", "track": "A", "config": c,
-                      "metrics": evaluate(vault, r.probabilities), "diagnostics": edsp_diagnostics(r),
+                      "metrics": scored(vault, r.probabilities, bins), "diagnostics": edsp_diagnostics(r),
                       "selection": {"metric": metric, "val_scores": [s for _, _, s in cands],
                                     "grid": [cc for cc, _, _ in cands], "chosen_index": best}}, t0)
 
                 # ---------------- baselines
-                for b in TRACK_A_BASELINES + (["signed_vote"] if signed else []):
+                for b in TRACK_A_BASELINES + (["signed_vote", "signed_lgc"] if signed else []):
                     t0 = time.perf_counter()
                     probs, info = select_and_predict(b, g, vault, metric)
                     emit({"split": sid, "method": b, "group": BASELINES[b][0], "track": "A",
                           "config": {"baseline": b, "chosen": info.get("chosen")},
-                          "metrics": evaluate(vault, probs),
+                          "metrics": scored(vault, probs, bins),
                           "diagnostics": {k: v for k, v in info.items() if k in ("converged", "iterations", "uncovered_fraction", "solver")}}, t0)
                 print(f"{name} split {sid} done", flush=True)
             except Exception as exc:  # noqa: BLE001
                 failures += 1
                 with open(path, "a") as fh:
-                    fh.write(json.dumps({"suite": "E1", "dataset": name, "split": sid, "method": "NOT-RUN",
+                    fh.write(json.dumps({"suite": args.suite, "dataset": name, "split": sid, "method": "NOT-RUN",
                                          "reason": f"{type(exc).__name__}: {exc}"[:500],
                                          "run_record": {"git_sha": sha, "runner_type": runner}}) + "\n")
                 print(f"[not run] {name} split {sid}: {exc}", file=sys.stderr, flush=True)

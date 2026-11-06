@@ -35,15 +35,18 @@
 
 - E1 (Track-A, 16 datasets, 1,743 run records) completed: `docs/E1_REPORT.md`, `results/aggregates/e1/`. EDSP-tuned: 0 wins / 4 ties / 10 losses vs LGC; ≈ harmonic LP (H1 supported for harmonic, not for LGC); H2 supported only for minesweeper; H7: non-convergence 3/134 (Planetoid public splits), no oscillation, GS and damped fixed points coincide.
 
+- PR-3 (mixed / signed acquisition + E2 pipeline): loaders for YelpChi and Amazon fraud (C3a, relation-typed; edge relation bitmask; Amazon unlabelled prefix excluded), wiki-editor, wiki-RfA, wiki-Elec (C5, signed + node labels; Mercado convention; RfA/Elec are leakage case studies); homophily statistics ignore unlabelled nodes; `signed_lgc` baseline; per-record stratified accuracy by local-homophily bin (§5.7); `run_e1.py --suite E2` (H-NATIVE on signed, H-RELATION on relation-typed graphs) and `aggregate_e1.py --suite E2`; `e1.yml` takes a `suite` input.
+
 ## Remaining
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
 - `scripts/oracle_upper_bound.py` (E10) and H-SOFT (extension) — not implemented yet.
 - Track-B 2-layer MLP / LightGBM base predictors.
-- LinBP-DCE, signed-Laplacian LP / Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers).
-- Store per-node predictions in run records (for §5.7) and re-score E1.
-- PR-3 (acquisition for C3a/C4/C5), then E2 (signed, relation-typed and probabilistic graphs).
+- LinBP-DCE, Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers, incl. fraud SOTA CARE-GNN / PC-GNN / BWGNN / GAGA and signed SOTA SGCN / SDGNN / SiGAT).
+- Re-run E1 so its records carry the stratified accuracy (§5.7).
+- Remaining acquisitions: Bitcoin OTC/Alpha (+ REV2 labels), Congress signed backbones, C4 (DBLP / patents); E2 on ogbn-proteins (multi-label, per task, P-NATIVE).
+- PERTURBED-REAL mixing sweep (controlled and heterogeneous edge rewiring of real graphs), reported separately from real-world results.
 
 ## Blockers
 

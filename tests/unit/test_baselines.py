@@ -76,6 +76,23 @@ def test_signed_vote_uses_signs():
     assert P[2].argmax() == 1
 
 
+def test_signed_lgc_separates_a_negative_tie_and_is_test_label_invariant():
+    # 0 -(+)- 2 -(-)- 3 -(+)- 1 ; train: 0 (class 0), 1 (class 1)
+    edges = np.array([[0, 2], [2, 3], [1, 3], [3, 4]])
+    sign = np.array([1.0, -1.0, 1.0, -1.0])
+    y = np.array([0, 1, 0, 1, 0])
+    g = GraphData("s", 5, edges, 2, [Split("0", np.array([0, 1]), np.array([2]), np.array([3, 4]), "t")], y, edge_sign=sign)
+    for a in (0.5, 0.9, 0.99):
+        P, _ = B.signed_lgc(g, g.vault(0), alpha=a)
+        assert np.allclose(P.sum(1), 1) and P[2].argmax() == 0 and P[3].argmax() == 1 and P[4].argmax() == 0
+    v = g.vault(0)
+    P, _ = select_and_predict("signed_lgc", g, v)
+    assert v.test_accesses_outside_evaluate() == []
+    g2 = GraphData("s", 5, edges, 2, g.splits, np.array([0, 1, 0, 0, 1]), edge_sign=sign)
+    P2, _ = select_and_predict("signed_lgc", g2, g2.vault(0))
+    assert np.array_equal(P, P2)
+
+
 def test_possible_worlds_with_certain_edges_equals_harmonic():
     g = path_graph(5)
     P1, _ = B.harmonic(g, g.vault(0))
@@ -91,11 +108,11 @@ def test_correct_and_smooth_returns_distributions_and_keeps_train_labels_dominan
     assert info["smooth"]["converged"]
 
 
-@pytest.mark.parametrize("name", [n for n in BASELINES if n != "signed_vote"])
+@pytest.mark.parametrize("name", list(BASELINES))
 def test_baselines_never_read_test_labels_and_are_test_label_invariant(name):
     from test_regimes import toy_graph, with_test_labels_changed
 
-    g = toy_graph()
+    g = toy_graph(signed=name.startswith("signed"))
     v = g.vault(0)
     P, _ = select_and_predict(name, g, v)
     assert v.test_accesses_outside_evaluate() == []

@@ -40,18 +40,38 @@ def class_pair_counts(edges: np.ndarray, y: np.ndarray, k: int) -> np.ndarray:
 
 
 def edge_homophily(edges: np.ndarray, y: np.ndarray) -> float:
+    """Over edges whose endpoints are both labelled (label < 0 = unlabelled)."""
     if len(edges) == 0:
         return float("nan")
-    return float(np.mean(y[edges[:, 0]] == y[edges[:, 1]]))
+    a, b = y[edges[:, 0]], y[edges[:, 1]]
+    m = (a >= 0) & (b >= 0)
+    return float(np.mean(a[m] == b[m])) if m.any() else float("nan")
 
 
 def local_homophily(edges: np.ndarray, y: np.ndarray, n: int) -> np.ndarray:
-    """Per-node same-class neighbour fraction; NaN for isolated nodes."""
+    """Per-node same-class fraction among labelled neighbours; NaN for isolated or
+    unlabelled nodes (label < 0)."""
     src, dst = _directed(edges)
+    lab = (y[src] >= 0) & (y[dst] >= 0)
+    src, dst = src[lab], dst[lab]
     deg = np.bincount(src, minlength=n).astype(float)
     same = np.bincount(src, weights=(y[src] == y[dst]).astype(float), minlength=n)
     out = np.full(n, np.nan)
     np.divide(same, deg, out=out, where=deg > 0)
+    return out
+
+
+def local_homophily_bins(g: GraphData, n_bins: int = 5) -> np.ndarray:
+    """Descriptive bin (0..n_bins-1, -1 = undefined) of each node's full-label local
+    homophily, for the stratified accuracy of Master Prompt §5.7. Uses descriptive
+    labels (allowed only in this module); the bins are never inputs to a method."""
+    y = g.descriptive_vault().descriptive_labels()
+    if y.ndim != 1:
+        return np.full(g.num_nodes, -1, dtype=np.int64)
+    loc = local_homophily(g.edges, y, g.num_nodes)
+    out = np.full(g.num_nodes, -1, dtype=np.int64)
+    ok = ~np.isnan(loc)
+    out[ok] = np.minimum((loc[ok] * n_bins).astype(np.int64), n_bins - 1)
     return out
 
 

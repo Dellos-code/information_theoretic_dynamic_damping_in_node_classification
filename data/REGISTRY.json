@@ -363,25 +363,29 @@
     },
     "yelpchi": {
       "cell": "C3a",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
+      "routes": [
+        "https://raw.githubusercontent.com/YingtongDou/CARE-GNN/master/data/{file}"
+      ],
+      "loader": "fraud_mat",
+      "metric": "roc_auc",
+      "domain": "fraud (reviews)",
       "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "CARE-GNN repo / DGL FraudDataset",
-      "status": "planned (PR-3 acquisition)"
+      "split": "10x stratified 40/20/40 (CARE-GNN/BWGNN convention TO VERIFY)",
+      "notes": "relations R-U-R, R-T-R, R-S-R; edge_relation = bitmask of relations",
+      "status": "registered"
     },
     "amazon-fraud": {
       "cell": "C3a",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
+      "routes": [
+        "https://raw.githubusercontent.com/YingtongDou/CARE-GNN/master/data/{file}"
+      ],
+      "loader": "fraud_mat",
+      "metric": "roc_auc",
+      "domain": "fraud (users)",
       "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "CARE-GNN repo / DGL FraudDataset",
-      "status": "planned (PR-3 acquisition)"
+      "split": "10x stratified 40/20/40 over nodes 3305+ (TO VERIFY)",
+      "notes": "relations U-P-U, U-S-U, U-V-U; first 3,305 nodes unlabelled",
+      "status": "registered"
     },
     "uncertain-dblp": {
       "cell": "C4",
@@ -449,17 +453,6 @@
       "notes": "SNAP + REV2 labels",
       "status": "planned (PR-3 acquisition)"
     },
-    "wiki-rfa": {
-      "cell": "C5",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "Mercado et al. melopeo/GL",
-      "status": "planned (PR-3 acquisition)"
-    },
     "highland-tribes": {
       "cell": "C5",
       "routes": [],
@@ -470,6 +463,45 @@
       "split": "TO VERIFY",
       "notes": "labels TO VERIFY",
       "status": "planned (PR-3 acquisition)"
+    },
+    "wiki-editor": {
+      "cell": "C5",
+      "routes": [
+        "https://raw.githubusercontent.com/melopeo/GL/master/WikipediaDatasets/generated_wikiEditor_network/{file}"
+      ],
+      "loader": "wiki_editor",
+      "metric": "accuracy",
+      "domain": "social/signed (Wikipedia editors)",
+      "license": "TO VERIFY",
+      "split": "10x stratified 60/20/20 on the LCC of labelled nodes",
+      "notes": "Yuan et al. 2017 SNE data via Mercado et al.; label meaning TO VERIFY",
+      "status": "registered"
+    },
+    "wiki-rfa": {
+      "cell": "C5",
+      "routes": [
+        "https://snap.stanford.edu/data/{file}"
+      ],
+      "loader": "wiki_rfa",
+      "metric": "accuracy",
+      "domain": "social/signed (Wikipedia RfA)",
+      "license": "TO VERIFY",
+      "split": "10x stratified 60/20/20 on the LCC of candidates",
+      "notes": "LEAKAGE: labels are outcomes of incoming votes; signed_vote baseline mandatory",
+      "status": "registered"
+    },
+    "wiki-elec": {
+      "cell": "C5",
+      "routes": [
+        "https://snap.stanford.edu/data/{file}"
+      ],
+      "loader": "wiki_elec",
+      "metric": "accuracy",
+      "domain": "social/signed (Wikipedia elections)",
+      "license": "TO VERIFY",
+      "split": "10x stratified 60/20/20 on the LCC of candidates",
+      "notes": "LEAKAGE: labels are outcomes of incoming votes; signed_vote baseline mandatory",
+      "status": "registered"
     }
   }
 }

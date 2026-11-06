@@ -309,3 +309,175 @@ def load(name: str) -> GraphData:
     except KeyError as exc:
         raise KeyError(f"no loader registered for {name!r}; known: {sorted(LOADERS)}") from exc
     return loader(name)
+
+
+# ------------------------------------------------- C3a: relation-typed fraud graphs
+def fraud_mat(name: str) -> GraphData:
+    """YelpChi and Amazon fraud graphs (Dou et al., CIKM 2020; CARE-GNN repository).
+
+    Relations: YelpChi R-U-R, R-T-R, R-S-R; Amazon U-P-U, U-S-U, U-V-U. An undirected
+    edge may belong to several relations, so ``edge_relation`` stores the bitmask of
+    the relations containing it (bit r for relation r in the order above); H-RELATION
+    then assigns one polarity per relation combination. Amazon: the first 3,305 nodes
+    are unlabelled in the CARE-GNN data (TO VERIFY) and are excluded from all splits.
+    Splits: 10 stratified random 40/20/40 splits (seeds 0-9), the convention of
+    CARE-GNN / BWGNN (TO VERIFY).
+    """
+    from scipy.io import loadmat
+
+    fname, rels = {"yelpchi": ("YelpChi.zip", ("net_rur", "net_rtr", "net_rsr")),
+                   "amazon-fraud": ("Amazon.zip", ("net_upu", "net_usu", "net_uvu"))}[name]
+    path = _fetch(name, fname, f"fraud/{fname}")
+    member = fname.replace(".zip", ".mat")
+    with zipfile.ZipFile(path) as zf, zf.open(member) as fh:
+        d = loadmat(io.BytesIO(fh.read()))
+    labels = np.asarray(d["label"]).ravel().astype(np.int64)
+    n = len(labels)
+    rows, cols, bits = [], [], []
+    for r, key in enumerate(rels):
+        A = sp.coo_matrix(d[key])
+        keep = A.row != A.col
+        rows.append(A.row[keep])
+        cols.append(A.col[keep])
+        bits.append(np.full(int(keep.sum()), 1 << r, dtype=np.int64))
+    raw = np.stack([np.concatenate(rows), np.concatenate(cols)], axis=1)
+    edges, _, _mask, report = canonicalize_edges(raw, n, edge_sign=np.concatenate(bits).astype(float))
+    # canonicalize sums the per-row values; recover the bitmask with a bitwise OR instead
+    lo, hi = np.minimum(raw[:, 0], raw[:, 1]), np.maximum(raw[:, 0], raw[:, 1])
+    key_raw = lo * n + hi
+    key_out = edges[:, 0] * n + edges[:, 1]
+    order = np.argsort(key_out)
+    pos = order[np.searchsorted(key_out[order], key_raw)]
+    relation = np.zeros(len(edges), dtype=np.int64)
+    np.bitwise_or.at(relation, pos, np.concatenate(bits))
+    report["relations"] = list(rels)
+    report["relation_combination_counts"] = {int(b): int(c) for b, c in zip(*np.unique(relation, return_counts=True), strict=True)}
+    if name == "amazon-fraud":
+        labels[:3305] = -1  # unlabelled in the CARE-GNN data: excluded from splits and statistics
+        report["unlabelled_prefix_nodes"] = 3305
+    eligible = labels
+    feats = sp.csr_matrix(d["features"]).toarray().astype(np.float32)
+    g = GraphData(name, n, edges, 2, random_splits(eligible, 10, (0.4, 0.2, 0.4), 0), labels, features=feats,
+                  edge_relation=relation, meta={"source": "YingtongDou/CARE-GNN data", "domain": "fraud"})
+    return _finish(g, report)
+
+
+# ------------------------------------------------------- C5: signed + node labels
+def _signed_graph(name: str, nodes_raw: np.ndarray | None, src: np.ndarray, dst: np.ndarray, sign: np.ndarray,
+                  label_of: dict, source: str, extra: dict | None = None) -> GraphData:
+    """Mercado et al. (ECML-PKDD 2019) convention: keep labelled nodes only, then the
+    largest connected component of the unsigned graph; signs summed per pair."""
+    labelled = np.array(sorted(k for k in label_of), dtype=np.int64)
+    idx = {int(u): i for i, u in enumerate(labelled)}
+    keep = np.array([int(a) in idx and int(b) in idx and int(a) != int(b) for a, b in zip(src, dst, strict=True)], dtype=bool)
+    e = np.array([[idx[int(a)], idx[int(b)]] for a, b in zip(src[keep], dst[keep], strict=True)], dtype=np.int64).reshape(-1, 2)
+    n = len(labelled)
+    edges, _, s, report = canonicalize_edges(e, n, edge_sign=sign[keep].astype(float))
+    from scipy.sparse.csgraph import connected_components
+
+    A = sp.coo_matrix((np.ones(len(edges)), (edges[:, 0], edges[:, 1])), shape=(n, n))
+    _, comp = connected_components(A, directed=False)
+    big = np.bincount(comp).argmax()
+    sel = np.flatnonzero(comp == big)
+    remap = -np.ones(n, dtype=np.int64)
+    remap[sel] = np.arange(len(sel))
+    m = (remap[edges[:, 0]] >= 0) & (remap[edges[:, 1]] >= 0)
+    edges2 = np.stack([remap[edges[m, 0]], remap[edges[m, 1]]], axis=1)
+    y_raw = np.array([label_of[int(u)] for u in labelled[sel]])
+    classes = sorted(set(y_raw.tolist()))
+    y = np.array([classes.index(v) for v in y_raw], dtype=np.int64)
+    report |= {"labelled_nodes": int(n), "lcc_nodes": len(sel), "class_values": classes, **(extra or {})}
+    g = GraphData(name, len(sel), edges2, len(classes), random_splits(y, 10, (0.6, 0.2, 0.2), 0), y,
+                  edge_sign=s[m], meta={"source": source, "domain": "social/signed"})
+    return _finish(g, report)
+
+
+def wiki_editor(name: str = "wiki-editor") -> GraphData:
+    """Wikipedia editor network (Yuan, Wu & Xiang, PAKDD 2017; files distributed with
+    Mercado et al.'s code): signed edges (1 positive, 0 negative) between editors and
+    binary user labels (meaning TO VERIFY: vandal vs benign in the SNE paper)."""
+    e = _fetch(name, "wiki_edit.txt", "wiki-editor/wiki_edit.txt")
+    lab = _fetch(name, "wiki_usr_labels.txt", "wiki-editor/wiki_usr_labels.txt")
+    E = np.loadtxt(e, dtype=np.int64).reshape(-1, 3)
+    L = np.loadtxt(lab, dtype=np.int64).reshape(-1, 2)
+    label_of = {int(u): int(c) for u, c in L}
+    sign = np.where(E[:, 2] == 1, 1.0, -1.0)
+    return _signed_graph(name, None, E[:, 0], E[:, 1], sign, label_of, "melopeo/GL WikipediaDatasets/generated_wikiEditor_network")
+
+
+def wiki_rfa(name: str = "wiki-rfa") -> GraphData:
+    """Wikipedia Requests for Adminship (West et al. 2014, SNAP wiki-RfA): votes
+    (support +1 / oppose -1; neutral dropped) from voter to candidate; label =
+    election result of the candidate (RES). LEAKAGE NOTE (Master Prompt §3.1 C5.3):
+    the label is the outcome of the votes that form the candidate's incoming
+    edges; the sign-of-summed-votes baseline (signed_vote) is mandatory."""
+    path = _fetch(name, "wiki-RfA.txt.gz", "wiki-rfa/wiki-RfA.txt.gz")
+    names: dict[str, int] = {}
+    src, dst, sign = [], [], []
+    label_of: dict[int, int] = {}
+    rec: dict[str, str] = {}
+
+    def flush() -> None:
+        if {"SRC", "TGT", "VOT", "RES"} <= rec.keys() and rec["SRC"] and rec["TGT"]:
+            a = names.setdefault(rec["SRC"], len(names))
+            b = names.setdefault(rec["TGT"], len(names))
+            res = int(rec["RES"])
+            if res in (-1, 1):
+                label_of[b] = res
+            v = int(rec["VOT"])
+            if v != 0:
+                src.append(a)
+                dst.append(b)
+                sign.append(float(v))
+
+    with gzip.open(path, "rt", encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            line = line.rstrip("\n")
+            if not line.strip():
+                flush()
+                rec = {}
+                continue
+            if ":" in line[:4]:
+                k, _, v = line.partition(":")
+                rec[k.strip()] = v.strip()
+        flush()
+    return _signed_graph(name, None, np.array(src), np.array(dst), np.array(sign), label_of,
+                         "SNAP wiki-RfA", {"leakage_note": "labels are election outcomes of incoming votes"})
+
+
+def wiki_elec(name: str = "wiki-elec") -> GraphData:
+    """Wikipedia adminship elections 2004-2008 (Leskovec et al., SNAP wikiElec.ElecBs3):
+    E (promoted 1 / not 0), U (candidate), V (vote, voter id); votes +1/-1 kept,
+    neutral dropped; label = E of the candidate's election (last one if repeated).
+    Same LEAKAGE NOTE as wiki-rfa."""
+    path = _fetch(name, "wikiElec.ElecBs3.txt.gz", "wiki-elec/wikiElec.ElecBs3.txt.gz")
+    src, dst, sign = [], [], []
+    label_of: dict[int, int] = {}
+    result, cand = None, None
+    with gzip.open(path, "rt", encoding="latin-1") as fh:
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            tag = parts[0].strip()
+            if tag == "E":
+                result = int(parts[1])
+            elif tag == "U":
+                cand = int(parts[1])
+                label_of[cand] = int(result) if result is not None else -1
+            elif tag == "V" and cand is not None:
+                v, voter = int(parts[1]), int(parts[2])
+                if v != 0:
+                    src.append(voter)
+                    dst.append(cand)
+                    sign.append(float(v))
+    label_of = {k: v for k, v in label_of.items() if v in (0, 1)}
+    return _signed_graph(name, None, np.array(src), np.array(dst), np.array(sign), label_of,
+                         "SNAP wikiElec.ElecBs3", {"leakage_note": "labels are election outcomes of incoming votes"})
+
+
+LOADERS.update({
+    "yelpchi": fraud_mat,
+    "amazon-fraud": fraud_mat,
+    "wiki-editor": wiki_editor,
+    "wiki-rfa": wiki_rfa,
+    "wiki-elec": wiki_elec,
+})

@@ -255,3 +255,123 @@ def test_wikics_loader_on_fixture(tmp_path):
     (d / "data.json").write_text(json.dumps(data))
     g = load("wikics")
     assert len(g.splits) == 20 and g.edges.tolist() == [[0, 1], [1, 2], [2, 3]]
+
+
+# ------------------------------------------------------------- PR-3 loaders
+def _write_fraud_zip(path, n, labels, rels):
+    import io
+
+    from scipy.io import savemat
+
+    buf = io.BytesIO()
+    savemat(buf, {"label": np.asarray(labels).reshape(1, -1), "features": sp.csr_matrix(np.ones((n, 2))),
+                  **{k: sp.csr_matrix(v) for k, v in rels.items()}})
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr(path.name.replace(".zip", ".mat"), buf.getvalue())
+
+
+def _adj(n, pairs):
+    A = np.zeros((n, n))
+    for a, b in pairs:
+        A[a, b] = A[b, a] = 1.0
+    return A
+
+
+def test_fraud_loader_relation_bitmask_on_fixture(tmp_path):
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "fraud"
+    d.mkdir(parents=True)
+    n = 10
+    rels = {"net_rur": _adj(n, [(0, 1), (2, 3)]), "net_rtr": _adj(n, [(0, 1), (4, 5)]),
+            "net_rsr": _adj(n, [(0, 1), (2, 3), (6, 7)]) + np.eye(n)}
+    _write_fraud_zip(d / "YelpChi.zip", n, np.arange(n) % 2, rels)
+    g = load("yelpchi")
+    got = {tuple(e): int(r) for e, r in zip(g.edges.tolist(), g.edge_relation, strict=True)}
+    assert got == {(0, 1): 0b111, (2, 3): 0b101, (4, 5): 0b010, (6, 7): 0b100}
+    assert g.meta["canonicalization"]["relation_combination_counts"] == {2: 1, 4: 1, 5: 1, 7: 1}
+    assert g.edge_sign is None and len(g.splits) == 10
+
+
+def test_amazon_fraud_unlabelled_prefix_is_excluded(tmp_path):
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "fraud"
+    d.mkdir(parents=True)
+    n = 3325
+    labels = np.zeros(n, dtype=int)
+    labels[-10:] = 1
+    rels = {k: _adj(n, [(i, i + 1) for i in range(0, n - 1, 2)]) for k in ("net_upu", "net_usu", "net_uvu")}
+    _write_fraud_zip(d / "Amazon.zip", n, labels, {k: sp.csr_matrix(v) for k, v in rels.items()})
+    g = load("amazon-fraud")
+    for s in g.splits:
+        for idx in (s.train_idx, s.val_idx, s.test_idx):
+            assert idx.min() >= 3305
+    st = S.label_stats(g)
+    assert st["class_counts"] == [10, 10]
+
+
+def test_signed_wiki_editor_keeps_labelled_lcc_and_maps_signs(tmp_path):
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "wiki-editor"
+    d.mkdir(parents=True)
+    # 10-11-12-13 labelled path (+,-,+); 13-99 to an unlabelled node; 20-21 a smaller labelled component
+    (d / "wiki_edit.txt").write_text("10 11 1\n11 12 0\n12 13 1\n13 99 1\n20 21 1\n11 10 1\n")
+    (d / "wiki_usr_labels.txt").write_text("10 1\n11 0\n12 1\n13 0\n20 1\n21 0\n")
+    g = load("wiki-editor")
+    assert g.num_nodes == 4 and g.num_classes == 2
+    assert g.edges.tolist() == [[0, 1], [1, 2], [2, 3]]
+    assert g.edge_sign.tolist() == [2.0, -1.0, 1.0]  # duplicate (10,11) summed
+    assert g.meta["canonicalization"]["lcc_nodes"] == 4
+
+
+def test_signed_wiki_rfa_and_elec_parsers_on_fixture(tmp_path):
+    import gzip
+
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "wiki-rfa"
+    d.mkdir(parents=True)
+    blocks = [("A", "B", 1, 1), ("C", "B", -1, 1), ("B", "A", 1, -1), ("C", "A", 0, -1), ("A", "C", -1, 1)]
+    text = "\n\n".join(f"SRC:{s}\nTGT:{t}\nVOT:{v}\nRES:{r}\nYEA:2010\nDAT:x\nTXT:y" for s, t, v, r in blocks)
+    with gzip.open(d / "wiki-RfA.txt.gz", "wt") as fh:
+        fh.write(text + "\n")
+    g = load("wiki-rfa")
+    assert g.num_nodes == 3 and sorted(g.edge_sign.tolist()) == [-1.0, -1.0, 2.0]
+    assert g.meta["canonicalization"]["leakage_note"]
+
+    d = _cache(tmp_path) / "wiki-elec"
+    d.mkdir(parents=True)
+    lines = ["# comment", "E\t1", "T\t2004", "U\t1\tu1", "N\t2\tu2", "V\t1\t2\tt\tu2", "V\t-1\t3\tt\tu3", "V\t0\t4\tt\tu4",
+             "E\t0", "T\t2005", "U\t2\tu2", "N\t1\tu1", "V\t-1\t1\tt\tu1", "V\t1\t3\tt\tu3",
+             "E\t1", "T\t2006", "U\t3\tu3", "N\t1\tu1", "V\t1\t1\tt\tu1"]
+    with gzip.open(d / "wikiElec.ElecBs3.txt.gz", "wt", encoding="latin-1") as fh:
+        fh.write("\n".join(lines) + "\n")
+    g = load("wiki-elec")
+    assert g.num_nodes == 3 and g.num_classes == 2
+    assert g.edges.tolist() == [[0, 1], [0, 2], [1, 2]]
+    assert g.edge_sign.tolist() == [0.0, 0.0, 1.0]  # (1,2): +1-1; (1,3): -1+1; (2,3): +1
+
+
+def test_homophily_ignores_unlabelled_nodes():
+    edges = np.array([[0, 1], [1, 2], [2, 3]])
+    y = np.array([0, 0, -1, 1])
+    assert S.edge_homophily(edges, y) == 1.0
+    loc = S.local_homophily(edges, y, 4)
+    assert loc[0] == 1.0 and math.isnan(loc[3])
+
+
+def test_stratified_accuracy_and_bins():
+    from edsp.eval.evaluate import stratified_accuracy
+
+    n = 6
+    edges = np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]])
+    y = np.array([0, 0, 1, 1, 0, 0])
+    g = GraphData("toy", n, edges, 2, [Split("s", np.array([0]), np.array([1]), np.arange(2, 6), "test")], y)
+    bins = S.local_homophily_bins(g, n_bins=2)
+    # local homophily: 1, .5, .5, .5, .5, 1 -> bins 1,1,1,1,1,1 (0.5*2 = 1)
+    assert bins.tolist() == [1, 1, 1, 1, 1, 1]
+    probs = np.tile([1.0, 0.0], (n, 1))
+    out = stratified_accuracy(g.vault(0), probs, bins, n_bins=2)
+    assert sum(out["count"]) == 4 and sum(out["correct"]) == 2

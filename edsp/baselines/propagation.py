@@ -203,6 +203,32 @@ def ppr_lp(graph: GraphData, vault: LabelVault, alpha: float = 0.9, weights: np.
     return _to_probs(F), info | {"alpha": alpha, "converged": True}
 
 
+def signed_lgc(graph: GraphData, vault: LabelVault, alpha: float = 0.9) -> tuple[np.ndarray, dict]:
+    """Signed-Laplacian label spreading (Kunegis et al., SDM 2010; the signed LP family
+    compared in Mercado et al., ECML-PKDD 2019): F = (1 - alpha) (I - alpha S)^-1 Y_c with
+    S = Dbar^-1/2 A_s Dbar^-1/2, A_s the summed signed adjacency, Dbar = diag(sum |A_s|),
+    and Y_c the centred one-hot train labels (Y - 1/k on train rows), so a negative edge
+    pushes its endpoint away from the neighbour's class. I - alpha S is positive definite
+    for alpha < 1. Scores are mapped to probabilities by shifting each row to a zero
+    minimum (as signed_vote); rows with no signal get the uniform distribution."""
+    if graph.edge_sign is None:
+        raise ValueError("signed_lgc needs edge signs")
+    Y, idx, _ = _one_hot_train(graph, vault)
+    k = graph.num_classes
+    Yc = np.zeros_like(Y)
+    Yc[idx] = Y[idx] - 1.0 / k
+    A = adjacency(graph, graph.edge_sign)
+    d = np.asarray(abs(A).sum(axis=1)).ravel()
+    inv = np.divide(1.0, np.sqrt(d), out=np.zeros_like(d), where=d > 0)
+    S = sp.diags(inv) @ A @ sp.diags(inv)
+    F, info = _solve((sp.identity(graph.num_nodes) - alpha * S).tocsr(), (1 - alpha) * Yc)
+    spread = F.max(axis=1) - F.min(axis=1)
+    P = np.full_like(F, 1.0 / k)
+    live = spread > 1e-12
+    P[live] = _to_probs(F[live] - F[live].min(axis=1, keepdims=True) + 1e-9 * spread[live, None])
+    return P, info | {"alpha": alpha, "converged": True, "no_signal_fraction": float(1 - live.mean())}
+
+
 def correct_and_smooth(
     graph: GraphData, vault: LabelVault, alpha_correct: float = 0.8, alpha_smooth: float = 0.8, base: np.ndarray | None = None,
 ) -> tuple[np.ndarray, dict]:
@@ -275,6 +301,7 @@ GRIDS: dict[str, dict[str, list]] = {
     "lgc": {"alpha": [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 0.999]},
     "ppr_lp": {"alpha": [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 0.999]},
     "correct_and_smooth": {"alpha_correct": [0.5, 0.8, 0.95], "alpha_smooth": [0.5, 0.8, 0.95]},
+    "signed_lgc": {"alpha": [0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 0.999]},
     "linbp": {"scale": [0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95]},
 }
 
@@ -289,6 +316,7 @@ BASELINES: dict[str, tuple[str, str, Callable]] = {
     "lgc": ("B1", "A", lgc),
     "ppr_lp": ("B1", "A", ppr_lp),
     "linbp": ("B1", "A", linbp),
+    "signed_lgc": ("B1", "A", signed_lgc),
     "correct_and_smooth": ("B1", "B", correct_and_smooth),
 }
 
