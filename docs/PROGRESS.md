@@ -37,6 +37,8 @@
 
 - PR-3 (mixed / signed acquisition + E2 pipeline): loaders for YelpChi and Amazon fraud (C3a, relation-typed; edge relation bitmask; Amazon unlabelled prefix excluded), wiki-editor, wiki-RfA, wiki-Elec (C5, signed + node labels; Mercado convention; RfA/Elec are leakage case studies); homophily statistics ignore unlabelled nodes; `signed_lgc` baseline; per-record stratified accuracy by local-homophily bin (§5.7); `run_e1.py --suite E2` (H-NATIVE on signed, H-RELATION on relation-typed graphs) and `aggregate_e1.py --suite E2`; `e1.yml` takes a `suite` input.
 
+- PR-8 (mixing): stratified accuracy with §5.7 bins (10 local-homophily bins of width 0.1 + 11 degree bins); a DATASET-STATS record per dataset; empirical mixed cells C3c / C3d in the E1/E2 aggregate (PREREGISTRATION A1); PERTURBED-REAL mixing sweep — `edsp/data/perturb.py` (global, beta, uniform, logistic-map chaos, regional, class-community, permutation-structured mixing), `run_e1.py --perturb`, `scripts/aggregate_mix.py`, workflow `mix.yml` (PREREGISTRATION A2).
+
 ## Remaining
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
@@ -46,7 +48,6 @@
 - LinBP-DCE, Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers, incl. fraud SOTA CARE-GNN / PC-GNN / BWGNN / GAGA and signed SOTA SGCN / SDGNN / SiGAT).
 - Re-run E1 so its records carry the stratified accuracy (§5.7).
 - Remaining acquisitions: Bitcoin OTC/Alpha (+ REV2 labels), Congress signed backbones, C4 (DBLP / patents); E2 on ogbn-proteins (multi-label, per task, P-NATIVE).
-- PERTURBED-REAL mixing sweep (controlled and heterogeneous edge rewiring of real graphs), reported separately from real-world results.
 
 ## Blockers
 

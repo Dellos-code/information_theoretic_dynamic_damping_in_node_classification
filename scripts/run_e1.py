@@ -32,15 +32,18 @@ import time
 from pathlib import Path
 
 import numpy as np
+from scipy.sparse.csgraph import connected_components
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from edsp.baselines import BASELINES, select_and_predict
+from edsp.baselines.propagation import adjacency
 from edsp.core import edsp
 from edsp.data.loaders import load
+from edsp.data.perturb import perturb
 from edsp.data.registry import dataset_entry, datasets_with_loader
-from edsp.data.stats import local_homophily_bins
+from edsp.data.stats import DEGREE_BINS, degree_bins, label_stats, local_homophily_bins
 from edsp.eval.evaluate import evaluate, stratified_accuracy
 from edsp.regimes import build_inputs
 from edsp.regimes.inputs import _polarity
@@ -90,7 +93,9 @@ def run_core(inputs, variant: str = "EDSP-canonical", **kw):
 
 
 def scored(vault, probs, bins) -> dict:
-    return evaluate(vault, probs) | {"stratified": stratified_accuracy(vault, probs, bins)}
+    return evaluate(vault, probs) | {"stratified": {
+        "local_homophily": stratified_accuracy(vault, probs, bins[0], 10),
+        "degree": stratified_accuracy(vault, probs, bins[1], DEGREE_BINS)}}
 
 
 def edsp_diagnostics(res) -> dict:
@@ -111,6 +116,9 @@ def main() -> int:
     ap.add_argument("--h7-splits", type=int, default=3)
     ap.add_argument("--gs-max-iter", type=int, default=300)
     ap.add_argument("--suite", default="E1")
+    ap.add_argument("--perturb", nargs="*", default=None,
+                    help="PERTURBED-REAL mixing specs (edsp.data.perturb), e.g. global:h=0.3 uniform")
+    ap.add_argument("--perturb-seeds", type=int, default=3)
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
@@ -121,25 +129,46 @@ def main() -> int:
     runner = f"actions-run-{run_id}" if run_id else os.environ.get("EDSP_ENVIRONMENT", "local")
     sha = git_sha()
     failures = 0
-    for name in names:
-        g = load(name)
-        metric = headline(name)
+    jobs = [(b, None, 0) for b in names] if not args.perturb else [
+        (b, spec, s) for b in names for spec in args.perturb for s in range(args.perturb_seeds)]
+    loaded: dict = {}
+    for base, spec, pseed in jobs:
+        if base not in loaded:
+            loaded = {base: load(base)}
+        g = loaded[base] if spec is None else perturb(loaded[base], spec, pseed)
+        name = g.name
+        entry = dataset_entry(base)
+        metric = headline(base)
         signed = g.edge_sign is not None
         relation = g.edge_relation is not None
-        bins = local_homophily_bins(g)
+        bins = (local_homophily_bins(g, 10), degree_bins(g))
         dhash = g.content_hash()
         path = out / f"{name}.jsonl"
         splits = g.splits[: args.max_splits] if args.max_splits else g.splits
 
-        def emit(rec: dict, t0: float, path: Path = path, name: str = name, dhash: str = dhash, metric: str = metric) -> None:
+        pert = g.meta["canonicalization"]["perturbation"] if spec is not None else None
+
+        def emit(rec: dict, t0: float, path: Path = path, name: str = name, dhash: str = dhash, metric: str = metric,
+                 entry: dict = entry, base: str = base, pert: dict | None = pert) -> None:
             rec |= {"suite": args.suite, "dataset": name, "headline_metric": metric,
-                    "constructed_benchmark": bool(dataset_entry(name).get("constructed_benchmark", False)),
+                    "constructed_benchmark": bool(entry.get("constructed_benchmark", False)),
+                    **({"base_dataset": base, "perturbation": pert, "data_class": "PERTURBED-REAL"} if pert else {}),
                     "run_record": {"git_sha": sha, "runner_type": runner, "dataset_hash": dhash,
                                    "config_hash": config_hash(rec.get("config")),
                                    "wall_clock_seconds": round(time.perf_counter() - t0, 3),
                                    "peak_rss_mib": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}}
             with open(path, "a") as fh:
                 fh.write(json.dumps(rec, default=float) + "\n")
+
+        # descriptive dataset statistics used to form the empirical mixed cells
+        # C3c (local-homophily spread) and C3d (structured compatibility), §3.1
+        t0 = time.perf_counter()
+        ls = label_stats(g, train_split=None) if not g.multilabel else {}
+        emit({"split": None, "method": "DATASET-STATS", "cell": entry.get("cell"),
+              "stats": {key: ls.get(key) for key in ("edge_homophily", "adjusted_homophily", "label_informativeness",
+                                                    "local_homophily_std", "compatibility_distances")}
+              | {"num_classes": g.num_classes, "num_nodes": g.num_nodes, "num_edges": len(g.edges),
+                 "components": int(connected_components(adjacency(g), directed=False)[0])}}, t0)
 
         for si, split in enumerate(splits):
             sid = split.split_id

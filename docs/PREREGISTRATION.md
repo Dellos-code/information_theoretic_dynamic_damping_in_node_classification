@@ -75,5 +75,39 @@ with seeds 0–9 (`edsp.data.graph.random_splits`). Planetoid datasets also get 
 
 ## 6. Amendments
 
-_None yet. Every amendment must state its date, reason and whether any experiment
-had already been run when it was made._
+Every amendment must state its date, reason and whether any experiment had
+already been run when it was made.
+
+### A1 (2026-11-06, PR-8) — empirical mixed cells C3c / C3d
+
+Reason: §3.1 defines C3c ("top-5 C1/C2 datasets by std of local homophily") and
+C3d (compatibility matrix "far from both I and (J−I)/(k−1)") as determined
+empirically, without a numeric rule. Rule fixed here: among the real (not
+constructed) C1/C2 datasets with run records, C3c = the 5 largest full-label
+`local_homophily_std`; C3d = the 5 largest min(‖H − I‖_F, ‖H − (J−I)/(k−1)‖_F).
+Both are reported as extra tables in the E1 aggregate; they do not change the
+headline ranks. Already run: E1 (all 16 datasets) — its per-dataset results were
+known when this rule was written; the rule uses only label statistics, not
+method results.
+
+### A2 (2026-11-06, PR-8) — PERTURBED-REAL mixing sweep (suite MIX)
+
+Reason: owner request (comparison on every kind of mixing, "even chaotic").
+Design: `edsp/data/perturb.py` (modes, locality, degree-preserving partner
+draws); base graphs cora, citeseer, amazon-ratings, roman-empire, wiki-editor;
+22 conditions (`.github/workflows/mix.yml`); 3 re-wiring seeds × the first 3
+splits; EDSP-default, EDSP-tuned (the 9-config E1 grid), and the E1 Track-A
+baselines; H7 GS/damped runs skipped. Primary comparison: EDSP-tuned vs the best
+baseline per condition (Wilcoxon over the 9 paired runs, Holm per base graph);
+with 9 pairs the smallest attainable two-sided p is 0.0039, so a condition with
+Holm-adjusted p ≥ 0.05 is reported as a tie, not as evidence of equality.
+Results are PERTURBED-REAL, kept under `results/perturbed/`, never ranked with
+real data. Already run when written: only pipeline smoke tests on cora
+(≤ 2 seeds × 2 splits, conditions global:h=0.1 and permutation:h=0.1).
+
+### A3 (2026-11-06, PR-8) — stratified accuracy bins
+
+§5.7 specifies local-homophily bins of width 0.1 and per-degree bins; PR-3 had
+5 bins. Now 10 bins of width 0.1 plus 11 logarithmic degree bins. No experiment
+with the 5-bin layout was run beyond PR smoke tests (the E2 dispatch of
+2026-11-06 was cancelled for this reason before any job finished).

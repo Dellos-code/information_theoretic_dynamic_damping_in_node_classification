@@ -54,7 +54,8 @@ def main() -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     not_run = [r for r in recs if r.get("method") == "NOT-RUN"]
-    recs = [r for r in recs if r.get("method") != "NOT-RUN"]
+    dstats = {r["dataset"]: r for r in recs if r.get("method") == "DATASET-STATS"}
+    recs = [r for r in recs if r.get("method") not in ("NOT-RUN", "DATASET-STATS")]
     by = defaultdict(dict)  # (dataset, method) -> {split: record}
     meta = {}
     for r in recs:
@@ -177,27 +178,69 @@ def main() -> int:
             return "—" if v is None else f"{v:.3f}"
         md.append(f"| {ds} | {f(x['non_converged_rate'])} | {f(x['oscillation_rate'])} | {f(x['moving_fraction'])} | {f(x['gs_damped_l1_mean'])} | {f(x['gs_damped_l1_p95'])} | {x['h7_splits']} |")
     agg["h7"] = h7
-    # stratified accuracy by local homophily (Master Prompt §5.7), pooled over splits
-    strat_methods = ["EDSP-default", "EDSP-tuned", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote"]
-    have = [d for d in datasets if any("stratified" in r["metrics"] for r in by.get((d, "EDSP-tuned"), {}).values())]
-    if have:
-        md += ["", "## Test accuracy by local-homophily bin (pooled over splits, ×100)", "",
-               ("Bins of each node's local homophily over all its labelled neighbours: "
-                "[0, .2), [.2, .4), [.4, .6), [.6, .8), [.8, 1]. Descriptive (full labels define the bins, "
-                "never the predictions). Cell: accuracy (test nodes)."), "",
-               "| dataset | method | " + " | ".join(f"bin {i}" for i in range(5)) + " |", "|---|---|" + "---|" * 5]
-        agg["stratified"] = {}
+    # stratified accuracy (Master Prompt §5.7), pooled over splits
+    strat_methods = ["EDSP-default", "EDSP-tuned", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote", "signed_lgc"]
+
+    def strat(r: dict, kind: str) -> dict | None:
+        s = r["metrics"].get("stratified")
+        if not s:
+            return None
+        return s.get(kind) if kind in s else (s if kind == "local_homophily" else None)  # PR-3 records: flat, 5 bins
+
+    agg["stratified"] = {}
+    for kind, title, labels in (
+        ("local_homophily", "local homophily (descriptive, full labels; bin i = [i/10, (i+1)/10))", None),
+        ("degree", "degree (bin 0: isolated; bin b: 2^(b-1) ≤ deg < 2^b; last bin open)", None),
+    ):
+        have = [d for d in datasets if any(strat(r, kind) for r in by.get((d, "EDSP-tuned"), {}).values())]
+        if not have:
+            continue
+        nb = max(strat(r, kind)["n_bins"] for d in have for r in by[(d, "EDSP-tuned")].values() if strat(r, kind))
+        md += ["", f"## Test accuracy by {title}, pooled over splits (×100)", "",
+               "Cell: accuracy (number of test nodes). Bins are never method inputs.", "",
+               "| dataset | method | " + " | ".join(str(i) for i in range(nb)) + " |", "|---|---|" + "---|" * nb]
         for ds in have:
-            agg["stratified"][ds] = {}
             for m in strat_methods:
-                rs = [r["metrics"]["stratified"] for r in by.get((ds, m), {}).values() if "stratified" in r["metrics"]]
+                rs = [strat(r, kind) for r in by.get((ds, m), {}).values()]
+                rs = [x for x in rs if x and x["n_bins"] == nb]
                 if not rs:
                     continue
                 c = np.sum([r["count"] for r in rs], axis=0)
                 k = np.sum([r["correct"] for r in rs], axis=0)
-                agg["stratified"][ds][m] = {"count": c.tolist(), "correct": k.tolist()}
-                cells = [f"{100 * k[i] / c[i]:.1f} ({c[i]})" if c[i] else "—" for i in range(len(c))]
+                agg["stratified"].setdefault(kind, {}).setdefault(ds, {})[m] = {"count": c.tolist(), "correct": k.tolist()}
+                cells = [f"{100 * k[i] / c[i]:.1f} ({c[i]})" if c[i] else "—" for i in range(nb)]
                 md.append(f"| {ds} | {m} | " + " | ".join(cells) + " |")
+
+    # empirical mixed cells C3c / C3d (Master Prompt §3.1; rule in docs/PREREGISTRATION.md addendum)
+    pool = [d for d in real if d in dstats and dstats[d].get("cell") in ("C1", "C2")]
+    if pool:
+        def spread(d: str) -> float:
+            return float(dstats[d]["stats"]["local_homophily_std"])
+
+        def structure(d: str) -> float:
+            cd = dstats[d]["stats"]["compatibility_distances"]
+            return float(min(cd["to_identity"], cd["to_uniform_heterophily"]))
+        cells_def = {"C3c (mixed by local structure: top-5 std of local homophily)": sorted(pool, key=spread, reverse=True)[:5],
+                     "C3d (structured compatibility: top-5 min Frobenius distance to I and to (J-I)/(k-1))": sorted(pool, key=structure, reverse=True)[:5]}
+        agg["mixed_cells"] = {}
+        for cname, members in cells_def.items():
+            md += ["", f"## Cell {cname}", "",
+                   "| dataset | std local homophily | min compat. distance | " + " | ".join(RANKED) + " |", "|---|---|---|" + "---|" * len(RANKED)]
+            for d in members:
+                row = agg["datasets"][d]["methods"]
+                best = max(row[m]["mean"] for m in RANKED if m in row)
+                cells = [("**{:.2f}**" if np.isclose(row[m]["mean"], best) else "{:.2f}").format(row[m]["mean"]) if m in row else "—" for m in RANKED]
+                md.append(f"| {d} | {spread(d):.3f} | {structure(d):.3f} | " + " | ".join(cells) + " |")
+            full_c = [d for d in members if all(values(d, m) for m in RANKED)]
+            entry = {"datasets": members}
+            if len(full_c) >= 2:
+                S_ = np.array([[np.mean(list(values(d, m).values())) for m in RANKED] for d in full_c])
+                fn = friedman_nemenyi(S_)
+                entry |= {"average_ranks": dict(zip(RANKED, fn["average_ranks"], strict=True)), "friedman_p": fn["friedman_p"]}
+                order = np.argsort(fn["average_ranks"])
+                md += ["", f"Average ranks ({len(full_c)} datasets; Friedman p = {fn['friedman_p']:.3g}): "
+                       + ", ".join(f"{RANKED[i]} {fn['average_ranks'][i]:.2f}" for i in order) + "."]
+            agg["mixed_cells"][cname] = entry
     if not_run:
         md += ["", "## Not run", ""] + [f"- {r['dataset']} split {r['split']}: {r['reason']}" for r in not_run]
 
