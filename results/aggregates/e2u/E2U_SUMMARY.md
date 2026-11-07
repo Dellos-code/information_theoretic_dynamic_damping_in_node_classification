@@ -1,6 +1,6 @@
 # E2U
 
-Run records: 1170 (git 1afaf38a8669; runners actions-run-42377245757). Headline metric per dataset in brackets; mean ± std over splits (×100). Rows marked † are constructed benchmarks or case studies and are excluded from real-world aggregates.
+Run records: 1430 (git 8783eafeac24; runners actions-run-42414234730). Headline metric per dataset in brackets; mean ± std over splits (×100). Rows marked † are constructed benchmarks or case studies and are excluded from real-world aggregates.
 
 | dataset [metric] | splits | EDSP-default | EDSP-tuned | EDSP-fullH-default | EDSP-fullH-tuned | majority | train_prior | harmonic | harmonic_cmn | lgc | ppr_lp | linbp | signed_vote | signed_lgc |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
