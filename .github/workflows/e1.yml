@@ -17,6 +17,9 @@ on:
       datasets:
         description: "Space-separated dataset names (empty = every dataset of the suite)"
         default: ""
+      runner:
+        description: "Runner for the experiment jobs: ubuntu-latest (GitHub) or self-hosted (the owner's machine)"
+        default: "ubuntu-latest"
       extra_args:
         description: "Extra runner flags, e.g. --fullh (E5)"
         default: ""
@@ -82,7 +85,7 @@ jobs:
 
   run:
     needs: plan
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     timeout-minutes: 330
     strategy:
       fail-fast: false
