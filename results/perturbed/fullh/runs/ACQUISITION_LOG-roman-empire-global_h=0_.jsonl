@@ -1,0 +1,1 @@
+{"cell_id": "C2", "dataset": "roman-empire", "environment": "actions-run-42364290816", "outcome": "PROCESSED", "report": {"duplicates_merged": 0, "input_rows": 32927, "self_loops_removed": 0, "undirected_edges": 32927}, "sha256_processed": "sha256:d7e433d79f75b5d518ab1071d3a31f28f0c9665a04317adf79f937f600f187b7", "timestamp_utc": "2026-11-07T10:31:32.631684+00:00"}

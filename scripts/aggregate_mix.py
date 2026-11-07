@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT))
 
 from edsp.eval.stats_tests import holm, wilcoxon_paired
 
-METHODS = ["EDSP-default", "EDSP-tuned", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp"]
+METHODS = ["EDSP-default", "EDSP-tuned", "EDSP-fullH-default", "EDSP-fullH-tuned", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp"]
 BASELINES = ["harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp"]
 
 
