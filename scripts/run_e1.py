@@ -38,6 +38,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from edsp.baselines import BASELINES, select_and_predict
+from edsp.baselines.gnn import select_and_predict_gnn
 from edsp.baselines.propagation import adjacency
 from edsp.core import edsp
 from edsp.data.loaders import load
@@ -50,6 +51,7 @@ from edsp.regimes.compat import estimate_heterophilic_compatibility
 from edsp.regimes.inputs import _polarity
 from edsp.selection import validation_score
 
+TRACK_B_BASELINES = ["majority", "train_prior", "feature_lr", "correct_and_smooth"]
 TRACK_A_BASELINES = ["majority", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp"]
 P_GRID = (0.1, 0.5, 0.9)
 EPS = 1e-6
@@ -75,13 +77,13 @@ def _native_h(signed: bool, relation: bool) -> dict:
     return {"name": "trainonly", "fill": "b1"}
 
 
-def default_config(signed: bool, relation: bool = False) -> dict:
-    return {"track": "A", "p": {"name": "const", "p0": 0.5}, "h": _native_h(signed, relation), "T_L": math.inf}
+def default_config(signed: bool, relation: bool = False, track: str = "A") -> dict:
+    return {"track": track, "p": {"name": "const", "p0": 0.5}, "h": _native_h(signed, relation), "T_L": math.inf}
 
 
-def tuned_grid(signed: bool, relation: bool = False) -> list[dict]:
+def tuned_grid(signed: bool, relation: bool = False, track: str = "A") -> list[dict]:
     hs = [_native_h(signed, relation), {"name": "learned"}, {"name": "all1"}]
-    return [{"track": "A", "p": {"name": "const", "p0": p0}, "h": h, "T_L": math.inf} for h in hs for p0 in P_GRID]
+    return [{"track": track, "p": {"name": "const", "p0": p0}, "h": h, "T_L": math.inf} for h in hs for p0 in P_GRID]
 
 
 def config_hash(cfg: dict) -> str:
@@ -117,6 +119,9 @@ def main() -> int:
     ap.add_argument("--h7-splits", type=int, default=3)
     ap.add_argument("--gs-max-iter", type=int, default=300)
     ap.add_argument("--suite", default="E1")
+    ap.add_argument("--track", choices=("A", "B"), default="A",
+                    help="B = feature priors from the base predictor (suite E3): EDSP-B vs feature_lr, C&S and GNNs")
+    ap.add_argument("--gnn", default="mlp,gcn,sage,gat,gprgnn,bwgnn", help="GNN baselines for --track B ('' = none)")
     ap.add_argument("--fullh", action="store_true",
                     help="also run the named variant EDSP-fullH (default and tuned; H3 / suite E5)")
     ap.add_argument("--split-range", default=None,
@@ -189,10 +194,10 @@ def main() -> int:
                 # ---------------- EDSP-default (+ secondary column, H7 diagnostics)
                 t0 = time.perf_counter()
                 vault = g.vault(sid)
-                cfg = default_config(signed, relation)
+                cfg = default_config(signed, relation, args.track)
                 inp = build_inputs(g, vault, cfg)
                 res = run_core(inp)
-                rec = {"split": sid, "method": "EDSP-default", "track": "A", "config": cfg,
+                rec = {"split": sid, "method": "EDSP-default", "track": args.track, "config": cfg,
                        "metrics": scored(vault, res.probabilities, bins), "diagnostics": edsp_diagnostics(res),
                        "regime_diagnostics": {k: v for k, v in inp.diagnostics.items() if k != "priors"}}
                 if not res.converged:
@@ -202,7 +207,7 @@ def main() -> int:
                     t0 = time.perf_counter()
                     H, hinfo = estimate_heterophilic_compatibility(inp.edges, inp.heterophily, vault, g.num_classes)
                     rf = run_core(inp, heterophilic_operator=H)
-                    emit({"split": sid, "method": "EDSP-fullH-default", "track": "A", "config": cfg | {"operator": "fullH"},
+                    emit({"split": sid, "method": "EDSP-fullH-default", "track": args.track, "config": cfg | {"operator": "fullH"},
                           "metrics": scored(vault, rf.probabilities, bins), "diagnostics": edsp_diagnostics(rf),
                           "fullH": hinfo | {"H": H.round(4).tolist()}}, t0)
 
@@ -210,12 +215,12 @@ def main() -> int:
                 if si < args.h7_splits:
                     t0 = time.perf_counter()
                     gs = run_core(inp, "EDSP-GS", max_iter=args.gs_max_iter)
-                    emit({"split": sid, "method": "EDSP-GS", "track": "A", "config": cfg | {"variant": "EDSP-GS", "max_iter": args.gs_max_iter},
+                    emit({"split": sid, "method": "EDSP-GS", "track": args.track, "config": cfg | {"variant": "EDSP-GS", "max_iter": args.gs_max_iter},
                           "metrics": scored(vault, gs.probabilities, bins), "diagnostics": edsp_diagnostics(gs)}, t0)
                     t0 = time.perf_counter()
                     dm = run_core(inp, "EDSP-damped", beta=0.5)
                     dist = np.abs(gs.probabilities - dm.probabilities).sum(axis=1)
-                    emit({"split": sid, "method": "EDSP-damped(0.5)", "track": "A", "config": cfg | {"variant": "EDSP-damped", "beta": 0.5},
+                    emit({"split": sid, "method": "EDSP-damped(0.5)", "track": args.track, "config": cfg | {"variant": "EDSP-damped", "beta": 0.5},
                           "metrics": scored(vault, dm.probabilities, bins), "diagnostics": edsp_diagnostics(dm),
                           "h7_gs_vs_damped_l1": {"mean": float(dist.mean()), "p95": float(np.quantile(dist, 0.95)),
                                                  "gs_converged": bool(gs.converged), "damped_converged": bool(dm.converged)}}, t0)
@@ -225,10 +230,10 @@ def main() -> int:
                 pol_cache: dict[str, object] = {}
                 cands = []
                 fcands: list = []
-                for c in tuned_grid(signed, relation):
+                for c in tuned_grid(signed, relation, args.track):
                     key = json.dumps(c["h"], sort_keys=True)
                     if key not in pol_cache:
-                        pol_cache[key] = _polarity(g, vault, c["h"], "A")
+                        pol_cache[key] = _polarity(g, vault, c["h"], args.track)
                     i = build_inputs(g, vault, c, polarity=pol_cache[key])  # type: ignore[arg-type]
                     r = run_core(i)
                     cands.append((c, r, validation_score(vault, r.probabilities, metric)))
@@ -238,26 +243,35 @@ def main() -> int:
                         fcands.append((c | {"operator": "fullH"}, rf, validation_score(vault, rf.probabilities, metric), hinfo))
                 best = int(np.argmax([s if np.isfinite(s) else -np.inf for _, _, s in cands]))
                 c, r, _ = cands[best]
-                emit({"split": sid, "method": "EDSP-tuned", "track": "A", "config": c,
+                emit({"split": sid, "method": "EDSP-tuned", "track": args.track, "config": c,
                       "metrics": scored(vault, r.probabilities, bins), "diagnostics": edsp_diagnostics(r),
                       "selection": {"metric": metric, "val_scores": [s for _, _, s in cands],
                                     "grid": [cc for cc, _, _ in cands], "chosen_index": best}}, t0)
                 if fcands:
                     fb = int(np.argmax([s if np.isfinite(s) else -np.inf for _, _, s, _ in fcands]))
                     c, r, _, hinfo = fcands[fb]
-                    emit({"split": sid, "method": "EDSP-fullH-tuned", "track": "A", "config": c,
+                    emit({"split": sid, "method": "EDSP-fullH-tuned", "track": args.track, "config": c,
                           "metrics": scored(vault, r.probabilities, bins), "diagnostics": edsp_diagnostics(r),
                           "fullH": hinfo, "selection": {"metric": metric, "val_scores": [s for _, _, s, _ in fcands],
                                                         "chosen_index": fb}}, t0)
 
                 # ---------------- baselines
-                for b in TRACK_A_BASELINES + (["signed_vote", "signed_lgc"] if signed else []):
+                for b in (TRACK_A_BASELINES + (["signed_vote", "signed_lgc"] if signed else [])
+                          if args.track == "A" else TRACK_B_BASELINES):
                     t0 = time.perf_counter()
                     probs, info = select_and_predict(b, g, vault, metric)
-                    emit({"split": sid, "method": b, "group": BASELINES[b][0], "track": "A",
+                    emit({"split": sid, "method": b, "group": BASELINES[b][0], "track": BASELINES[b][1],
                           "config": {"baseline": b, "chosen": info.get("chosen")},
                           "metrics": scored(vault, probs, bins),
                           "diagnostics": {k: v for k, v in info.items() if k in ("converged", "iterations", "uncovered_fraction", "solver")}}, t0)
+                for m in ([x for x in args.gnn.split(",") if x] if args.track == "B" else []):
+                    t0 = time.perf_counter()
+                    probs, info = select_and_predict_gnn(m, g, vault, metric, seed=si)
+                    emit({"split": sid, "method": m, "group": "B2" if m in ("gcn", "sage", "gat") else
+                          ("B0" if m == "mlp" else ("B6" if m == "bwgnn" else "B4")), "track": "B",
+                          "config": {"baseline": m, "chosen": info["chosen"]}, "metrics": scored(vault, probs, bins),
+                          "diagnostics": {"best_epoch": info["best_epoch"], "epochs_run": info["epochs_run"],
+                                          "val_scores": info["val_scores"]}}, t0)
                 print(f"{name} split {sid} done", flush=True)
             except Exception as exc:  # noqa: BLE001
                 failures += 1

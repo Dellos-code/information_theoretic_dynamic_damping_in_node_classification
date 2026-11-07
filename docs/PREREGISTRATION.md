@@ -121,6 +121,28 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A7 (2026-11-07, PR-12) — E3 (Track B) and the H4 decision rule
+
+Methods: EDSP-default / EDSP-tuned with Track-B priors (the logistic-regression
+base predictor of `edsp/regimes/priors.py`), the base predictor itself
+(`feature_lr`), Correct & Smooth on the same base predictor (3 × 3 grid), and the
+GNNs of `edsp/baselines/gnn.py` (MLP, GCN+, SAGE+, GAT+, GPR-GNN, BWGNN; 9-point
+grids each, validation early stopping and selection on the headline metric).
+Datasets: the real E1 datasets except sampson (no features) and coauthor-cs /
+coauthor-physics (6,805 / 8,415 dense features: not affordable on CPU runners in
+this pass; reported as NOT-RUN with that reason). All splits, one CI job per split.
+H4 ("Track-B EDSP ≈ C&S < tuned GNNs on feature-rich heterophilous graphs"), on
+the real C2 datasets (roman-empire, amazon-ratings, tolokers, questions,
+chameleon-filtered, squirrel-filtered): (a) EDSP-B-tuned vs C&S, two-sided
+Wilcoxon over splits, Holm across datasets — "≈" on a dataset = adjusted p ≥ 0.05;
+(b) the best of GCN+ / SAGE+ / GAT+ / GPR-GNN (by mean) vs EDSP-B-tuned, same test.
+**Supported** if (a) holds on more than half of the datasets and (b) is a
+significant GNN win on more than half; **not supported** if neither holds on more
+than half; else **inconclusive**. Choosing the best GNN after the fact favours the
+GNNs; this is stated in the report.
+Already run when written: unit tests and single-configuration timing / sanity runs
+on cora and roman-empire (split 0), no E3 records.
+
 ### A6 (2026-11-07, PR-11) — Congress signed networks in E2
 
 Datasets: the signed co-sponsorship backbones of Neal (2020) for the House and the

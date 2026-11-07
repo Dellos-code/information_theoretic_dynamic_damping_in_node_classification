@@ -47,6 +47,12 @@ def main() -> int:
     ap.add_argument("--runs", default=None)
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
+    if args.suite == "E3":  # Track B: feature priors; baselines are B0 / C&S / GNNs
+        global METHODS, RANKED, BASELINES
+        gnns = ["mlp", "gcn", "sage", "gat", "gprgnn", "bwgnn"]
+        METHODS = ["EDSP-default", "EDSP-tuned", "majority", "train_prior", "feature_lr", "correct_and_smooth", *gnns]
+        RANKED = ["EDSP-default", "EDSP-tuned", "feature_lr", "correct_and_smooth", *gnns]
+        BASELINES = ["feature_lr", "correct_and_smooth", *gnns]
     s = args.suite.lower()
     args.runs = args.runs or str(ROOT / "results" / "runs" / s)
     args.out = args.out or str(ROOT / "results" / "aggregates" / s)
@@ -72,7 +78,8 @@ def main() -> int:
     agg: dict = {"git_sha": shas, "runners": runners, "datasets": {}, "not_run": not_run}
     title = {"E1": "E1 — Track-A EDSP vs B0/B1 Track-A baselines",
              "E2": "E2 — native-polarity graphs (signed, relation-typed): Track-A EDSP vs Track-A baselines",
-             "E5": "E5 — EDSP-fullH (estimated compatibility instead of the complement), H3"}
+             "E5": "E5 — EDSP-fullH (estimated compatibility instead of the complement), H3",
+             "E3": "E3 — Track B (feature priors): EDSP-B vs logistic regression, Correct & Smooth and tuned GNNs, H4"}
     md = ["# " + title.get(args.suite, args.suite), "",
           (f"Run records: {len(recs)} (git {', '.join(shas)}; runners {', '.join(runners)}). "
           "Headline metric per dataset in brackets; mean ± std over splits (×100). "
@@ -180,7 +187,8 @@ def main() -> int:
         md.append(f"| {ds} | {f(x['non_converged_rate'])} | {f(x['oscillation_rate'])} | {f(x['moving_fraction'])} | {f(x['gs_damped_l1_mean'])} | {f(x['gs_damped_l1_p95'])} | {x['h7_splits']} |")
     agg["h7"] = h7
     # stratified accuracy (Master Prompt §5.7), pooled over splits
-    strat_methods = ["EDSP-default", "EDSP-tuned", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote", "signed_lgc"]
+    strat_methods = ["EDSP-default", "EDSP-tuned", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote", "signed_lgc",
+                     "feature_lr", "correct_and_smooth", "gcn", "sage", "gat", "gprgnn"]
 
     def strat(r: dict, kind: str) -> dict | None:
         s = r["metrics"].get("stratified")
@@ -284,6 +292,39 @@ def main() -> int:
                f"H3 (part 2) **{'supported' if np.isfinite(p_one) and p_one < 0.05 else 'not supported'}**.")]
         agg["H3"] = {"rows": [dict(zip(["dataset", "delta", "p", "c3d", "k", "linbp", "fullh"], r, strict=True)) for r in rows],
                      "c3d_wins": wins, "c3d_losses": losses, "part1": label, "spearman_rho": rho, "spearman_p_one_sided": p_one}
+    # H4 (PREREGISTRATION A7): EDSP-B-tuned ≈ C&S < best tuned GNN on the real C2 datasets
+    if args.suite == "E3":
+        c2 = [d for d in real if d in dstats and dstats[d].get("cell") == "C2"]
+        rows = []
+        for d in c2:
+            e = values(d, "EDSP-tuned")
+            cs = values(d, "correct_and_smooth")
+            gm = {m: np.mean(list(values(d, m).values())) for m in ("gcn", "sage", "gat", "gprgnn") if values(d, m)}
+            if not e or not cs or not gm:
+                continue
+            bg = max(gm, key=gm.get)
+            g = values(d, bg)
+            c1 = sorted(set(e) & set(cs))
+            c2_ = sorted(set(e) & set(g))
+            rows.append((d, bg, float(np.mean([e[s] - cs[s] for s in c1])),
+                         wilcoxon_paired(np.array([e[s] for s in c1]), np.array([cs[s] for s in c1])),
+                         float(np.mean([g[s] - e[s] for s in c2_])),
+                         wilcoxon_paired(np.array([g[s] for s in c2_]), np.array([e[s] for s in c2_]))))
+        if rows:
+            pa, pb = holm([r[3] for r in rows]), holm([r[5] for r in rows])
+            md += ["", "## H4 — EDSP-B-tuned vs C&S and vs the best tuned GNN (C2, PREREGISTRATION A7)", "",
+                   "| dataset | best GNN | EDSP − C&S | p (Holm) | GNN − EDSP | p (Holm) |", "|---|---|---|---|---|---|"]
+            same = gnn_better = 0
+            for (d, bg, d1, _, d2, _), q1, q2 in zip(rows, pa, pb, strict=True):
+                same += q1 >= 0.05
+                gnn_better += q2 < 0.05 and d2 > 0
+                md.append(f"| {d} | {bg} | {100 * d1:+.2f} | {q1:.3g} | {100 * d2:+.2f} | {q2:.3g} |")
+            n = len(rows)
+            ok = same > n / 2 and gnn_better > n / 2
+            bad = same <= n / 2 and gnn_better <= n / 2
+            md += ["", (f"EDSP-B ≈ C&S (no significant difference) on {same}/{n}; best GNN significantly better on "
+                   f"{gnn_better}/{n} → H4 **{'supported' if ok else ('not supported' if bad else 'inconclusive')}**.")]
+            agg["H4"] = {"rows": rows, "same_as_cs": same, "gnn_better": gnn_better, "n": n}
     if not_run:
         md += ["", "## Not run", ""] + [f"- {r['dataset']} split {r['split']}: {r['reason']}" for r in not_run]
 

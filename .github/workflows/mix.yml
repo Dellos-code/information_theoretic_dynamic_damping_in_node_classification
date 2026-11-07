@@ -71,6 +71,7 @@ jobs:
     timeout-minutes: 330
     strategy:
       fail-fast: false
+      max-parallel: 15  # leave runners for pull-request CI
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     env:
       EDSP_DATA_DIR: ${{ github.workspace }}/.edsp-cache
