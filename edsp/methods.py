@@ -32,6 +32,13 @@ def run_edsp(
 ) -> EDSPRun:
     vault = vault if vault is not None else graph.vault(split, strict=strict)
     inputs = build_inputs(graph, vault, config)
+    if (config or {}).get("operator") == "fullH" and "heterophilic_operator" not in core_kwargs:
+        # named variant EDSP-fullH: train-only estimated compatibility replaces C on heterophilic edges
+        from edsp.regimes.compat import estimate_heterophilic_compatibility
+
+        H, info = estimate_heterophilic_compatibility(inputs.edges, inputs.heterophily, vault, graph.num_classes)
+        core_kwargs = dict(core_kwargs, heterophilic_operator=H)
+        inputs.diagnostics["fullH"] = info | {"H": H.round(4).tolist()}
     result = edsp(
         inputs.edges, inputs.probabilities, inputs.heterophily, inputs.priors,
         prior_trust=inputs.prior_trust, edge_trust=inputs.edge_trust, variant=variant, **core_kwargs,  # type: ignore[arg-type]

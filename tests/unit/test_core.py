@@ -323,3 +323,21 @@ def test_diagnostics_are_bounded():
     assert len(result.regime_trace) == result.iterations
     assert len(result.entropy_trace) == result.iterations
     assert result.phi_residual_l1 >= 0
+
+
+def test_fullh_with_complement_matrix_equals_canonical_and_rejects_bad_operators():
+    rng = np.random.default_rng(0)
+    n, k = 30, 3
+    edges = np.array([(i, j) for i in range(n) for j in range(i + 1, n) if rng.random() < 0.15])
+    h = (rng.random(len(edges)) < 0.5).astype(int)
+    p = np.full(len(edges), 0.5)
+    pri = np.full((n, k), 1 / k)
+    pri[:6] = np.eye(k)[np.arange(6) % k]
+    comp = (np.ones((k, k)) - np.eye(k)) / (k - 1)
+    a = edsp(edges, p, h, pri)
+    b = edsp(edges, p, h, pri, heterophilic_operator=comp)
+    assert np.allclose(a.probabilities, b.probabilities) and a.iterations == b.iterations
+    with pytest.raises(ValueError):
+        edsp(edges, p, h, pri, heterophilic_operator=np.eye(2))
+    with pytest.raises(ValueError):
+        edsp(edges, p, h, pri, heterophilic_operator=np.full((k, k), 0.5))

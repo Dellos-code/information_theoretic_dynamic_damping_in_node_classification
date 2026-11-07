@@ -140,12 +140,10 @@ def _phi_step(
     base_entropy: np.ndarray,
     hmax: float,
     k: int,
+    operator: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    transformed = np.where(
-        h[:, None] == 0,
-        current[source],
-        (1.0 - current[source]) / (k - 1),
-    )
+    het = (1.0 - current[source]) / (k - 1) if operator is None else current[source] @ operator
+    transformed = np.where(h[:, None] == 0, current[source], het)
     aggregate = np.zeros_like(current)
     np.add.at(aggregate, target, weights[:, None] * transformed)
     aggregate[den == 0] = 1.0 / k
@@ -216,8 +214,14 @@ def edsp(
     beta: float = 1.0,
     order: str = "id",
     seed: int | None = None,
+    heterophilic_operator: np.ndarray | None = None,
 ) -> EDSPResult:
-    """Run canonical EDSP or one of the explicitly named iteration variants."""
+    """Run canonical EDSP or one of the explicitly named iteration variants.
+
+    ``heterophilic_operator`` (named variant EDSP-fullH, Master Prompt §2.5): a k×k
+    row-stochastic matrix M applied to heterophilic messages as V M instead of the
+    canonical complement C(V) = V (J − I)/(k − 1). None (default) keeps the canonical
+    complement; canonical EDSP itself is never altered (R5)."""
     if variant not in {"EDSP-canonical", "EDSP-GS", "EDSP-damped"}:
         raise ValueError(f"unknown EDSP variant: {variant}")
     if variant == "EDSP-canonical" and not np.isclose(beta, 1.0):
@@ -228,6 +232,11 @@ def edsp(
         raise ValueError("order must be 'id' or 'random'")
     v, p, clipped = trust_calibrate(priors, np.asarray(probabilities), prior_trust, edge_trust)
     n, k = v.shape
+    M = None
+    if heterophilic_operator is not None:
+        M = np.asarray(heterophilic_operator, dtype=np.float64)
+        if M.shape != (k, k) or np.any(M < 0) or not np.allclose(M.sum(axis=1), 1.0):
+            raise ValueError("heterophilic_operator must be a k x k row-stochastic matrix")
     edges, p, h = _directed_edges(n, np.asarray(edges), p, np.asarray(heterophily))
     source, target = edges[:, 0], edges[:, 1]
     log_odds = -np.log1p(-p)
@@ -262,9 +271,9 @@ def edsp(
                 end = offsets[target_node + 1]
                 incoming = slice(start, end)
                 if end > start:
-                    transformed = np.where(
-                        h[incoming, None] == 0, next_values[source[incoming]], (1.0 - next_values[source[incoming]]) / (k - 1)
-                    )
+                    src_vals = next_values[source[incoming]]
+                    het_vals = (1.0 - src_vals) / (k - 1) if M is None else src_vals @ M
+                    transformed = np.where(h[incoming, None] == 0, src_vals, het_vals)
                     aggregate_node = np.sum(weights[incoming, None] * transformed, axis=0)
                 else:
                     aggregate_node = np.full(k, 1.0 / k)
@@ -300,6 +309,7 @@ def edsp(
                 base_entropy,
                 hmax,
                 k,
+                M,
             )
             next_values = (1 - beta) * current + beta * proposed
             next_values = np.maximum(next_values, 0.0)
@@ -322,7 +332,7 @@ def edsp(
             converged = True
             break
 
-    phi_next, _, _ = _phi_step(current, v, source, target, h, weights, den, p_esc, base_entropy, hmax, k)
+    phi_next, _, _ = _phi_step(current, v, source, target, h, weights, den, p_esc, base_entropy, hmax, k, M)
 
     return EDSPResult(
         probabilities=current,

@@ -21,6 +21,9 @@ on:
       max_splits:
         description: "Splits per seed"
         default: "3"
+      extra_args:
+        description: "Extra runner flags, e.g. --fullh (E5)"
+        default: ""
       seed_offset:
         description: "First re-wiring seed (A4 confirmatory run: 10)"
         default: "0"
@@ -56,7 +59,7 @@ jobs:
             BASES="cora"; SPECS="global:h=0.2 uniform permutation:h=0.1"; EXTRA="--perturb-seeds 1 --max-splits 1"
           else
             BASES="${{ inputs.bases }}"; SPECS="${{ inputs.specs }}"; [ -z "$SPECS" ] && SPECS="$SWEEP"
-            EXTRA="--perturb-seeds ${{ inputs.seeds }} --perturb-seed-offset ${{ inputs.seed_offset }} --max-splits ${{ inputs.max_splits }}"
+            EXTRA="--perturb-seeds ${{ inputs.seeds }} --perturb-seed-offset ${{ inputs.seed_offset }} --max-splits ${{ inputs.max_splits }} ${{ inputs.extra_args }}"
           fi
           M=$(python3 -c 'import json,sys; b,s=sys.argv[1].split(),sys.argv[2].split(); print(json.dumps({"include":[{"base":x,"spec":y} for x in b for y in s]}))' "$BASES" "$SPECS")
           echo "matrix=$M" >> "$GITHUB_OUTPUT"
