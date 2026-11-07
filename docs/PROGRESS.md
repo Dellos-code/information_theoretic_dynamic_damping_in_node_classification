@@ -43,6 +43,8 @@
 
 - PR-10 (H3): named variant EDSP-fullH in the core (`heterophilic_operator`, canonical unchanged), train-only Ĥ estimator, runner `--fullh`, H3 table in the aggregate, `extra_args` workflow input, PREREGISTRATION A5.
 
+- PR-11: Congress signed networks (8 graphs). PR-12: Track-B / E3 — PyTorch GNN baselines (MLP, GCN+, SAGE+, GAT+, GPR-GNN, BWGNN), `run_e1.py --track B --gnn`, H4 analysis (PREREGISTRATION A7).
+
 ## Remaining
 - Confirmatory MIX run (A4); YelpChi in E2.
 
