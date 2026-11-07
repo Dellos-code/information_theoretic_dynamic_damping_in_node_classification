@@ -17,6 +17,9 @@ on:
       datasets:
         description: "Space-separated dataset names (empty = every dataset of the suite)"
         default: ""
+      extra_args:
+        description: "Extra runner flags, e.g. --fullh (E5)"
+        default: ""
       chunks:
         description: "Datasets run as one job per split range, as name:n_splits:splits_per_job"
         default: "yelpchi:10:1 amazon-fraud:10:2 questions:10:2 coauthor-physics:10:2"
@@ -54,7 +57,7 @@ jobs:
             if [ -n "${{ inputs.datasets }}" ]; then
               LIST=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1].split()))' "${{ inputs.datasets }}")
             else
-              LIST=$(python3 -c 'import json,sys; d=json.load(open("data/REGISTRY.json"))["datasets"]; e2=lambda v: v.get("cell") in ("C3a","C5"); print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins" and (e2(v) if sys.argv[1]=="E2" else not e2(v) or k=="sampson"))))' "$SUITE")
+              LIST=$(python3 -c 'import json,sys; d=json.load(open("data/REGISTRY.json"))["datasets"]; e2=lambda v: v.get("cell") in ("C3a","C5"); print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins" and (e2(v) if sys.argv[1]=="E2" else not e2(v) or k=="sampson"))))' "$([ "$SUITE" = E2 ] && echo E2 || echo E1)")
             fi
             CH="${{ inputs.chunks }}"
             LIST=$(python3 -c '
@@ -72,7 +75,9 @@ jobs:
                   inc.append({"dataset": n, "range": "", "tag": n})
           print(json.dumps(inc))' "$LIST" "$CH")
             echo "datasets=$LIST" >> "$GITHUB_OUTPUT"
-            if [ -n "${{ inputs.max_splits }}" ]; then echo "extra=--max-splits ${{ inputs.max_splits }}" >> "$GITHUB_OUTPUT"; else echo "extra=" >> "$GITHUB_OUTPUT"; fi
+            EX="${{ inputs.extra_args }}"
+            if [ -n "${{ inputs.max_splits }}" ]; then EX="$EX --max-splits ${{ inputs.max_splits }}"; fi
+            echo "extra=$EX" >> "$GITHUB_OUTPUT"
           fi
 
   run:

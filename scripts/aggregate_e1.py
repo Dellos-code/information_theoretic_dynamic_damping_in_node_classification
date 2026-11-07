@@ -25,7 +25,7 @@ sys.path.insert(0, str(ROOT))
 
 from edsp.eval.stats_tests import bootstrap_ci, friedman_nemenyi, holm, wilcoxon_paired
 
-METHODS = ["EDSP-default", "EDSP-tuned", "majority", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote", "signed_lgc"]
+METHODS = ["EDSP-default", "EDSP-tuned", "EDSP-fullH-default", "EDSP-fullH-tuned", "majority", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote", "signed_lgc"]
 RANKED = ["EDSP-default", "EDSP-tuned", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp"]
 BASELINES = ["harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "train_prior", "signed_vote", "signed_lgc"]
 # case studies (tiny or label-leaking by construction, Master Prompt §3.1 C5.3): reported, never ranked
@@ -71,7 +71,8 @@ def main() -> int:
 
     agg: dict = {"git_sha": shas, "runners": runners, "datasets": {}, "not_run": not_run}
     title = {"E1": "E1 — Track-A EDSP vs B0/B1 Track-A baselines",
-             "E2": "E2 — native-polarity graphs (signed, relation-typed): Track-A EDSP vs Track-A baselines"}
+             "E2": "E2 — native-polarity graphs (signed, relation-typed): Track-A EDSP vs Track-A baselines",
+             "E5": "E5 — EDSP-fullH (estimated compatibility instead of the complement), H3"}
     md = ["# " + title.get(args.suite, args.suite), "",
           (f"Run records: {len(recs)} (git {', '.join(shas)}; runners {', '.join(runners)}). "
           "Headline metric per dataset in brackets; mean ± std over splits (×100). "
@@ -241,6 +242,48 @@ def main() -> int:
                 md += ["", f"Average ranks ({len(full_c)} datasets; Friedman p = {fn['friedman_p']:.3g}): "
                        + ", ".join(f"{RANKED[i]} {fn['average_ranks'][i]:.2f}" for i in order) + "."]
             agg["mixed_cells"][cname] = entry
+
+    # H3 (PREREGISTRATION A5): EDSP-fullH-tuned vs EDSP-tuned
+    if any(values(d, "EDSP-fullH-tuned") for d in real):
+        from scipy.stats import spearmanr
+
+        c3d = cells_def[next(c for c in cells_def if c.startswith("C3d"))] if pool else []
+        rows = []
+        for d in real:
+            a, b = values(d, "EDSP-fullH-tuned"), values(d, "EDSP-tuned")
+            common = sorted(set(a) & set(b))
+            if len(common) < 2:
+                continue
+            x, y = np.array([a[s] for s in common]), np.array([b[s] for s in common])
+            rows.append((d, float(np.mean(x - y)), wilcoxon_paired(x, y), d in c3d,
+                         int(dstats[d]["stats"]["num_classes"]) if d in dstats else None,
+                         np.mean(list(values(d, "linbp").values())) if values(d, "linbp") else np.nan, float(np.mean(x))))
+        prim = [r for r in rows if r[3]]
+        adj = dict(zip([r[0] for r in prim], holm([r[2] for r in prim]), strict=True))
+        md += ["", "## H3 — EDSP-fullH-tuned vs EDSP-tuned (PREREGISTRATION A5)", "",
+               ("Δ = mean paired difference of the headline metric (×100); p = two-sided Wilcoxon over splits; "
+               "primary test on the C3d datasets with Holm across them."), "",
+               "| dataset | k | C3d | EDSP-fullH-tuned | Δ vs EDSP-tuned | p | p (Holm, C3d) | verdict | LinBP |", "|---|---|---|---|---|---|---|---|---|"]
+        wins = losses = 0
+        for d, delta, pv, isc, k, lin, fh in rows:
+            ph = adj.get(d)
+            verdict = "—"
+            if ph is not None:
+                verdict = "win" if ph < 0.05 and delta > 0 else ("loss" if ph < 0.05 and delta < 0 else "tie")
+                wins += verdict == "win"
+                losses += verdict == "loss"
+            md.append(f"| {d} | {k} | {'yes' if isc else ''} | {100 * fh:.2f} | {100 * delta:+.2f} | {pv:.3g} | "
+                      f"{'' if ph is None else f'{ph:.3g}'} | {verdict} | {100 * lin:.2f} |")
+        ks = [(r[4], r[1]) for r in rows if r[4] is not None]
+        rho, p_two = spearmanr([k for k, _ in ks], [g for _, g in ks]) if len(ks) >= 3 else (np.nan, np.nan)
+        p_one = (p_two / 2 if rho > 0 else 1 - p_two / 2) if np.isfinite(p_two) else np.nan
+        n = len(prim)
+        label = "supported" if wins >= 3 and losses == 0 else ("not supported" if wins <= 1 else "inconclusive")
+        md += ["", (f"C3d: {wins} win / {n - wins - losses} tie / {losses} loss → H3 (part 1) **{label}**. "
+               f"Gap vs k over all {len(ks)} datasets: Spearman ρ = {rho:.2f}, one-sided p = {p_one:.3g} → "
+               f"H3 (part 2) **{'supported' if np.isfinite(p_one) and p_one < 0.05 else 'not supported'}**.")]
+        agg["H3"] = {"rows": [dict(zip(["dataset", "delta", "p", "c3d", "k", "linbp", "fullh"], r, strict=True)) for r in rows],
+                     "c3d_wins": wins, "c3d_losses": losses, "part1": label, "spearman_rho": rho, "spearman_p_one_sided": p_one}
     if not_run:
         md += ["", "## Not run", ""] + [f"- {r['dataset']} split {r['split']}: {r['reason']}" for r in not_run]
 

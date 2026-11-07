@@ -121,6 +121,27 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A5 (2026-11-07, PR-10) — H3 decision rule and the E5 run
+
+Reason: H3 had no numeric decision rule. Variant: EDSP-fullH (Master Prompt §2.5)
+— on edges with h_ij = 1 the message is V Ĥ instead of C(V); Ĥ = row-normalised,
+Laplace-smoothed (+1) class counts on the train–train edges with h_ij = 1
+(`edsp/regimes/compat.py`); canonical complement if there are none.
+EDSP-fullH-default uses the EDSP-default inputs, EDSP-fullH-tuned the same
+9-configuration grid as EDSP-tuned, validation-selected (R6).
+Run (suite E5): every E1 dataset, all splits, `--fullh`.
+Part 1: on the five C3d datasets of A1 (wikics, questions, amazon-computers,
+roman-empire, coauthor-cs), EDSP-fullH-tuned vs EDSP-tuned, two-sided Wilcoxon
+over splits, Holm across the five; **supported** if ≥ 3 wins and no loss, **not
+supported** if ≤ 1 win, else **inconclusive**.
+Part 2 ("the gap grows with k"): Spearman correlation between k and the mean
+paired gap over all real E1 datasets, one-sided (ρ > 0), α = 0.05.
+Secondary, exploratory: EDSP-fullH vs LinBP-MCE on the same data, and a MIX run
+with `--fullh` on global h = 0 and 0.2, permutation h = 0.1 and 0.3, and community
+(seeds 10–19 × 3 splits; PERTURBED-REAL).
+Already run when written: only smoke tests (cora / citeseer / chameleon-filtered,
+2 splits; cora permutation h = 0.1, 1 seed).
+
 ### A3 (2026-11-06, PR-8) — stratified accuracy bins
 
 §5.7 specifies local-homophily bins of width 0.1 and per-degree bins; PR-3 had

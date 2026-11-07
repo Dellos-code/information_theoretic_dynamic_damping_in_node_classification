@@ -259,3 +259,18 @@ def test_learned_fallbacks_and_invalid_decision():
     assert "H-ALL0" in pol.diagnostics["status"] and not pol.h.any()
     with pytest.raises(ValueError):
         H.h_learned(g, g.vault(0), "A", decision="nope")
+
+
+def test_fullh_compatibility_uses_train_labels_only_and_falls_back():
+    from edsp.regimes.compat import estimate_heterophilic_compatibility
+
+    g = toy_graph()
+    v = g.vault(0)
+    h1 = np.ones(len(g.edges), dtype=int)
+    H, info = estimate_heterophilic_compatibility(g.edges, h1, v, g.num_classes)
+    g2 = with_test_labels_changed(g)
+    H2, _ = estimate_heterophilic_compatibility(g2.edges, h1, g2.vault(0), g.num_classes)
+    assert np.allclose(H.sum(axis=1), 1) and np.array_equal(H, H2) and info["fallback"] is None
+    assert v.test_accesses_outside_evaluate() == []
+    H0, info0 = estimate_heterophilic_compatibility(g.edges, np.zeros(len(g.edges), dtype=int), v, g.num_classes)
+    assert info0["fallback"] == "complement" and np.allclose(np.diag(H0), 0)

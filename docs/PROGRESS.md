@@ -41,6 +41,8 @@
 
 - Results (2026-11-06): E1 re-run with §5.7 bins and C3c/C3d (docs/E1_REPORT.md), E2 on signed and relation-typed graphs (docs/E2_REPORT.md; YelpChi pending), exploratory MIX sweep (docs/MIX_REPORT.md); PREREGISTRATION A4 fixes the confirmatory MIX run.
 
+- PR-10 (H3): named variant EDSP-fullH in the core (`heterophilic_operator`, canonical unchanged), train-only Ĥ estimator, runner `--fullh`, H3 table in the aggregate, `extra_args` workflow input, PREREGISTRATION A5.
+
 ## Remaining
 - Confirmatory MIX run (A4); YelpChi in E2.
 

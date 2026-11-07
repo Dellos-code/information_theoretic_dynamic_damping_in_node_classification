@@ -46,6 +46,7 @@ from edsp.data.registry import dataset_entry, datasets_with_loader
 from edsp.data.stats import DEGREE_BINS, degree_bins, label_stats, local_homophily_bins
 from edsp.eval.evaluate import evaluate, stratified_accuracy
 from edsp.regimes import build_inputs
+from edsp.regimes.compat import estimate_heterophilic_compatibility
 from edsp.regimes.inputs import _polarity
 from edsp.selection import validation_score
 
@@ -116,6 +117,8 @@ def main() -> int:
     ap.add_argument("--h7-splits", type=int, default=3)
     ap.add_argument("--gs-max-iter", type=int, default=300)
     ap.add_argument("--suite", default="E1")
+    ap.add_argument("--fullh", action="store_true",
+                    help="also run the named variant EDSP-fullH (default and tuned; H3 / suite E5)")
     ap.add_argument("--split-range", default=None,
                     help="START:STOP — run only splits[START:STOP] (one CI job per range on large graphs)")
     ap.add_argument("--perturb", nargs="*", default=None,
@@ -195,6 +198,13 @@ def main() -> int:
                 if not res.converged:
                     rec["metrics_mean_last_two"] = evaluate(vault, 0.5 * (res.last_iterates[0] + res.last_iterates[1]))
                 emit(rec, t0)
+                if args.fullh:
+                    t0 = time.perf_counter()
+                    H, hinfo = estimate_heterophilic_compatibility(inp.edges, inp.heterophily, vault, g.num_classes)
+                    rf = run_core(inp, heterophilic_operator=H)
+                    emit({"split": sid, "method": "EDSP-fullH-default", "track": "A", "config": cfg | {"operator": "fullH"},
+                          "metrics": scored(vault, rf.probabilities, bins), "diagnostics": edsp_diagnostics(rf),
+                          "fullH": hinfo | {"H": H.round(4).tolist()}}, t0)
 
                 # ---------------- H7(c) and named variants on the first splits
                 if si < args.h7_splits:
@@ -214,6 +224,7 @@ def main() -> int:
                 t0 = time.perf_counter()
                 pol_cache: dict[str, object] = {}
                 cands = []
+                fcands: list = []
                 for c in tuned_grid(signed, relation):
                     key = json.dumps(c["h"], sort_keys=True)
                     if key not in pol_cache:
@@ -221,12 +232,23 @@ def main() -> int:
                     i = build_inputs(g, vault, c, polarity=pol_cache[key])  # type: ignore[arg-type]
                     r = run_core(i)
                     cands.append((c, r, validation_score(vault, r.probabilities, metric)))
+                    if args.fullh:
+                        H, hinfo = estimate_heterophilic_compatibility(i.edges, i.heterophily, vault, g.num_classes)
+                        rf = run_core(i, heterophilic_operator=H)
+                        fcands.append((c | {"operator": "fullH"}, rf, validation_score(vault, rf.probabilities, metric), hinfo))
                 best = int(np.argmax([s if np.isfinite(s) else -np.inf for _, _, s in cands]))
                 c, r, _ = cands[best]
                 emit({"split": sid, "method": "EDSP-tuned", "track": "A", "config": c,
                       "metrics": scored(vault, r.probabilities, bins), "diagnostics": edsp_diagnostics(r),
                       "selection": {"metric": metric, "val_scores": [s for _, _, s in cands],
                                     "grid": [cc for cc, _, _ in cands], "chosen_index": best}}, t0)
+                if fcands:
+                    fb = int(np.argmax([s if np.isfinite(s) else -np.inf for _, _, s, _ in fcands]))
+                    c, r, _, hinfo = fcands[fb]
+                    emit({"split": sid, "method": "EDSP-fullH-tuned", "track": "A", "config": c,
+                          "metrics": scored(vault, r.probabilities, bins), "diagnostics": edsp_diagnostics(r),
+                          "fullH": hinfo, "selection": {"metric": metric, "val_scores": [s for _, _, s, _ in fcands],
+                                                        "chosen_index": fb}}, t0)
 
                 # ---------------- baselines
                 for b in TRACK_A_BASELINES + (["signed_vote", "signed_lgc"] if signed else []):
