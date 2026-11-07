@@ -1,4 +1,8 @@
-# E2 report — native-polarity real graphs (signed, relation-typed), Track-A
+# E2 report
+
+> Corrected on 2026-11-07 after an independent audit (docs/AUDIT_2026-11-07.md):
+> every number reproduced; text corrections in §1 (ranking), §2–3 (calibration
+> withdrawn, H7, default vs tuned, Holm verdict, unsigned low-h accuracies), §4. — native-polarity real graphs (signed, relation-typed), Track-A
 
 **Scope.** Track-A (labels and graph only) on the real graphs whose edges carry
 their own polarity information:
@@ -24,7 +28,8 @@ for signed graphs that runs without a GNN). GNN baselines for signed graphs
 **Provenance (R1).** 1,672 run records in `results/runs/e2/`: the Congress graphs
 from Actions run
 [42366240266](https://github.com/Dellos-code/information_theoretic_dynamic_damping_in_node_classification/actions/runs/42366240266)
-(commit 08499fa of PR-11, which adds only the Congress loader); every other dataset except
+(commit 08499fa of PR-11; relative to 2ff5600 it also contains PR-9/PR-10 code — the
+split-chunking and the EDSP-fullH operator, which is behaviour-preserving when unused); every other dataset except
 YelpChi from Actions run
 [42214156507](https://github.com/Dellos-code/information_theoretic_dynamic_damping_in_node_classification/actions/runs/42214156507)
 (commit 2ff5600); YelpChi (`yelpchi.part00–09.jsonl`, one CI job per split) from run
@@ -71,12 +76,18 @@ significant loss; with the eight Congress graphs added to the family it is a tie
 Both readings come from the same records; the defensible summary is "no
 detectable difference to signed_lgc on any signed graph".
 
-Friedman over all 11 real datasets: p = 1.4e-5, CD = 3.17; average ranks EDSP-tuned
-1.73, EDSP-default 2.45, LGC 4.36, LinBP 4.45, PPR-LP 5.36, train prior 5.45,
-harmonic+CMN 6.00, harmonic 6.18. **These ranks exclude signed_vote and
-signed_lgc** (they do not run on the relation-typed graphs), i.e. they rank EDSP only
-against methods that ignore edge signs. Without the 8 Congress graphs (A6): 3
-datasets, p = 0.055 — not informative.
+**Primary ranking (corrected after the independent audit, docs/AUDIT_2026-11-07.md
+B2):** over the 9 ranked signed graphs, with the signed baselines included:
+signed_lgc 1.94, signed_vote 2.28, **EDSP-tuned 2.67**, EDSP-default 3.11
+(Friedman p = 8.9e-11, CD = 4.52; no significant difference among the sign-aware
+methods). **EDSP is third, not first.** Caveats: 8 of these 9 graphs are Congress
+chamber-sessions (one data source, not independent), and the Senate test sets have
+19–21 nodes (one node = 5 points), so the ties with the signed baselines are
+low-power non-results.
+
+The ranking over all 11 real datasets (p = 1.4e-5; EDSP-tuned 1.73) leaves out
+signed_vote and signed_lgc, which do not run on the relation-typed graphs; it ranks
+EDSP only against sign-blind methods and is not a headline result.
 
 ## 2. Accuracy by local homophily (§5.7)
 
@@ -85,9 +96,9 @@ Accuracy ×100, pooled over splits.
 
 | dataset | low-h test nodes | EDSP-tuned low / high | signed_lgc | LGC | harmonic+CMN | LinBP |
 |---|---|---|---|---|---|---|
-| wiki-editor | 4,847 | **71.8** / 91.3 | 72.0 / 91.4 | 24.7 / 94.2 | 10.9 / 97.0 | 6.2 / 97.0 |
-| wiki-elec† | 1,122 | **64.4** / 97.3 | 61.5 / 98.4 | 4.3 / 98.7 | 19.4 / 89.9 | 0.3 / 99.1 |
-| wiki-rfa† | 657 | **70.0** / 86.8 | 70.2 / 94.9 | 6.8 / 98.5 | 13.1 / 98.6 | 2.6 / 97.8 |
+| wiki-editor | 4,847 | 71.8 / 91.3 | 72.0 / 91.4 | 24.7 / 94.2 | 10.9 / 97.0 | 6.2 / 97.0 |
+| wiki-elec† | 1,122 | 64.4 / 97.3 | 61.5 / 98.4 | 4.3 / 98.7 | 19.4 / 89.9 | 0.3 / 99.1 |
+| wiki-rfa† | 657 | 70.0 / 86.8 | 70.2 / 94.9 | 6.8 / 98.5 | 13.1 / 98.6 | 2.6 / 97.8 |
 | amazon-fraud | 2,979 | 1.7 / 99.8 | — | 0.0 / 100.0 | 0.0 / 100.0 | 0.1 / 100.0 |
 | congress (8 graphs, pooled) | 784 | 98.0 / 69.3 | 100.0 / 52.1 | 18.8 / 99.2 | 0.0 / 100.0 | 85.5 / 62.6 |
 | yelpchi | 23,368 | 0.4 / 99.7 | — | 0.1 / 99.9 | 0.1 / 99.9 | 0.1 / 99.9 |
@@ -105,11 +116,13 @@ classifies some heterophilic nodes (5.2 %), at the price of the homophilic ones
   at or below the majority class (52–56 %). The sign-aware methods reach 96–98 %: EDSP-tuned beats every
   unsigned baseline on all 8 graphs and ties signed_vote and signed_lgc on all 8.
 - **Signed graphs: this is where the polarity mechanism works.** With native signs
-  EDSP classifies heterophilic nodes (local homophily < 0.3) at 64–72 %, where every
-  unsigned propagation method is at 0–25 %. On wiki-editor that lifts it 9.6 points
-  above the best unsigned baseline (LGC) and 1.8 above the signed majority vote.
-  It does **not** beat the signed-Laplacian label spreading baseline: −0.31 on
-  wiki-editor (significant), −1.1 and −4.4 on the two case studies. Both use the
+  EDSP classifies heterophilic nodes (local homophily < 0.3) at 64–72 % on the three
+  Wikipedia graphs, where LGC, harmonic+CMN and LinBP are at 0–25 % (on Congress,
+  LinBP reaches 85.5 % on those nodes, EDSP 98.0 %). On wiki-editor that lifts EDSP
+  9.6 points above the best unsigned baseline (LGC) and 1.8 above the signed
+  majority vote. It does **not** beat the signed-Laplacian label spreading
+  baseline: −0.31 on wiki-editor (raw p = 0.02, Holm-adjusted p = 0.14 under the
+  pre-registered family of A6: a tie), −1.1 and −4.4 on the two case studies. Both use the
   same information (signs + train labels); signed_lgc is better on the
   homophilic side (wiki-rfa high-h nodes 94.9 vs 86.8), i.e. EDSP loses accuracy
   on the nodes that plain propagation already gets right.
@@ -120,26 +133,39 @@ classifies some heterophilic nodes (5.2 %), at the price of the homophilic ones
   far from what the published fraud detectors (CARE-GNN, PC-GNN, BWGNN, GAGA)
   report on YelpChi; those use node features, so they belong to the PR-6 / Track-B
   comparison, not to this table. Neither EDSP nor any baseline classifies the
-  heterophilic (fraud-adjacent) nodes: low-h accuracy ≤ 1.7 %. With labels only, the
+  heterophilic (fraud-adjacent) nodes: low-h accuracy ≤ 1.7 % for EDSP-tuned and
+  every baseline (EDSP-default: 7.3 % on amazon-fraud, 5.2 % on yelpchi). With labels only, the
   per-relation polarities learned from train–train edges carry little
   information beyond the base rate.
-- **EDSP-default vs EDSP-tuned:** identical on signed graphs (the native signs fix
-  the polarity, tuning p0 changes nothing); on amazon-fraud tuning adds 1.9 AUC
-  points.
-- **Calibration:** on the signed graphs EDSP has the lowest NLL of all methods
-  (wiki-editor: EDSP-tuned 0.41, LGC 0.52, signed_vote 2.52, signed_lgc 2.81 — the
-  two signed baselines turn scores into probabilities by a shift, so their
-  probabilities are poor even where their accuracy is high); on amazon-fraud
-  harmonic+CMN is better (0.268 vs EDSP-default 0.276).
-- **H7:** no non-convergence and no oscillation on any E2 graph; GS and damped
-  fixed points coincide.
+- **EDSP-default vs EDSP-tuned:** close on most signed graphs, but not identical:
+  congress-house-93 +7.30 (73.15 → 80.45), house-100 +0.56, senate-100 +0.50,
+  senate-114 −0.50, wiki-editor −0.03; on amazon-fraud tuning adds 1.9 AUC points.
+  EDSP-tuned's grid includes H-LEARNED, which runs its own nested validation search
+  (6 l2 values), so its tuning budget is larger than the baselines' 9 points (audit
+  B6); its gains over EDSP-default are therefore slightly optimistic.
+- **Calibration — no claim (withdrawn after the audit, B1).** The raw NLL table
+  makes EDSP look best on signed graphs, but the comparison is not meaningful: the
+  signed baselines map scores to probabilities with a 1e-9 floor, so every wrong
+  prediction costs ≈ 20.7 nats; with a single validation-fitted confidence their
+  NLL is at or below EDSP's on 10 of 11 signed graphs, and on ECE EDSP is worse than
+  signed_lgc on 7 of 8 Congress graphs. No calibration test was pre-registered or
+  run. A fair comparison needs every method recalibrated on validation (temperature
+  or Platt scaling) before NLL/ECE are compared.
+- **H7:** EDSP-default converged on every E2 run. EDSP-tuned did **not** on 2 of 10
+  YelpChi splits (rand0, rand5: H-LEARNED, p0 = 0.9): 1,000 iterations, flagged
+  period-2 oscillating, amplitude 0.94 (L1). The pre-registered "mean of the last two
+  iterates" column was computed only for EDSP-default, so it is missing for these two
+  runs (runner fixed in the audit-corrections PR for future runs).
 
 ## 4. Limitations
 
 - YelpChi's first job (one job for all 10 splits) exceeded the GitHub job budget;
   the records here come from the re-run with one job per split (PR-9).
-- Only three ranked datasets; any claim about "signed graphs in general"
-  needs Bitcoin OTC / Alpha and the Congress networks (acquisition pending).
+- 11 ranked datasets, 8 of them Congress chamber-sessions from one source;
+  Bitcoin OTC / Alpha were not added (their labels derive from the ratings).
+- Bold in `results/aggregates/e2/E2_SUMMARY.md` marks the best mean, not a
+  significant difference (Master Prompt §6.5 asks for the latter; e.g. amazon-fraud
+  82.87 and congress-house-93 80.45 are ties).
 - GNN baselines for signed and fraud graphs (PR-6) and Track-B (features) are not
   run.
 - Mercado et al.'s GL (diffuse-interface) method is not implemented; `signed_lgc`

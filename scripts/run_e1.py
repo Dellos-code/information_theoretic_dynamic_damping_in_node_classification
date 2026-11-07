@@ -101,6 +101,14 @@ def scored(vault, probs, bins) -> dict:
         "degree": stratified_accuracy(vault, probs, bins[1], DEGREE_BINS)}}
 
 
+def secondary(vault, res) -> dict:
+    """Pre-registered secondary column for a non-converged EDSP run: metrics of the
+    mean of the last two iterates (PREREGISTRATION §2; every EDSP method, audit C2)."""
+    if res.converged:
+        return {}
+    return {"metrics_mean_last_two": evaluate(vault, 0.5 * (res.last_iterates[0] + res.last_iterates[1]))}
+
+
 def edsp_diagnostics(res) -> dict:
     prev, last = res.last_iterates
     moving = np.abs(last - prev).sum(axis=1) >= EPS
@@ -209,6 +217,7 @@ def main() -> int:
                     rf = run_core(inp, heterophilic_operator=H)
                     emit({"split": sid, "method": "EDSP-fullH-default", "track": args.track, "config": cfg | {"operator": "fullH"},
                           "metrics": scored(vault, rf.probabilities, bins), "diagnostics": edsp_diagnostics(rf),
+                          **secondary(vault, rf),
                           "fullH": hinfo | {"H": H.round(4).tolist()}}, t0)
 
                 # ---------------- H7(c) and named variants on the first splits
@@ -245,6 +254,7 @@ def main() -> int:
                 c, r, _ = cands[best]
                 emit({"split": sid, "method": "EDSP-tuned", "track": args.track, "config": c,
                       "metrics": scored(vault, r.probabilities, bins), "diagnostics": edsp_diagnostics(r),
+                      **secondary(vault, r),
                       "selection": {"metric": metric, "val_scores": [s for _, _, s in cands],
                                     "grid": [cc for cc, _, _ in cands], "chosen_index": best}}, t0)
                 if fcands:
@@ -252,6 +262,7 @@ def main() -> int:
                     c, r, _, hinfo = fcands[fb]
                     emit({"split": sid, "method": "EDSP-fullH-tuned", "track": args.track, "config": c,
                           "metrics": scored(vault, r.probabilities, bins), "diagnostics": edsp_diagnostics(r),
+                          **secondary(vault, r),
                           "fullH": hinfo, "selection": {"metric": metric, "val_scores": [s for _, _, s, _ in fcands],
                                                         "chosen_index": fb}}, t0)
 
