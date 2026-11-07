@@ -121,6 +121,30 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A8 (2026-11-07, PR-13) — testing the two caveats of the MIX wins
+
+The confirmed MIX wins (A4) are on re-wired graphs, mostly k = 2 with heterogeneous
+mixing, and rely on H-LEARNED; two caveats were raised: (i) no real graph shows them;
+(ii) the generator's locality rule (80 % of partners from the same stratum) makes edge
+polarity predictable from structure. Both are tested here, before any of these runs.
+
+(i) **Sign-blind real graphs (suite E2U).** The real k = 2 graphs with native polarity —
+congress-{house,senate}-{93,100,107,114}, wiki-editor (ranked), wiki-rfa, wiki-elec (case
+studies), amazon-fraud and yelpchi (relations removed) — are run with their signs /
+relation types *removed* (`run_e1.py --drop-signs`): same nodes, labels, splits and
+edges; EDSP must recover polarity from structure (H-LEARNED) exactly as in MIX.
+Test per ranked dataset: EDSP-tuned vs the best of harmonic, harmonic+CMN, LGC, PPR-LP,
+LinBP (by mean), two-sided Wilcoxon over splits, Holm across the 11 ranked datasets.
+"The MIX advantage transfers to real graphs" is **supported** if EDSP-tuned has ≥ 3 wins
+and more wins than losses, **not supported** if ≤ 1 win, else **inconclusive**.
+(ii) **No locality (MIX-loc0).** The heterogeneous k = 2 conditions of MIX on
+wiki-editor (beta (0.5, 0.5), (0.2, 0.5), (0.5, 5), (0.8, 0.5), uniform, logistic,
+regional 20, community) and the two amazon-ratings beta wins, re-run with `loc = 0`
+(partners drawn from the whole target class), fresh seeds 20–29 × 3 splits. Same test
+as A4 (Holm over the conditions of each base). The locality caveat is **cleared** for a
+condition if it is still a significant win at loc = 0.
+Already run when written: one-split local smoke test of `--drop-signs` on wiki-editor.
+
 ### A7 (2026-11-07, PR-12) — E3 (Track B) and the H4 decision rule
 
 Methods: EDSP-default / EDSP-tuned with Track-B priors (the logistic-regression
