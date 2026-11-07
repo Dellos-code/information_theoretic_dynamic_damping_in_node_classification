@@ -23,7 +23,7 @@ def test_each_gnn_learns_the_toy_graph_and_ignores_test_labels(name, monkeypatch
     g = toy_graph()
     v = g.vault(0)
     grid = {k: vals[0] for k, vals in gnn.GNN_GRIDS[name].items()}
-    P, info = gnn.train_gnn(name, g, v, seed=0, **grid)
+    P, _ = gnn.train_gnn(name, g, v, seed=0, **grid)
     assert P.shape == (g.num_nodes, g.num_classes) and np.allclose(P.sum(1), 1, atol=1e-5)
     idx, _ = v.train_labels()
     train_acc = float(np.mean(P[idx].argmax(1) == g._labels[idx]))

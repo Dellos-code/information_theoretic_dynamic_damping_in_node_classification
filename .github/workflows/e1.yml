@@ -86,6 +86,8 @@ jobs:
     timeout-minutes: 330
     strategy:
       fail-fast: false
+      # leave free runners for the CI checks of open pull requests (20 concurrent jobs per account)
+      max-parallel: 15
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.datasets) }}
     env:
