@@ -21,6 +21,7 @@ Every run appends one JSON record to --out/<dataset>.jsonl (rule R1).
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import hashlib
 import json
 import math
@@ -130,6 +131,8 @@ def main() -> int:
     ap.add_argument("--track", choices=("A", "B"), default="A",
                     help="B = feature priors from the base predictor (suite E3): EDSP-B vs feature_lr, C&S and GNNs")
     ap.add_argument("--gnn", default="mlp,gcn,sage,gat,gprgnn,bwgnn", help="GNN baselines for --track B ('' = none)")
+    ap.add_argument("--drop-signs", action="store_true",
+                    help="run on the sign-blind view of signed / relation-typed graphs (A8)")
     ap.add_argument("--fullh", action="store_true",
                     help="also run the named variant EDSP-fullH (default and tuned; H3 / suite E5)")
     ap.add_argument("--split-range", default=None,
@@ -157,6 +160,11 @@ def main() -> int:
         if base not in loaded:
             loaded = {base: load(base)}
         g = loaded[base] if spec is None else perturb(loaded[base], spec, pseed)
+        if args.drop_signs and (g.edge_sign is not None or g.edge_relation is not None):
+            # sign-blind view of a real signed / relation-typed graph (PREREGISTRATION A8):
+            # same nodes, labels, splits and edge set, polarity information removed
+            g = dataclasses.replace(g, name=g.name + "~unsigned", edge_sign=None, edge_relation=None,
+                                    meta=dict(g.meta) | {"sign_blind_view": True})
         name = g.name
         entry = dataset_entry(base)
         metric = headline(base)
