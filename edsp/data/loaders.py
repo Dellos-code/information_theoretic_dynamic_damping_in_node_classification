@@ -571,7 +571,13 @@ def congress(name: str) -> GraphData:
     parties = [_party_of(x) for x in names]
     parsed = sum(p is not None for p in parties)
     if parsed < 0.9 * n:
-        raise ValueError(f"party parsed for only {parsed}/{n} labels; first labels: {names[:5]}")
+        with zipfile.ZipFile(path) as z:
+            names_in_zip = z.namelist()[:12]
+            first_sheet = next((x for x in z.namelist() if x.startswith("xl/worksheets/")), "")
+            raw = z.read(first_sheet)[:700].decode("utf-8", "replace") if first_sheet else ""
+        raise ValueError(f"party parsed for only {parsed}/{n} labels; first labels: {names[:5]}; "
+                         f"raw rows: {len(sheets[key])}, first raw row: {sheets[key][0][:4] if sheets[key] else None}; "
+                         f"zip: {names_in_zip}; {first_sheet}: {raw!r}")
     cls = {"D": 0, "R": 1}
     labels = np.array([cls.get(p, -1) for p in parties], dtype=np.int64)  # type: ignore[arg-type]
     iu, ju = np.nonzero(np.triu(M, 1))
