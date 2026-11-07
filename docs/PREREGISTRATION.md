@@ -121,6 +121,22 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A10 (2026-11-07, PR-16) — whose win is it: EDSP's propagation or H-LEARNED's polarity?
+
+A8 (i) found EDSP-tuned ahead of every sign-blind baseline on 7 of 8 sign-blind Congress
+graphs. In those runs EDSP-tuned selected H-LEARNED: a train-only edge classifier that
+predicts which edges are heterophilic. The win may belong to that classifier, not to
+EDSP's propagation. Ablation: feed H-LEARNED's predicted polarity, as signs
+(heterophilic → −1), to the two signed baselines (`signed_vote+HL`, `signed_lgc+HL`;
+`run_e1.py --learned-sign-baselines`), on the same sign-blind datasets as A8.
+Test per ranked dataset: EDSP-tuned vs the better (by mean) of the two, Wilcoxon over
+splits, Holm over the 11 ranked datasets. Reading fixed in advance: on the A8-win
+datasets, a significant EDSP win means EDSP's propagation adds value beyond the learned
+polarity; a tie or loss means the A8 advantage is due to the learned polarity (any signed
+propagation would get it). EDSP-tuned keeps its larger tuning budget (9 configurations
++ nested H-LEARNED search vs a 9-point α grid), which favours EDSP.
+Already run when written: smoke test on sampson only.
+
 ### A9 (2026-11-07, PR-15) — E3 on the fraud graphs: reduced GNN set
 
 The first Track-B run on amazon-fraud (4.4 M edges, 8.8 M directed) lost its runners

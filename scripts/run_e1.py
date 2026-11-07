@@ -134,6 +134,8 @@ def main() -> int:
     ap.add_argument("--gnn", default="mlp,gcn,sage,gat,gprgnn,bwgnn", help="GNN baselines for --track B ('' = none)")
     ap.add_argument("--gnn-hidden", type=int, default=256,
                     help="hidden width of the GNNs (64 for the fraud graphs = BWGNN's published setting; A9)")
+    ap.add_argument("--learned-sign-baselines", action="store_true",
+                    help="also run signed_vote / signed_lgc on H-LEARNED's predicted signs (A10 ablation)")
     ap.add_argument("--drop-signs", action="store_true",
                     help="run on the sign-blind view of signed / relation-typed graphs (A8)")
     ap.add_argument("--fullh", action="store_true",
@@ -287,6 +289,19 @@ def main() -> int:
                           "config": {"baseline": b, "chosen": info.get("chosen")},
                           "metrics": scored(vault, probs, bins),
                           "diagnostics": {k: v for k, v in info.items() if k in ("converged", "iterations", "uncovered_fraction", "solver")}}, t0)
+                if args.learned_sign_baselines and not signed and args.track == "A":
+                    # ablation (A10): the signed baselines fed with H-LEARNED's predicted polarity,
+                    # to separate the gain of the learned polarity from that of EDSP's propagation
+                    pol = _polarity(g, vault, {"name": "learned"}, "A")
+                    keep = np.ones(len(g.edges), bool) if pol.keep is None else np.asarray(pol.keep, bool)
+                    g_hl = dataclasses.replace(g, edges=g.edges[keep],
+                                               edge_sign=np.where(np.asarray(pol.h)[keep] == 1, -1.0, 1.0))
+                    for b in ("signed_vote", "signed_lgc"):
+                        t0 = time.perf_counter()
+                        probs, info = select_and_predict(b, g_hl, vault, metric)
+                        emit({"split": sid, "method": b + "+HL", "group": "B1", "track": "A",
+                              "config": {"baseline": b, "polarity": "learned", "chosen": info.get("chosen")},
+                              "metrics": scored(vault, probs, bins)}, t0)
                 for m in ([x for x in args.gnn.split(",") if x] if args.track == "B" else []):
                     t0 = time.perf_counter()
                     probs, info = select_and_predict_gnn(m, g, vault, metric, seed=si)
