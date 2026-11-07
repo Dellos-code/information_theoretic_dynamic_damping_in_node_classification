@@ -377,3 +377,56 @@ def test_stratified_accuracy_and_bins():
     probs = np.tile([1.0, 0.0], (n, 1))
     out = stratified_accuracy(g.vault(0), probs, bins, n_bins=2)
     assert sum(out["count"]) == 4 and sum(out["correct"]) == 2
+
+
+def _write_xlsx(path, sheets):
+    """Tiny XLSX writer for fixtures (inline strings and numbers only)."""
+    def col(i):
+        s = ""
+        i += 1
+        while i:
+            i, r = divmod(i - 1, 26)
+            s = chr(65 + r) + s
+        return s
+    ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+    rns = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("xl/workbook.xml", f'<workbook {ns} {rns}><sheets>' + "".join(
+            f'<sheet name="{n}" sheetId="{i + 1}" r:id="rId{i + 1}"/>' for i, n in enumerate(sheets)) + "</sheets></workbook>")
+        z.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + "".join(
+            f'<Relationship Id="rId{i + 1}" Target="worksheets/sheet{i + 1}.xml" Type="x"/>' for i in range(len(sheets))) + "</Relationships>")
+        for i, rows in enumerate(sheets.values()):
+            xml = []
+            for r, row in enumerate(rows):
+                cells = []
+                for c, v in enumerate(row):
+                    ref = f"{col(c)}{r + 1}"
+                    cells.append(f'<c r="{ref}"><v>{v}</v></c>' if isinstance(v, (int, float)) else
+                                 f'<c r="{ref}" t="inlineStr"><is><t>{v}</t></is></c>')
+                xml.append(f'<row r="{r + 1}">' + "".join(cells) + "</row>")
+            z.writestr(f"xl/worksheets/sheet{i + 1}.xml", f"<worksheet {ns}><sheetData>" + "".join(xml) + "</sheetData></worksheet>")
+
+
+def test_congress_loader_parses_signed_matrix_and_party(tmp_path):
+    import json as _json
+
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "congress"
+    d.mkdir(parents=True)
+    names = ["Adams (D-NY)", "Baker (R-TX)", "Clark (D-CA)", "Dunn (I-VT)", "Evans (R-OH)"]
+    M = np.array([[0, -1, 1, 0, -1], [-1, 0, -1, 0, 1], [1, -1, 0, 1, 0], [0, 0, 1, 0, 0], [-1, 1, 0, 0, 0]])
+    _write_xlsx(d / "a_sign_of_the_times.xlsx", {"H92": [["x"], [0]], "S100": [names] + M.tolist()})
+    (d / "figshare-8096429.json").write_text(_json.dumps({"files": [{"name": "a_sign_of_the_times.xlsx", "download_url": "https://example.invalid/x"}]}))
+    g = load("congress-senate-100")
+    assert g.num_nodes == 5 and g.num_classes == 2
+    assert g._labels.tolist() == [0, 1, 0, -1, 1]
+    got = {tuple(e): s for e, s in zip(g.edges.tolist(), g.edge_sign.tolist(), strict=True)}
+    assert got == {(0, 1): -1.0, (0, 2): 1.0, (0, 4): -1.0, (1, 2): -1.0, (1, 4): 1.0, (2, 3): 1.0}
+    assert all(3 not in s.train_idx and 3 not in s.test_idx for s in g.splits)
+
+
+def test_party_parser_formats():
+    from edsp.data.loaders import _party_of
+
+    assert [_party_of(x) for x in ["Smith (D-NY)", "SMITH_R_TX", "Jones [I-VT]", "Lee, Democrat", "nobody"]] == ["D", "R", "I", "D", None]

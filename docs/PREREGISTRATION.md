@@ -121,6 +121,19 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A6 (2026-11-07, PR-11) — Congress signed networks in E2
+
+Datasets: the signed co-sponsorship backbones of Neal (2020) for the House and the
+Senate in the 93rd, 100th, 107th and 114th Congress (one session about every 14
+years, fixed before any of them was loaded): 8 graphs, labels D / R
+(independents unlabelled), 10 stratified 60/20/20 splits, headline accuracy,
+H-NATIVE. They enter E2 like wiki-editor (ranked, Holm across datasets); because
+the 8 graphs are 2 chambers × 4 sessions and not independent samples, the E2
+report also gives the Friedman ranks with and without them. Bitcoin OTC / Alpha
+stay unregistered: their REV2 labels are defined from the ratings themselves
+(C5.3 leakage) and the label files are not reachable from the dev sandbox.
+Already run when written: nothing on these graphs (fixture test only).
+
 ### A5 (2026-11-07, PR-10) — H3 decision rule and the E5 run
 
 Reason: H3 had no numeric decision rule. Variant: EDSP-fullH (Master Prompt §2.5)

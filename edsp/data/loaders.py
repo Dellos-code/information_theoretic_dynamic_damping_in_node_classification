@@ -481,3 +481,118 @@ LOADERS.update({
     "wiki-rfa": wiki_rfa,
     "wiki-elec": wiki_elec,
 })
+
+
+# --------------------------------------------------- C5 Congress signed networks
+# Neal (2020), "A sign of the times? Weak and strong polarization in the U.S.
+# Congress, 1973-2016", Social Networks; figshare 10.6084/m9.figshare.8096429.
+# One workbook, one tab per chamber and session ("H93", "S114", ...): a square signed
+# adjacency matrix (+1 / -1 / 0) inferred from bill co-sponsorship with the SDSM
+# backbone; the header row names each legislator with party and state. The signs
+# are inferred from co-sponsorship only, so the party label is not used to build
+# the graph (no label leakage by construction).
+CONGRESS_SESSIONS = (93, 100, 107, 114)  # registered subset, one per ~14 years (PREREGISTRATION A6)
+_XLSX_NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+
+
+def _xlsx_sheets(path: Path) -> dict[str, list[list[str]]]:
+    """Minimal XLSX reader (zip + XML; no dependency): {sheet name: rows of cell strings}."""
+    import xml.etree.ElementTree as ET
+
+    def col_index(ref: str) -> int:
+        letters = re.match(r"[A-Z]+", ref).group(0)  # type: ignore[union-attr]
+        n = 0
+        for ch in letters:
+            n = n * 26 + ord(ch) - 64
+        return n - 1
+
+    rel_ns = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
+    with zipfile.ZipFile(path) as z:
+        shared: list[str] = []
+        if "xl/sharedStrings.xml" in z.namelist():
+            for si in ET.fromstring(z.read("xl/sharedStrings.xml")).findall("m:si", _XLSX_NS):
+                shared.append("".join(t.text or "" for t in si.iter(f"{{{_XLSX_NS['m']}}}t")))
+        rels = {r.get("Id"): r.get("Target") for r in ET.fromstring(z.read("xl/_rels/workbook.xml.rels"))}
+        out = {}
+        for sh in ET.fromstring(z.read("xl/workbook.xml")).find("m:sheets", _XLSX_NS):  # type: ignore[union-attr]
+            target = rels[sh.get(rel_ns)].lstrip("/")
+            target = target if target.startswith("xl/") else "xl/" + target
+            rows = []
+            for row in ET.fromstring(z.read(target)).iter(f"{{{_XLSX_NS['m']}}}row"):
+                cells: dict[int, str] = {}
+                for c in row.findall("m:c", _XLSX_NS):
+                    t, v = c.get("t"), c.find("m:v", _XLSX_NS)
+                    if t == "s" and v is not None:
+                        val = shared[int(v.text)]  # type: ignore[arg-type]
+                    elif t == "inlineStr":
+                        val = "".join(x.text or "" for x in c.iter(f"{{{_XLSX_NS['m']}}}t"))
+                    else:
+                        val = v.text if v is not None and v.text is not None else ""
+                    cells[col_index(c.get("r"))] = val  # type: ignore[arg-type]
+                rows.append([cells.get(i, "") for i in range(max(cells) + 1)] if cells else [])
+            out[sh.get("name")] = rows
+    return out
+
+
+def _party_of(label: str) -> str | None:
+    """Party letter from a legislator label such as 'Smith (D-NY)', 'SMITH_D_NY' or 'D-NY'."""
+    for pat in (r"\(([A-Z])\s*[-,]", r"\[([A-Z])\s*-", r"(?:^|[\s_,-])([DRI])(?:[\s_,-]+[A-Z]{2})(?:\W*$|[\s_)])",
+                r"(?:^|\W)(Democrat|Republican|Independent)"):
+        m = re.search(pat, label)
+        if m:
+            return m.group(1)[0]
+    return None
+
+
+def congress(name: str) -> GraphData:
+    """congress-{house,senate}-<session>: party (D / R) labels; independents and
+    unparseable labels are unlabelled (-1) and stay in the graph."""
+    chamber, session = name.split("-")[1], int(name.split("-")[2])
+    meta_path = _fetch(name, "8096429", "congress/figshare-8096429.json")
+    files = json.loads(meta_path.read_text())["files"]
+    xf = next(f for f in files if f["name"].endswith(".xlsx"))
+    path = acquisition.fetch(xf["download_url"], "congress/" + xf["name"], dataset=name, cell_id=cell_of(name),
+                             candidate_rank=1)
+    sheets = _xlsx_sheets(path)
+    tab = ("H" if chamber == "house" else "S") + str(session)
+    key = next((s for s in sheets if s.replace(" ", "").upper() == tab), None)
+    if key is None:
+        raise ValueError(f"no sheet {tab}; sheets: {sorted(sheets)[:8]}…")
+    rows = [r for r in sheets[key] if any(x != "" for x in r)]
+    header = rows[0]
+    has_row_labels = not _is_number(rows[1][0]) if len(rows) > 1 and rows[1] else False
+    names = header[1:] if has_row_labels or header[0] == "" else header
+    body = [r[1:] if has_row_labels else r for r in rows[1:]]
+    n = len(names)
+    M = np.zeros((n, n))
+    for i, r in enumerate(body[:n]):
+        vals = [float(x) if _is_number(x) else 0.0 for x in r[:n]]
+        M[i, : len(vals)] = vals
+    parties = [_party_of(x) for x in names]
+    parsed = sum(p is not None for p in parties)
+    if parsed < 0.9 * n:
+        raise ValueError(f"party parsed for only {parsed}/{n} labels; first labels: {names[:5]}")
+    cls = {"D": 0, "R": 1}
+    labels = np.array([cls.get(p, -1) for p in parties], dtype=np.int64)  # type: ignore[arg-type]
+    iu, ju = np.nonzero(np.triu(M, 1))
+    sign = M[iu, ju]
+    sign = np.where(sign != 0, sign, M.T[iu, ju])
+    edges, _, esign, report = canonicalize_edges(np.stack([iu, ju], 1), n, edge_sign=sign)
+    splits = random_splits(labels, 10, (0.6, 0.2, 0.2), seed=0)
+    report |= {"sheet": key, "header_examples": names[:3], "party_counts": {p: parties.count(p) for p in set(parties)},
+               "asymmetric_cells": int(np.sum(M != M.T)), "source": "figshare 10.6084/m9.figshare.8096429"}
+    g = GraphData(name, n, edges, 2, splits, labels, edge_sign=esign)
+    return _finish(g, report)
+
+
+def _is_number(x: str) -> bool:
+    try:
+        float(x)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+for _ch in ("house", "senate"):
+    for _s in CONGRESS_SESSIONS:
+        LOADERS[f"congress-{_ch}-{_s}"] = congress
