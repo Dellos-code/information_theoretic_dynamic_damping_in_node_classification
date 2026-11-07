@@ -424,9 +424,16 @@ def test_congress_loader_parses_signed_matrix_and_party(tmp_path):
     got = {tuple(e): s for e, s in zip(g.edges.tolist(), g.edge_sign.tolist(), strict=True)}
     assert got == {(0, 1): -1.0, (0, 2): 1.0, (0, 4): -1.0, (1, 2): -1.0, (1, 4): 1.0, (2, 3): 1.0}
     assert all(3 not in s.train_idx and 3 not in s.test_idx for s in g.splits)
+    # the layout of the real figshare file: no header row, column A = "Name (ST-P)"
+    rl = ["Adams, A. (NY-D)", "Baker, B. (TX-R)", "Clark, C. (CA-D)", "Dunn, D. (VT-I)", "Evans, E. (OH-R)"]
+    (d / "a_sign_of_the_times.xlsx").unlink()
+    _write_xlsx(d / "a_sign_of_the_times.xlsx", {"S100": [[a] + r for a, r in zip(rl, M.tolist(), strict=True)]})
+    g2 = load("congress-senate-100")
+    assert g2._labels.tolist() == [0, 1, 0, -1, 1] and g2.edges.tolist() == g.edges.tolist()
 
 
 def test_party_parser_formats():
     from edsp.data.loaders import _party_of
 
+    assert _party_of("Baucus, M. (MT-D)") == "D" and _party_of("Jeffords, J. (VT-I)") == "I"
     assert [_party_of(x) for x in ["Smith (D-NY)", "SMITH_R_TX", "Jones [I-VT]", "Lee, Democrat", "nobody"]] == ["D", "R", "I", "D", None]

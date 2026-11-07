@@ -535,8 +535,8 @@ def _xlsx_sheets(path: Path) -> dict[str, list[list[str]]]:
 
 
 def _party_of(label: str) -> str | None:
-    """Party letter from a legislator label such as 'Smith (D-NY)', 'SMITH_D_NY' or 'D-NY'."""
-    for pat in (r"\(([A-Z])\s*[-,]", r"\[([A-Z])\s*-", r"(?:^|[\s_,-])([DRI])(?:[\s_,-]+[A-Z]{2})(?:\W*$|[\s_)])",
+    """Party letter from a legislator label: 'Baucus, M. (MT-D)' (the figshare file), 'Smith (D-NY)', 'SMITH_D_NY'."""
+    for pat in (r"\([A-Z]{2}-([A-Z])\)", r"\(([A-Z])\s*[-,]", r"\[([A-Z])\s*-", r"(?:^|[\s_,-])([DRI])(?:[\s_,-]+[A-Z]{2})(?:\W*$|[\s_)])",
                 r"(?:^|\W)(Democrat|Republican|Independent)"):
         m = re.search(pat, label)
         if m:
@@ -559,10 +559,15 @@ def congress(name: str) -> GraphData:
     if key is None:
         raise ValueError(f"no sheet {tab}; sheets: {sorted(sheets)[:8]}…")
     rows = [r for r in sheets[key] if any(x != "" for x in r)]
-    header = rows[0]
-    has_row_labels = not _is_number(rows[1][0]) if len(rows) > 1 and rows[1] else False
-    names = header[1:] if has_row_labels or header[0] == "" else header
-    body = [r[1:] if has_row_labels else r for r in rows[1:]]
+    if not _is_number(rows[0][0]) and len(rows[0]) > 1 and _is_number(rows[0][1]):
+        # observed layout of the figshare file: no header row, column A = "Name (ST-P)"
+        names = [r[0] for r in rows]
+        body = [r[1:] for r in rows]
+    else:  # header-row layout, with or without a row-label column
+        header = rows[0]
+        has_row_labels = bool(len(rows) > 1 and rows[1] and not _is_number(rows[1][0]))
+        names = header[1:] if has_row_labels or header[0] == "" else header
+        body = [r[1:] if has_row_labels else r for r in rows[1:]]
     n = len(names)
     M = np.zeros((n, n))
     for i, r in enumerate(body[:n]):
