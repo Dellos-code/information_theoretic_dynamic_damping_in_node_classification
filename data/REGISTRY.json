@@ -429,7 +429,7 @@
       "license": "TO VERIFY",
       "split": "TO VERIFY",
       "notes": "Neal, figshare 10.6084/m9.figshare.8096429",
-      "status": "planned (PR-3 acquisition)"
+      "status": "superseded by congress-{house,senate}-{93,100,107,114} (PR-11)"
     },
     "bitcoin-otc": {
       "cell": "C5",
@@ -439,7 +439,7 @@
       "domain": "TO VERIFY",
       "license": "TO VERIFY",
       "split": "TO VERIFY",
-      "notes": "SNAP + REV2 labels",
+      "notes": "SNAP + REV2 labels; REV2 ground truth = the founder and users he rated >= 0.5 vs users rated <= -0.5 by them: labels are derived from the edges (leakage, C5.3) -> case study only; label file at cs.stanford.edu/~srijan/rev2 (not reachable from the dev sandbox)",
       "status": "planned (PR-3 acquisition)"
     },
     "bitcoin-alpha": {
@@ -450,7 +450,7 @@
       "domain": "TO VERIFY",
       "license": "TO VERIFY",
       "split": "TO VERIFY",
-      "notes": "SNAP + REV2 labels",
+      "notes": "SNAP + REV2 labels; REV2 ground truth = the founder and users he rated >= 0.5 vs users rated <= -0.5 by them: labels are derived from the edges (leakage, C5.3) -> case study only; label file at cs.stanford.edu/~srijan/rev2 (not reachable from the dev sandbox)",
       "status": "planned (PR-3 acquisition)"
     },
     "highland-tribes": {
@@ -501,6 +501,110 @@
       "license": "TO VERIFY",
       "split": "10x stratified 60/20/20 on the LCC of candidates",
       "notes": "LEAKAGE: labels are outcomes of incoming votes; signed_vote baseline mandatory",
+      "status": "registered"
+    },
+    "congress-house-93": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US House, 93th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab H93); signs inferred from co-sponsorship only, party not used to build edges",
+      "status": "registered"
+    },
+    "congress-house-100": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US House, 100th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab H100); signs inferred from co-sponsorship only, party not used to build edges",
+      "status": "registered"
+    },
+    "congress-house-107": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US House, 107th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab H107); signs inferred from co-sponsorship only, party not used to build edges",
+      "status": "registered"
+    },
+    "congress-house-114": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US House, 114th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab H114); signs inferred from co-sponsorship only, party not used to build edges",
+      "status": "registered"
+    },
+    "congress-senate-93": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US Senate, 93th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab S93); signs inferred from co-sponsorship only, party not used to build edges",
+      "status": "registered"
+    },
+    "congress-senate-100": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US Senate, 100th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab S100); signs inferred from co-sponsorship only, party not used to build edges",
+      "status": "registered"
+    },
+    "congress-senate-107": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US Senate, 107th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab S107); signs inferred from co-sponsorship only, party not used to build edges",
+      "status": "registered"
+    },
+    "congress-senate-114": {
+      "cell": "C5",
+      "routes": [
+        "https://api.figshare.com/v2/articles/{file}"
+      ],
+      "loader": "congress",
+      "metric": "accuracy",
+      "domain": "political/signed (US Senate, 114th Congress; SDSM backbone of bill co-sponsorship)",
+      "license": "TO VERIFY (figshare)",
+      "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
+      "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab S114); signs inferred from co-sponsorship only, party not used to build edges",
       "status": "registered"
     }
   }
