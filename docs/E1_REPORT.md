@@ -5,9 +5,15 @@ single-label datasets; all official / registered splits (Planetoid public + 10
 random, Platonov 10, WikiCS 20, Shchur 10 random, Sampson 18 leave-one-out).
 Methods: EDSP-default (zero-tuning default of §2.5), EDSP-tuned (9 validation-
 selected configurations), the named variants EDSP-GS / EDSP-damped(0.5) on the
-first 3 splits (H7), and the B0/B1 Track-A baselines with equal 9-point grids.
+first 3 splits (H7), and the B0/B1 Track-A baselines (9-point grids for LGC, PPR-LP, LinBP; none for
+harmonic, harmonic+CMN). The budgets are not exactly equal: EDSP-tuned's grid
+contains H-LEARNED, which runs its own nested 6-point validation search (audit B6).
 
-**Provenance (rule R1).** 1,761 run records in `results/runs/e1/` (incl. one
+> Corrected on 2026-11-07 after an independent audit (docs/AUDIT_2026-11-07.md):
+> every number reproduced; H1/H2 relabelled descriptive, H7 and C3c statements
+> corrected.
+
+**Provenance (rule R1).** 1,761 run records in `results/runs/e1/` (plus one
 DATASET-STATS record per dataset), all from Actions run
 [42214169204](https://github.com/Dellos-code/information_theoretic_dynamic_damping_in_node_classification/actions/runs/42214169204)
 on commit 2ff5600 (PR-8). This re-run supersedes the first E1 (runs 42067613272 and
@@ -45,9 +51,9 @@ Wilcoxon tests show 10 significant losses.
 
 | id | verdict | evidence |
 |---|---|---|
-| H1 (Track-A EDSP ≈ harmonic LP / LGC on homophilic graphs) | **Supported for harmonic LP, not supported for LGC.** | EDSP-default is within 0.4 points of plain harmonic LP on Amazon-Computers/Photo, Coauthor-CS/Physics, Cora and CiteSeer, as the reduction D2 predicts; LGC is significantly better on most of them. EDSP-default inherits the collapse of plain harmonic LP on low-label splits (PubMed public split 25.2%; WikiCS 42.1 vs 72.9 for LGC). |
-| H2 (Track-A near chance on minesweeper, tolokers, questions) | **Supported for minesweeper only.** | ROC-AUC: minesweeper 50.6 (chance); tolokers 71.1 / 72.0 and questions 63.1 / 64.6 (default / tuned), clearly above chance, though below LGC (72.7, 68.7). Near-zero label informativeness did not imply chance-level ROC-AUC. |
-| H7 (descriptive) | **Non-convergence and non-uniqueness are rare on these real graphs.** | EDSP-default failed to converge in 3 of 153 real-graph runs (the first version of this report said 134, a counting error), all on the Planetoid public splits (slow convergence, not oscillation: the mean of the last two iterates gives the same accuracy). No period-2 oscillation was flagged. The GS-vs-damped fixed points coincide (mean per-node L1 distance ≤ 0.002, on PubMed). The toy 2-cycles and multiple fixed points of docs/FINDINGS.md did not appear here. |
+| H1 (Track-A EDSP ≈ harmonic LP / LGC on homophilic graphs) | **Descriptive only — no decision rule was pre-registered for "≈" (audit B4).** Close to harmonic LP, clearly below LGC. | EDSP-default is within 0.4 points of plain harmonic LP on Amazon-Computers/Photo, Coauthor-CS/Physics, Cora and CiteSeer, as the reduction D2 predicts, but 3.44 points below it on WikiCS, and the tiny differences on Amazon-Computers (−0.14) and Coauthor-Physics (−0.09) are statistically significant, so "≈" would need an equivalence margin to be tested; LGC is significantly better on most of them. EDSP-default inherits the collapse of plain harmonic LP on low-label splits (PubMed public split 25.2%; WikiCS 42.1 vs 72.9 for LGC). |
+| H2 (Track-A near chance on minesweeper, tolokers, questions) | **Descriptive only — no decision rule pre-registered.** Near chance on minesweeper only. | ROC-AUC: minesweeper 50.6 (chance); tolokers 71.1 / 72.0 and questions 63.1 / 64.6 (default / tuned), clearly above chance, though below LGC (72.7, 68.7). Near-zero label informativeness did not imply chance-level ROC-AUC. |
+| H7 (descriptive) | **Non-convergence and non-uniqueness are rare on these real graphs.** | EDSP-default failed to converge in 3 of 153 real-graph runs (the first version of this report said 134, a counting error), all on the Planetoid public splits (slow convergence, not oscillation: the mean of the last two iterates gives the same accuracy). No period-2 oscillation was flagged (the detector requires the whole state to be 2-periodic, so partial oscillation would be missed — audit B5). GS-vs-damped (H7c) was computed on the first 3 splits only; on the converged splits the two fixed points are close, but on the Planetoid public splits neither GS (300-sweep cap) nor damped converged (PubMed: L1 0.0063, accuracy 36.4 vs 40.4), so non-uniqueness cannot be assessed there. In E2, EDSP-tuned (H-LEARNED) oscillated on 2 YelpChi splits. |
 
 H3–H6 are tested in later suites (E2, E3, E5, E6).
 
@@ -71,7 +77,7 @@ H3–H6 are tested in later suites (E2, E3, E5, E6).
   (NLL 5.0, ECE 0.47).
 - **Signed case study (Sampson, 18 nodes, leave-one-out, excluded from
   statistics):** EDSP with native signs 66.7% = signed vote 66.7%, against 44.4% for
-  harmonic/LGC/PPR-LP. Too small to conclude anything, but it is the only
+  harmonic/LGC/PPR-LP and 50.0% for harmonic+CMN. Too small to conclude anything, but it is the only
   setting so far where the polarity mechanism carries information.
 
 ## 4. What this means for the paper (assessment, not a result)
@@ -113,8 +119,9 @@ Contrast E2 (signed graphs), where it does.
 | C3c — largest spread of local homophily | citeseer, pubmed, cora, wikics, amazon-ratings | LGC 1.20, harmonic+CMN 3.00, PPR-LP 3.20, **EDSP-tuned 3.80**, harmonic 4.60, EDSP-default 5.60, LinBP 6.60, train prior 8.00 (p = 2.5e-4) |
 | C3d — compatibility farthest from both I and (J−I)/(k−1) | wikics, questions, amazon-computers, roman-empire, coauthor-cs | LGC 2.00, PPR-LP 3.00, **EDSP-tuned 3.60**, harmonic+CMN 4.40, harmonic 5.00, LinBP 5.60, EDSP-default 5.80, train prior 6.60 (p = 0.05) |
 
-LGC is first in both real mixed cells; EDSP-tuned is 4th and 3rd. These are 5
-datasets each, so no pairwise difference is significant at the Nemenyi level.
+LGC is first in both real mixed cells; EDSP-tuned is 4th and 3rd. With 5 datasets
+per cell no difference involving EDSP is significant at the Nemenyi level (in C3c,
+CD = 4.70, LGC vs train prior and LGC vs LinBP are).
 
 ## 7. Not run / limitations
 

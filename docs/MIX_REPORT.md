@@ -34,7 +34,8 @@ informativeness, spread of local homophily, every method ± std):
 
 A2 fixed a Wilcoxon test over the 9 paired runs per condition, Holm-corrected over
 the 22 conditions of a base graph. With 9 pairs the smallest two-sided p is
-2/2⁹ = 0.0039, so the smallest Holm-adjusted p is 22 × 0.0039 = 0.086 > 0.05:
+2/2⁹ = 0.0039, so the smallest Holm-adjusted p is 22 × 0.0039 = 0.086 > 0.05 (0.078 on wiki-editor,
+where two conditions have only zero differences and drop out of the family):
 **no condition could come out significant, whatever the data.** That is what
 happened (all adjusted p ≥ 0.078). The error is in the design I wrote, not in the
 data. Everything below is therefore **descriptive and exploratory**; amendment A4
@@ -92,7 +93,9 @@ citeseer beta m=0.2 c=0.5 (+0.5, 6 of 9).
   condition. All the gains come from the polarity regime EDSP-tuned selects on
   validation (counts over the run records):
   - heterogeneous mixing on wiki-editor (beta, uniform, logistic, regional,
-    community): **H-LEARNED in 81 of 81 runs** — per-edge polarity predicted by a
+    community): **H-LEARNED in 81 of 81 runs** (H-LEARNED adds a nested 6-point
+    validation search, so EDSP-tuned's budget there exceeds the baselines' 9 points
+    — audit B6; the wins are slightly optimistic) — per-edge polarity predicted by a
     classifier trained on train–train edges from label-free structural features
     (degrees and a spectral embedding);
   - uniform low-h mixing on wiki-editor (permutation 17 of 18 runs; global h = 0.1–0.4: 31 of 36):
