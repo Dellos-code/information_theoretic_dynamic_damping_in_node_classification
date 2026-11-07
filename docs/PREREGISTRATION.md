@@ -121,6 +121,16 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A9 (2026-11-07, PR-15) — E3 on the fraud graphs: reduced GNN set
+
+The first Track-B run on amazon-fraud (4.4 M edges, 8.8 M directed) lost its runners
+(memory) after 3–4 h per split; at hidden width 256 the GNNs do not fit the 16 GB /
+330-minute CPU jobs. On the fraud graphs E3 therefore runs feature_lr, C&S,
+EDSP-B-default / -tuned, MLP and **BWGNN at hidden width 64** (the setting of the BWGNN
+paper); GCN+, SAGE+, GAT+ and GPR-GNN are NOT-RUN there (compute), and yelpchi is not
+run in E3. H4 is unaffected (fraud graphs are not C2). No fraud E3 record existed when
+this was written (all jobs of runs 42382541370 and 42385833158 failed or were cancelled).
+
 ### A8 (2026-11-07, PR-13) — testing the two caveats of the MIX wins
 
 The confirmed MIX wins (A4) are on re-wired graphs, mostly k = 2 with heterogeneous

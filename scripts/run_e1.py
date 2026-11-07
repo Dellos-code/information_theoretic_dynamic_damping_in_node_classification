@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from edsp.baselines import BASELINES, select_and_predict
+from edsp.baselines import gnn as gnn_module
 from edsp.baselines.gnn import select_and_predict_gnn
 from edsp.baselines.propagation import adjacency
 from edsp.core import edsp
@@ -131,6 +132,8 @@ def main() -> int:
     ap.add_argument("--track", choices=("A", "B"), default="A",
                     help="B = feature priors from the base predictor (suite E3): EDSP-B vs feature_lr, C&S and GNNs")
     ap.add_argument("--gnn", default="mlp,gcn,sage,gat,gprgnn,bwgnn", help="GNN baselines for --track B ('' = none)")
+    ap.add_argument("--gnn-hidden", type=int, default=256,
+                    help="hidden width of the GNNs (64 for the fraud graphs = BWGNN's published setting; A9)")
     ap.add_argument("--drop-signs", action="store_true",
                     help="run on the sign-blind view of signed / relation-typed graphs (A8)")
     ap.add_argument("--fullh", action="store_true",
@@ -144,6 +147,7 @@ def main() -> int:
                     help="first re-wiring seed (confirmatory runs use fresh seeds, PREREGISTRATION A4)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
+    gnn_module.HIDDEN = args.gnn_hidden
     args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
     names = args.datasets or [d for d in datasets_with_loader() if d != "ogbn-proteins"]
     out = Path(args.out)
@@ -288,7 +292,8 @@ def main() -> int:
                     probs, info = select_and_predict_gnn(m, g, vault, metric, seed=si)
                     emit({"split": sid, "method": m, "group": "B2" if m in ("gcn", "sage", "gat") else
                           ("B0" if m == "mlp" else ("B6" if m == "bwgnn" else "B4")), "track": "B",
-                          "config": {"baseline": m, "chosen": info["chosen"]}, "metrics": scored(vault, probs, bins),
+                          "config": {"baseline": m, "chosen": info["chosen"], "hidden": gnn_module.HIDDEN},
+                          "metrics": scored(vault, probs, bins),
                           "diagnostics": {"best_epoch": info["best_epoch"], "epochs_run": info["epochs_run"],
                                           "val_scores": info["val_scores"]}}, t0)
                 print(f"{name} split {sid} done", flush=True)
