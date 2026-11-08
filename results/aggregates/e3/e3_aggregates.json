@@ -1,0 +1,88 @@
+{
+  "git_sha": [
+    "092aee8e1a7e"
+  ],
+  "runners": [
+    "actions-run-42491943224"
+  ],
+  "datasets": {
+    "questions": {
+      "metric": "roc_auc",
+      "constructed": false,
+      "methods": {
+        "gcn": {
+          "mean": 73.75428587260944,
+          "std": 0.0,
+          "ci95": [
+            73.75428587260944,
+            73.75428587260944
+          ],
+          "n": 1
+        },
+        "sage": {
+          "mean": 75.12479537483637,
+          "std": 0.0,
+          "ci95": [
+            75.12479537483637,
+            75.12479537483637
+          ],
+          "n": 1
+        }
+      }
+    }
+  },
+  "not_run": [],
+  "win_tie_loss_edsp_tuned": {
+    "feature_lr": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "correct_and_smooth": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "mlp": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gcn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "sage": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gat": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gprgnn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "bwgnn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    }
+  },
+  "h7": {
+    "questions": {
+      "non_converged_rate": null,
+      "oscillation_rate": null,
+      "moving_fraction": null,
+      "gs_damped_l1_mean": null,
+      "gs_damped_l1_p95": null,
+      "h7_splits": 0
+    }
+  },
+  "stratified": {}
+}
