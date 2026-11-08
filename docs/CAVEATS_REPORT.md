@@ -101,7 +101,7 @@ fraud graphs, where the predicted polarity is poor and a vote/spreading on it fa
 (signed_lgc+HL ≈ 52 AUC); there, however, EDSP-tuned is itself only tied with (amazon-fraud)
 or below (yelpchi) the plain sign-blind LGC. The same mechanism (H-LEARNED selected in
 81 of 81 runs) drives the MIX k = 2 wins, which therefore most likely have the same origin;
-this was not tested separately.
+this was not tested separately at the time; A11 (MIX_REPORT §5) has since tested it: 9 of the 17 MIX wins are EDSP's own, 6 belong to the learned polarity.
 
 ## Bottom line
 
