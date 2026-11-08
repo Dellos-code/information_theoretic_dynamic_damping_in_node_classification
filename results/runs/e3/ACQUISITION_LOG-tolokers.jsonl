@@ -1,0 +1,1 @@
+{"cell_id": "C2", "dataset": "tolokers", "environment": "actions-run-42467757225", "outcome": "PROCESSED", "report": {"duplicates_merged": 0, "input_rows": 519000, "self_loops_removed": 0, "undirected_edges": 519000}, "sha256_processed": "sha256:93d90adf5376f61afb7bac78c74459c4a5adc09a1321df63eb70009d5f11660e", "timestamp_utc": "2026-11-08T09:35:00.910552+00:00"}
