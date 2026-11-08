@@ -1,0 +1,50 @@
+{
+  "git_sha": [],
+  "runners": [],
+  "datasets": {},
+  "not_run": [],
+  "win_tie_loss_edsp_tuned": {
+    "feature_lr": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "correct_and_smooth": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "mlp": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gcn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "sage": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gat": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gprgnn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "bwgnn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    }
+  },
+  "h7": {},
+  "stratified": {}
+}
