@@ -121,7 +121,7 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
-### A14 (2026-11-08 14:30 UTC, PR-21) — fallback if a single-split GAT job exceeds the time limit
+### A14 (2026-11-08 14:20 UTC, PR-21) — fallback if a single-split GAT job exceeds the time limit
 
 Written while the GAT jobs of tolokers (splits 0, 2–9) and questions (0–9) are still running,
 before any of them has finished or timed out; no GAT result for those splits has been seen.
