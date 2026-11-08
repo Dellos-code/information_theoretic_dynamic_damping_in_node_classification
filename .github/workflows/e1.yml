@@ -6,7 +6,9 @@ name: e1
 # registry cells C3a and C5. workflow_dispatch runs the chosen suite (one job per
 # dataset), aggregates the run records and pushes them, with the aggregate tables,
 # to a new branch results/<suite>-<run_id>. On pull requests a 1-split smoke run
-# checks the pipeline end to end.
+# checks the pipeline end to end. Registry entries with an "extension" field (e.g. the
+# PR-20 "native-mixed" graphs) are left out of the default lists, so the suites already
+# run keep their dataset set; name them in the `datasets` input to run them.
 
 on:
   workflow_dispatch:
@@ -15,7 +17,7 @@ on:
         description: "E1 or E2"
         default: "E1"
       datasets:
-        description: "Space-separated dataset names (empty = every dataset of the suite)"
+        description: "Space-separated dataset names (empty = every dataset of the suite, without registry extensions)"
         default: ""
       runner:
         description: "Runner for the experiment jobs: ubuntu-latest (GitHub) or self-hosted (the owner's machine)"
@@ -64,7 +66,7 @@ jobs:
             if [ -n "${{ inputs.datasets }}" ]; then
               LIST=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1].split()))' "${{ inputs.datasets }}")
             else
-              LIST=$(python3 -c 'import json,sys; d=json.load(open("data/REGISTRY.json"))["datasets"]; e2=lambda v: v.get("cell") in ("C3a","C5"); print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins" and (e2(v) if sys.argv[1]=="E2" else not e2(v) or k=="sampson"))))' "$([ "$SUITE" = E2 ] && echo E2 || echo E1)")
+              LIST=$(python3 -c 'import json,sys; d=json.load(open("data/REGISTRY.json"))["datasets"]; e2=lambda v: v.get("cell") in ("C3a","C5"); print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins" and not v.get("extension") and (e2(v) if sys.argv[1]=="E2" else not e2(v) or k=="sampson"))))' "$([ "$SUITE" = E2 ] && echo E2 || echo E1)")
             fi
             CH="${{ inputs.chunks }}"
             LIST=$(python3 -c '

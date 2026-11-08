@@ -135,6 +135,34 @@ finishes at full size keep the full-size result; sizes are never mixed within a 
 if any split of a dataset needs the fallback, all its splits are re-run at hidden 64 for the
 GAT+(h64) row, and the full-size row is reported only if complete.
 
+### A13 (2026-11-08, PR-20) — native mixing: does the MIX k = 2 advantage appear on real graphs that mix by themselves?
+
+The MIX wins are on re-wired graphs; A8 (i) tested real graphs whose polarity was hidden
+(signs removed). Neither covers real graphs whose labels mix natively and close to randomly
+across edges. PR-20 adds such graphs (registry extension "native-mixed"; sources pinned,
+loaders verified by dataset-stats.yml before any run). Written before any experiment on them;
+their descriptive statistics (dataset-stats.yml) may be seen first, they do not change
+anything below.
+Datasets of the test (fixed now, whatever their measured homophily): the 13 k = 2 graphs
+fb100-{penn94, amherst41, cornell5, johnshopkins55, reed98} (gender), genius, deezer-europe,
+twitch-{de, en, es, fr, pt, ru}. actor (k = 5) is run and reported but is not part of the test.
+Suite E1, Track A, all methods of E1 plus A10's `signed_vote+HL` / `signed_lgc+HL`
+(`--learned-sign-baselines`), 10 stratified 60/20/20 splits, headline metric per registry
+(accuracy; ROC-AUC for genius and twitch), `--h7-splits 0` (H7 is not computed here: the
+per-node Gauss-Seidel loop does not scale to genius). One CI job per dataset, or per split
+for the largest graphs (no change of protocol). A loader or job failure is NOT-RUN.
+(a) Transfer, as A8 (i): per dataset, EDSP-tuned vs the best (by mean) of harmonic,
+harmonic+CMN, LGC, PPR-LP, LinBP; two-sided Wilcoxon over splits; Holm across the 13.
+**Supported** if EDSP-tuned has ≥ 3 wins, more wins than losses, **and** wins in at least
+two of the four source families (FB100, twitch, genius, deezer) — the Congress wins came from
+a single source and that was a caveat; **not supported** if ≤ 1 win; else **inconclusive**.
+(b) Attribution, as A10: on every dataset where (a) is a win, EDSP-tuned vs the better (by
+mean) of `signed_vote+HL` / `signed_lgc+HL`, Wilcoxon over splits, Holm over those datasets.
+A win means EDSP's propagation adds value beyond H-LEARNED's polarity; a tie or loss means
+the advantage belongs to the learned polarity.
+Already run when written: offline unit tests of the loaders on synthetic fixtures; no
+download, no statistics and no experiment on these graphs.
+
 ### A12 (2026-11-08, PR-21) — E3 on coauthor-cs / coauthor-physics after all
 
 A7 left the two coauthor graphs NOT-RUN in E3 (dense 6,805 / 8,415-dim features judged
@@ -147,6 +175,28 @@ NOT-RUN with that reason. Both datasets are homophilous (not C2): H4 is unaffect
 results only extend the E3 tables and the EDSP-B vs C&S / GNN win–tie–loss counts (same
 test as A7: Wilcoxon over splits, Holm across datasets per baseline).
 Already run when written: no coauthor E3 record exists.
+
+### A11 (2026-11-08, PR-19) — whose win is it in MIX? (A10 applied to the perturbed wins)
+
+A10 showed that on the sign-blind Congress graphs the advantage belongs to H-LEARNED's
+predicted polarity, not to EDSP's propagation; the report noted that the MIX k = 2 wins
+use the same mechanism but were not tested separately. Test, with A10's ablation
+(`run_e1.py --learned-sign-baselines`: `signed_vote+HL`, `signed_lgc+HL`):
+(a) the 17 confirmed A4 wins (loc = 0.8; wiki-editor: global h = 0.1–0.4, beta (0.2, 0.5),
+(0.5, 0.5), (0.5, 5), (0.8, 0.5), uniform, logistic, regional 20, community,
+permutation h = 0.1, 0.3; amazon-ratings: global h = 0, beta (0.2, 0.5), (0.5, 0.5)),
+re-run with the A4 seeds (offset 10, 10 seeds) × 3 splits = 30 pairs;
+(b) the 10 A8 loc = 0 conditions, re-run with the A8 seeds (offset 20, 10 seeds) × 3 splits.
+Same seeds on purpose: the re-wired graphs are identical, so EDSP-tuned must reproduce the
+A4 / A8 records exactly (determinism check, reported); the new data are the two +HL
+baselines on the same graphs. Test per condition: EDSP-tuned vs the better (by mean) of
+`signed_vote+HL` and `signed_lgc+HL`, two-sided Wilcoxon over the 30 paired runs, Holm over
+the conditions of a base graph within (a) and within (b) separately. Reading fixed in
+advance, as in A10: a significant EDSP win means EDSP's propagation adds value beyond the
+learned polarity in that condition; a tie or loss means the MIX advantage there is due to
+the learned polarity. EDSP-tuned keeps its larger tuning budget, which favours EDSP.
+Analysis script: `scripts/attribution_mix.py`. Already run when written: unit tests only;
+no A11 record exists.
 
 ### A10 (2026-11-07, PR-16) — whose win is it: EDSP's propagation or H-LEARNED's polarity?
 
