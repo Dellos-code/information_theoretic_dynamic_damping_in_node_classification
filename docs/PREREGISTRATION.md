@@ -121,6 +121,19 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A12 (2026-11-08, PR-21) — E3 on coauthor-cs / coauthor-physics after all
+
+A7 left the two coauthor graphs NOT-RUN in E3 (dense 6,805 / 8,415-dim features judged
+unaffordable on CPU runners). Runner capacity turned out larger than assumed, so they are
+run now, one CI job per split and per method group, in this order: (1) EDSP-B-default /
+-tuned, feature_lr, C&S and MLP (`--gnn mlp`); (2) GCN+, SAGE+, GAT+, GPR-GNN, BWGNN, each
+with `--gnn-only`, dispatched later in separate runs. Protocol unchanged (A7 grids,
+validation selection, 10 splits). Any job that exceeds the 330-minute limit is reported
+NOT-RUN with that reason. Both datasets are homophilous (not C2): H4 is unaffected; the
+results only extend the E3 tables and the EDSP-B vs C&S / GNN win–tie–loss counts (same
+test as A7: Wilcoxon over splits, Holm across datasets per baseline).
+Already run when written: no coauthor E3 record exists.
+
 ### A10 (2026-11-07, PR-16) — whose win is it: EDSP's propagation or H-LEARNED's polarity?
 
 A8 (i) found EDSP-tuned ahead of every sign-blind baseline on 7 of 8 sign-blind Congress
