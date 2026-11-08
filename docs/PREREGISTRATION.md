@@ -121,6 +121,20 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A14 (2026-11-08 14:30 UTC, PR-21) — fallback if a single-split GAT job exceeds the time limit
+
+Written while the GAT jobs of tolokers (splits 0, 2–9) and questions (0–9) are still running,
+before any of them has finished or timed out; no GAT result for those splits has been seen.
+If a GAT+ job for one split of tolokers or questions exceeds the 330-minute CI limit at the
+A7 size (hidden 256, 4 heads), that split's GAT+ is re-run with hidden 64 (the A9 fallback
+used for the fraud graphs), same grid and selection, and reported as **GAT+(h64)** with the
+reason. H4 and the win–tie–loss tables are then given twice: with GAT+(h64) among the GNNs,
+and with GAT+ left out of "best GNN" for that dataset. A smaller GAT can only weaken the
+GNN side, i.e. it favours EDSP; the report says so wherever it matters. Splits whose GAT+
+finishes at full size keep the full-size result; sizes are never mixed within a dataset —
+if any split of a dataset needs the fallback, all its splits are re-run at hidden 64 for the
+GAT+(h64) row, and the full-size row is reported only if complete.
+
 ### A12 (2026-11-08, PR-21) — E3 on coauthor-cs / coauthor-physics after all
 
 A7 left the two coauthor graphs NOT-RUN in E3 (dense 6,805 / 8,415-dim features judged
