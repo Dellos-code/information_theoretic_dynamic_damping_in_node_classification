@@ -103,6 +103,18 @@ def scored(vault, probs, bins) -> dict:
         "degree": stratified_accuracy(vault, probs, bins[1], DEGREE_BINS)}}
 
 
+def run_gnns(g, vault, metric, si, sid, bins, emit) -> None:
+    for m in ([x for x in ARGS.gnn.split(",") if x] if ARGS.track == "B" else []):
+        t0 = time.perf_counter()
+        probs, info = select_and_predict_gnn(m, g, vault, metric, seed=si)
+        emit({"split": sid, "method": m, "group": "B2" if m in ("gcn", "sage", "gat") else
+              ("B0" if m == "mlp" else ("B6" if m == "bwgnn" else "B4")), "track": "B",
+              "config": {"baseline": m, "chosen": info["chosen"], "hidden": gnn_module.HIDDEN},
+              "metrics": scored(vault, probs, bins),
+              "diagnostics": {"best_epoch": info["best_epoch"], "epochs_run": info["epochs_run"],
+                              "val_scores": info["val_scores"]}}, t0)
+
+
 def secondary(vault, res) -> dict:
     """Pre-registered secondary column for a non-converged EDSP run: metrics of the
     mean of the last two iterates (PREREGISTRATION §2; every EDSP method, audit C2)."""
@@ -122,6 +134,9 @@ def edsp_diagnostics(res) -> dict:
     }
 
 
+ARGS: argparse.Namespace
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--datasets", nargs="*", default=None)
@@ -132,6 +147,8 @@ def main() -> int:
     ap.add_argument("--track", choices=("A", "B"), default="A",
                     help="B = feature priors from the base predictor (suite E3): EDSP-B vs feature_lr, C&S and GNNs")
     ap.add_argument("--gnn", default="mlp,gcn,sage,gat,gprgnn,bwgnn", help="GNN baselines for --track B ('' = none)")
+    ap.add_argument("--gnn-only", action="store_true",
+                    help="run only the --gnn baselines (no EDSP / propagation baselines / DATASET-STATS)")
     ap.add_argument("--gnn-hidden", type=int, default=256,
                     help="hidden width of the GNNs (64 for the fraud graphs = BWGNN's published setting; A9)")
     ap.add_argument("--learned-sign-baselines", action="store_true",
@@ -149,6 +166,8 @@ def main() -> int:
                     help="first re-wiring seed (confirmatory runs use fresh seeds, PREREGISTRATION A4)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
+    global ARGS
+    ARGS = args
     gnn_module.HIDDEN = args.gnn_hidden
     args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
     names = args.datasets or [d for d in datasets_with_loader() if d != "ogbn-proteins"]
@@ -203,7 +222,7 @@ def main() -> int:
         # C3c (local-homophily spread) and C3d (structured compatibility), §3.1
         t0 = time.perf_counter()
         ls = label_stats(g, train_split=None) if not g.multilabel and first == 0 else {}
-        if first == 0:  # once per dataset, also when it is run in split chunks
+        if first == 0 and not args.gnn_only:  # once per dataset, also when it is run in split chunks
             emit({"split": None, "method": "DATASET-STATS", "cell": entry.get("cell"),
                   "stats": {key: ls.get(key) for key in ("edge_homophily", "adjusted_homophily", "label_informativeness",
                                                         "local_homophily_std", "compatibility_distances")}
@@ -212,6 +231,10 @@ def main() -> int:
 
         for si, split in enumerate(splits, start=first):
             sid = split.split_id
+            if args.gnn_only:  # GNN baselines only (a split's GNNs spread over several CI jobs)
+                run_gnns(g, g.vault(sid), metric, si, sid, bins, emit)
+                print(f"{name} split {sid} GNNs ({args.gnn}) done", flush=True)
+                continue
             try:
                 # ---------------- EDSP-default (+ secondary column, H7 diagnostics)
                 t0 = time.perf_counter()
@@ -302,15 +325,7 @@ def main() -> int:
                         emit({"split": sid, "method": b + "+HL", "group": "B1", "track": "A",
                               "config": {"baseline": b, "polarity": "learned", "chosen": info.get("chosen")},
                               "metrics": scored(vault, probs, bins)}, t0)
-                for m in ([x for x in args.gnn.split(",") if x] if args.track == "B" else []):
-                    t0 = time.perf_counter()
-                    probs, info = select_and_predict_gnn(m, g, vault, metric, seed=si)
-                    emit({"split": sid, "method": m, "group": "B2" if m in ("gcn", "sage", "gat") else
-                          ("B0" if m == "mlp" else ("B6" if m == "bwgnn" else "B4")), "track": "B",
-                          "config": {"baseline": m, "chosen": info["chosen"], "hidden": gnn_module.HIDDEN},
-                          "metrics": scored(vault, probs, bins),
-                          "diagnostics": {"best_epoch": info["best_epoch"], "epochs_run": info["epochs_run"],
-                                          "val_scores": info["val_scores"]}}, t0)
+                run_gnns(g, vault, metric, si, sid, bins, emit)
                 print(f"{name} split {sid} done", flush=True)
             except Exception as exc:  # noqa: BLE001
                 failures += 1
