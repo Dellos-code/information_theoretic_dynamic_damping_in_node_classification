@@ -1,1 +1,0 @@
-{"cell_id": "C2", "dataset": "minesweeper", "environment": "actions-run-42364282669", "outcome": "PROCESSED", "report": {"duplicates_merged": 0, "input_rows": 39402, "self_loops_removed": 0, "undirected_edges": 39402}, "sha256_processed": "sha256:f931b597ff7d5257ce225c5eeaa7546d424670634a5892318ffbcb952dcac432", "timestamp_utc": "2026-11-07T10:31:30.677596+00:00"}
