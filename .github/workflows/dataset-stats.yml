@@ -34,9 +34,10 @@ jobs:
       EDSP_ACQUISITION_LOG: ${{ github.workspace }}/results/dataset_stats/ACQUISITION_LOG.jsonl
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with:
-          version: latest
+      - name: Install uv from PyPI (GitHub release downloads returned HTTP 504 on 2026-11-08)
+        run: |
+          for i in 1 2 3 4 5; do python3 -m pip install --user --break-system-packages -q uv==0.13.7 && break; sleep 15; done
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: uv sync --frozen --group dev
       - uses: actions/cache@v4
         with:
