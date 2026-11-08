@@ -53,6 +53,9 @@ def main() -> int:
     ap.add_argument("--prefer", default=None, help="ref whose record wins a conflict")
     ap.add_argument("--exclude", nargs="*", default=[], help="run ids whose branches are skipped")
     ap.add_argument("--datasets", nargs="*", default=None, help="keep only these datasets")
+    ap.add_argument("--relabel-hidden", nargs="*", default=[], metavar="DATASET:METHOD:HIDDEN",
+                    help="records of METHOD on DATASET whose config.hidden is HIDDEN become METHOD(hHIDDEN), "
+                         "e.g. tolokers:gat:64 (A14); the original name is kept in relabelled_from")
     args = ap.parse_args()
 
     refs = [r for r in expand(args.refs) if str(run_id(r)) not in args.exclude]
@@ -81,6 +84,10 @@ def main() -> int:
                 if args.datasets and d not in args.datasets:
                     continue
                 m = r.get("method")
+                hid = (r.get("config") or {}).get("hidden")
+                if hid is not None and f"{d}:{m}:{hid}" in args.relabel_hidden:
+                    r = {**r, "method": f"{m}(h{hid})", "relabelled_from": m}
+                    m = r["method"]
                 if m == "DATASET-STATS":
                     stats.setdefault(d, r)
                     continue
