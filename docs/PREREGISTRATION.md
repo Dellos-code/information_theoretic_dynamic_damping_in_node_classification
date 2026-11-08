@@ -149,6 +149,28 @@ the advantage belongs to the learned polarity.
 Already run when written: offline unit tests of the loaders on synthetic fixtures; no
 download, no statistics and no experiment on these graphs.
 
+### A11 (2026-11-08, PR-19) — whose win is it in MIX? (A10 applied to the perturbed wins)
+
+A10 showed that on the sign-blind Congress graphs the advantage belongs to H-LEARNED's
+predicted polarity, not to EDSP's propagation; the report noted that the MIX k = 2 wins
+use the same mechanism but were not tested separately. Test, with A10's ablation
+(`run_e1.py --learned-sign-baselines`: `signed_vote+HL`, `signed_lgc+HL`):
+(a) the 17 confirmed A4 wins (loc = 0.8; wiki-editor: global h = 0.1–0.4, beta (0.2, 0.5),
+(0.5, 0.5), (0.5, 5), (0.8, 0.5), uniform, logistic, regional 20, community,
+permutation h = 0.1, 0.3; amazon-ratings: global h = 0, beta (0.2, 0.5), (0.5, 0.5)),
+re-run with the A4 seeds (offset 10, 10 seeds) × 3 splits = 30 pairs;
+(b) the 10 A8 loc = 0 conditions, re-run with the A8 seeds (offset 20, 10 seeds) × 3 splits.
+Same seeds on purpose: the re-wired graphs are identical, so EDSP-tuned must reproduce the
+A4 / A8 records exactly (determinism check, reported); the new data are the two +HL
+baselines on the same graphs. Test per condition: EDSP-tuned vs the better (by mean) of
+`signed_vote+HL` and `signed_lgc+HL`, two-sided Wilcoxon over the 30 paired runs, Holm over
+the conditions of a base graph within (a) and within (b) separately. Reading fixed in
+advance, as in A10: a significant EDSP win means EDSP's propagation adds value beyond the
+learned polarity in that condition; a tie or loss means the MIX advantage there is due to
+the learned polarity. EDSP-tuned keeps its larger tuning budget, which favours EDSP.
+Analysis script: `scripts/attribution_mix.py`. Already run when written: unit tests only;
+no A11 record exists.
+
 ### A10 (2026-11-07, PR-16) — whose win is it: EDSP's propagation or H-LEARNED's polarity?
 
 A8 (i) found EDSP-tuned ahead of every sign-blind baseline on 7 of 8 sign-blind Congress
