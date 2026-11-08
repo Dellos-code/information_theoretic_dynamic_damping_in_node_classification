@@ -297,14 +297,17 @@
     },
     "genius": {
       "cell": "C2",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "LINKX; ROC-AUC",
-      "status": "planned (PR-3 acquisition)"
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "genius",
+      "metric": "roc_auc",
+      "domain": "social (genius.com users)",
+      "license": "TO VERIFY (no license in the LINKX repo)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes; LINKX's fixed 5x50/25/25 splits not used (SPEC_AMBIGUITIES)",
+      "notes": "LINKX data/genius.mat (Lim & Benson 2021; ~421k nodes); label = binary 'marked' user flag (meaning TO VERIFY); headline ROC-AUC as in LINKX; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
     },
     "twitch-gamers": {
       "cell": "C2/C7",
@@ -326,7 +329,7 @@
       "license": "TO VERIFY",
       "split": "TO VERIFY",
       "notes": "LINKX/FB100",
-      "status": "planned (PR-3 acquisition)"
+      "status": "superseded by fb100-penn94 (PR-20)"
     },
     "texas": {
       "cell": "C2",
@@ -606,6 +609,191 @@
       "split": "10x stratified 60/20/20 over D/R legislators; independents unlabelled",
       "notes": "Neal 2020, Social Networks; figshare 10.6084/m9.figshare.8096429 (tab S114); signs inferred from co-sponsorship only, party not used to build edges",
       "status": "registered"
+    },
+    "fb100-penn94": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "fb100",
+      "metric": "accuracy",
+      "domain": "social (Facebook100 friendships, one school)",
+      "license": "TO VERIFY (no license in the LINKX repo; FB100 released by Facebook to Traud et al. 2012)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes; LINKX's fixed 5x50/25/25 Penn94 splits not used (SPEC_AMBIGUITIES)",
+      "notes": "LINKX data/facebook100/Penn94.mat; label = gender (local_info[:,1]-1; 0 = missing -> -1, unlabelled); Track-B features = LINKX label_binarize encoding of the other local_info columns; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "fb100-amherst41": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "fb100",
+      "metric": "accuracy",
+      "domain": "social (Facebook100 friendships, one school)",
+      "license": "TO VERIFY (no license in the LINKX repo; FB100 released by Facebook to Traud et al. 2012)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX data/facebook100/Amherst41.mat; label = gender (local_info[:,1]-1; 0 = missing -> -1, unlabelled); Track-B features = LINKX label_binarize encoding of the other local_info columns; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "fb100-cornell5": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "fb100",
+      "metric": "accuracy",
+      "domain": "social (Facebook100 friendships, one school)",
+      "license": "TO VERIFY (no license in the LINKX repo; FB100 released by Facebook to Traud et al. 2012)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX data/facebook100/Cornell5.mat; label = gender (local_info[:,1]-1; 0 = missing -> -1, unlabelled); Track-B features = LINKX label_binarize encoding of the other local_info columns; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "fb100-johnshopkins55": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "fb100",
+      "metric": "accuracy",
+      "domain": "social (Facebook100 friendships, one school)",
+      "license": "TO VERIFY (no license in the LINKX repo; FB100 released by Facebook to Traud et al. 2012)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX data/facebook100/Johns Hopkins55.mat; label = gender (local_info[:,1]-1; 0 = missing -> -1, unlabelled); Track-B features = LINKX label_binarize encoding of the other local_info columns; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "fb100-reed98": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "fb100",
+      "metric": "accuracy",
+      "domain": "social (Facebook100 friendships, one school)",
+      "license": "TO VERIFY (no license in the LINKX repo; FB100 released by Facebook to Traud et al. 2012)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX data/facebook100/Reed98.mat; label = gender (local_info[:,1]-1; 0 = missing -> -1, unlabelled); Track-B features = LINKX label_binarize encoding of the other local_info columns; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "deezer-europe": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "deezer_europe",
+      "metric": "accuracy",
+      "domain": "social (Deezer users, mutual follows)",
+      "license": "TO VERIFY (no license in the LINKX repo; original release benedekrozemberczki/FEATHER has an MIT LICENSE file, coverage of the data TO VERIFY)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX data/deezer-europe.mat (Rozemberczki & Sarkar 2020); label = gender; features dropped if the dense float32 matrix exceeds 1 GiB (expected: ~31k sparse artist columns -> Track B NOT-RUN); PyG's graphmining.ai npz not used; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "twitch-de": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "twitch",
+      "metric": "roc_auc",
+      "domain": "social (Twitch streamers, mutual friendships)",
+      "license": "TO VERIFY (no license in the LINKX repo; original release benedekrozemberczki/MUSAE has a GPL-3.0 LICENSE file, coverage of the data TO VERIFY)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX raw MUSAE files data/twitch/DE/musae_DE_*; label = mature (explicit language); REPORTED in data/twitch/README.txt: 9,498 nodes, 153,138 edges; headline ROC-AUC as LINKX (twitch-e); PyG's graphmining.ai npz not used; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "twitch-en": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "twitch",
+      "metric": "roc_auc",
+      "domain": "social (Twitch streamers, mutual friendships)",
+      "license": "TO VERIFY (no license in the LINKX repo; original release benedekrozemberczki/MUSAE has a GPL-3.0 LICENSE file, coverage of the data TO VERIFY)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX raw MUSAE files data/twitch/ENGB/musae_ENGB_*; label = mature (explicit language); REPORTED in data/twitch/README.txt: 7,126 nodes, 35,324 edges; headline ROC-AUC as LINKX (twitch-e); PyG's graphmining.ai npz not used; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "twitch-es": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "twitch",
+      "metric": "roc_auc",
+      "domain": "social (Twitch streamers, mutual friendships)",
+      "license": "TO VERIFY (no license in the LINKX repo; original release benedekrozemberczki/MUSAE has a GPL-3.0 LICENSE file, coverage of the data TO VERIFY)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX raw MUSAE files data/twitch/ES/musae_ES_*; label = mature (explicit language); REPORTED in data/twitch/README.txt: 4,648 nodes, 59,382 edges; headline ROC-AUC as LINKX (twitch-e); PyG's graphmining.ai npz not used; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "twitch-fr": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "twitch",
+      "metric": "roc_auc",
+      "domain": "social (Twitch streamers, mutual friendships)",
+      "license": "TO VERIFY (no license in the LINKX repo; original release benedekrozemberczki/MUSAE has a GPL-3.0 LICENSE file, coverage of the data TO VERIFY)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX raw MUSAE files data/twitch/FR/musae_FR_*; label = mature (explicit language); REPORTED in data/twitch/README.txt: 6,549 nodes, 112,666 edges; headline ROC-AUC as LINKX (twitch-e); PyG's graphmining.ai npz not used; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "twitch-pt": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "twitch",
+      "metric": "roc_auc",
+      "domain": "social (Twitch streamers, mutual friendships)",
+      "license": "TO VERIFY (no license in the LINKX repo; original release benedekrozemberczki/MUSAE has a GPL-3.0 LICENSE file, coverage of the data TO VERIFY)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX raw MUSAE files data/twitch/PTBR/musae_PTBR_*; label = mature (explicit language); REPORTED in data/twitch/README.txt: 1,912 nodes, 31,299 edges; headline ROC-AUC as LINKX (twitch-e); PyG's graphmining.ai npz not used; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "twitch-ru": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/{file}"
+      ],
+      "loader": "twitch",
+      "metric": "roc_auc",
+      "domain": "social (Twitch streamers, mutual friendships)",
+      "license": "TO VERIFY (no license in the LINKX repo; original release benedekrozemberczki/MUSAE has a GPL-3.0 LICENSE file, coverage of the data TO VERIFY)",
+      "split": "10x stratified 60/20/20 (seeds 0-9) over labelled nodes",
+      "notes": "LINKX raw MUSAE files data/twitch/RU/musae_RU_*; label = mature (explicit language); REPORTED in data/twitch/README.txt: 4,385 nodes, 37,304 edges; headline ROC-AUC as LINKX (twitch-e); PyG's graphmining.ai npz not used; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
+    },
+    "actor": {
+      "cell": "C2",
+      "routes": [
+        "https://raw.githubusercontent.com/graphdml-uiuc-jlu/geom-gcn/1124af17444d7fd09686504ec46caa3f39f4f632/{file}"
+      ],
+      "loader": "actor",
+      "metric": "accuracy",
+      "domain": "web/wiki (actor co-occurrence on Wikipedia pages)",
+      "license": "TO VERIFY (no license in the Geom-GCN repo)",
+      "split": "official Geom-GCN 10 splits (film_split_0.6_0.2_{0..9}; 48/32/20 by construction, TO VERIFY from mask sizes)",
+      "notes": "Geom-GCN new_data/film (Pei et al. 2020; PyG Actor reads the same files); k = 5; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
+      "status": "registered",
+      "extension": "native-mixed"
     }
+  },
+  "extensions": {
+    "native-mixed": "PR-20: candidate real graphs whose labels mix natively and close to randomly across edges (k = 2, edge homophily expected near 0.5, to be measured by dataset-stats.yml; actor: k = 5, low homophily). Excluded from the default E1/E2 lists of .github/workflows/e1.yml; run them by naming them in its `datasets` input. Cell choice: docs/SPEC_AMBIGUITIES.md."
   }
 }

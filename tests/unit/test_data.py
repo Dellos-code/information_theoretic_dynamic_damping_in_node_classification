@@ -7,6 +7,7 @@ EDSP_DATA_DIR, which acquisition.fetch treats as a cache hit.
 import json
 import math
 import pickle
+import re
 import zipfile
 from collections import defaultdict
 
@@ -437,3 +438,232 @@ def test_party_parser_formats():
 
     assert _party_of("Baucus, M. (MT-D)") == "D" and _party_of("Jeffords, J. (VT-I)") == "I"
     assert [_party_of(x) for x in ["Smith (D-NY)", "SMITH_R_TX", "Jones [I-VT]", "Lee, Democrat", "nobody"]] == ["D", "R", "I", "D", None]
+
+
+# ------------------------------------------------ PR-20 native-mixed extension loaders
+NATIVE_MIXED = {"fb100-penn94", "fb100-amherst41", "fb100-cornell5", "fb100-johnshopkins55", "fb100-reed98",
+                "genius", "deezer-europe", "twitch-de", "twitch-en", "twitch-es", "twitch-fr", "twitch-pt",
+                "twitch-ru", "actor"}
+
+
+def _check_canonical_and_isolated(g, fractions=(0.6, 0.2, 0.2), n_splits=10, random=True):
+    """Undirected simple graph, splits over labelled nodes only (stratified when random),
+    and the label-isolation contract of LabelVault."""
+    from edsp.baselines.propagation import adjacency
+
+    e = g.edges
+    assert (e[:, 0] < e[:, 1]).all()  # one row per undirected edge, no self-loops
+    assert len({tuple(x) for x in e.tolist()}) == len(e)
+    A = adjacency(g)
+    assert (A != A.T).nnz == 0 and A.diagonal().sum() == 0
+    y = g._labels  # tests may inspect the raw labels; methods never do
+    labelled = np.flatnonzero(y >= 0)
+    assert len(g.splits) == n_splits
+    for s in g.splits:
+        allidx = np.concatenate([s.train_idx, s.val_idx, s.test_idx])
+        assert len(allidx) == len(np.unique(allidx))
+        if random:
+            assert sorted(allidx.tolist()) == labelled.tolist()
+            for c in np.unique(y[labelled]):
+                n_c = int(np.sum(y == c))
+                a, b = round(fractions[0] * n_c), round(fractions[1] * n_c)
+                assert [int(np.sum(y[idx] == c)) for idx in (s.train_idx, s.val_idx, s.test_idx)] == [a, b, n_c - a - b]
+    v = g.vault(0)
+    with pytest.raises(LabelAccessError):
+        v.test_labels()
+    with pytest.raises(LabelAccessError):
+        v.val_labels()
+    with pytest.raises(LabelAccessError):
+        g.descriptive_vault().descriptive_labels()
+    idx, ytr = v.train_labels()
+    assert (ytr >= 0).all() and idx.tolist() == g.splits[0].train_idx.tolist()
+    assert g.meta["extension"] == "native-mixed"
+
+
+def test_linkx_label_binarize_encoding():
+    from edsp.data.loaders import _label_binarize_columns
+
+    cols = np.array([[1, 0, 9, 4], [2, 0, 9, 5], [3, 0, 8, 4], [1, 0, 8, 6]])
+    X, widths = _label_binarize_columns(cols)
+    # >= 3 values: one-hot; 1 value: one zero column; 2 values: indicator of the larger value
+    assert widths == [3, 1, 1, 3]
+    assert X.toarray().tolist() == [[1, 0, 0, 0, 1, 1, 0, 0], [0, 1, 0, 0, 1, 0, 1, 0],
+                                    [0, 0, 1, 0, 0, 1, 0, 0], [1, 0, 0, 0, 0, 0, 0, 1]]
+
+
+def test_fb100_loader_gender_labels_missing_and_features(tmp_path):
+    from scipy.io import savemat
+
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "linkx" / "facebook100"
+    d.mkdir(parents=True)
+    n = 6
+    A = sp.csc_matrix(_adj(n, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 0)]) + np.diag([0, 0, 1, 0, 0, 0]))
+    info = np.array([  # status, gender (0 = missing), major, minor, dorm, year, high school
+        [1, 1, 0, 0, 3, 2005, 1],
+        [1, 2, 5, 0, 3, 2005, 2],
+        [2, 0, 5, 0, 4, 2005, 3],
+        [2, 2, 7, 0, 4, 2006, 4],
+        [1, 1, 7, 0, 3, 2006, 5],
+        [6, 2, 9, 0, 4, 2006, 6],
+    ])
+    savemat(d / "Penn94.mat", {"A": A, "local_info": info.astype(float)})
+    g = load("fb100-penn94")
+    assert g.num_nodes == 6 and g.num_classes == 2
+    assert g._labels.tolist() == [0, 1, -1, 1, 0, 1]
+    assert g.edges.tolist() == [[0, 1], [0, 5], [1, 2], [2, 3], [3, 4], [4, 5]]
+    rep = g.meta["canonicalization"]
+    assert rep["self_loops_removed"] == 1 and rep["duplicates_merged"] == 6 and rep["unlabelled_nodes"] == 1
+    assert rep["feature_widths"] == [3, 4, 1, 1, 1, 6]
+    assert g.features.shape == (6, 16) and g.features.dtype == np.float32
+    # per row: one-hot status, major, high school + zero minor column + dorm / year indicators
+    assert g.features.sum(axis=1).tolist() == [3.0, 3.0, 4.0, 5.0, 4.0, 5.0]
+    _check_canonical_and_isolated(g)
+    assert all(2 not in np.concatenate([s.train_idx, s.val_idx, s.test_idx]) for s in g.splits)
+    st = S.label_stats(g)
+    assert st["class_counts"] == [2, 3] and st["edge_homophily"] == 0.0
+
+
+def test_fb100_url_encodes_the_space_in_johns_hopkins(monkeypatch):
+    from edsp.data import acquisition
+    from edsp.data.loaders import load
+
+    seen = []
+
+    def fake_fetch(url, relpath, **kw):
+        seen.append((url, relpath))
+        raise acquisition.AcquisitionError("offline")
+
+    monkeypatch.setattr(acquisition, "fetch", fake_fetch)
+    with pytest.raises(acquisition.AcquisitionError):
+        load("fb100-johnshopkins55")
+    url, relpath = seen[0]
+    assert url.endswith("/data/facebook100/Johns%20Hopkins55.mat") and " " not in url
+    assert relpath == "linkx/facebook100/JohnsHopkins55.mat"
+
+
+def test_genius_loader_edge_index_on_fixture(tmp_path):
+    from scipy.io import savemat
+
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "linkx"
+    d.mkdir(parents=True)
+    ei = np.array([[0, 1, 1, 2, 3, 4, 4, 5, 6, 7, 8, 9], [1, 0, 2, 2, 4, 3, 0, 6, 7, 8, 9, 5]], dtype=np.int64)
+    y = np.array([[0, 1, 0, 1, 0, 0, 1, 0, 1, 0]])
+    savemat(d / "genius.mat", {"edge_index": ei, "node_feat": np.arange(120, dtype=float).reshape(10, 12), "label": y})
+    g = load("genius")
+    assert g.num_nodes == 10 and g.num_classes == 2 and g.features.shape == (10, 12)
+    assert g.edges.tolist()[:4] == [[0, 1], [0, 4], [1, 2], [3, 4]] and len(g.edges) == 9
+    assert g.meta["canonicalization"]["self_loops_removed"] == 1
+    assert g.meta["canonicalization"]["label_counts"] == {0: 6, 1: 4}
+    _check_canonical_and_isolated(g)
+
+
+def test_deezer_loader_and_dense_feature_budget(tmp_path, monkeypatch):
+    from scipy.io import savemat
+
+    from edsp.data import loaders
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "linkx"
+    d.mkdir(parents=True)
+    n = 6
+    A = sp.csc_matrix(_adj(n, [(0, 1), (2, 3), (4, 5), (1, 4)]) + np.diag([0, 0, 0, 1, 0, 0]))
+    feats = sp.csc_matrix(np.eye(n, 8))
+    savemat(d / "deezer-europe.mat", {"A": A, "label": np.array([[0, 1, 1, 0, 1, 0]]), "features": feats})
+    g = load("deezer-europe")
+    assert g.num_nodes == 6 and g.features.shape == (6, 8) and g._labels.tolist() == [0, 1, 1, 0, 1, 0]
+    assert g.edges.tolist() == [[0, 1], [1, 4], [2, 3], [4, 5]]
+    _check_canonical_and_isolated(g)
+    monkeypatch.setattr(loaders, "MAX_DENSE_FEATURE_BYTES", 16)
+    g2 = load("deezer-europe")
+    assert g2.features is None
+    assert g2.meta["canonicalization"]["features_omitted"]["shape"] == [6, 8]
+    assert g2.edges.tolist() == g.edges.tolist()
+
+
+def test_twitch_loader_on_fixture_with_duplicate_rows(tmp_path):
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "linkx" / "twitch" / "FR"
+    d.mkdir(parents=True)
+    (d / "musae_FR_target.csv").write_text(
+        "id,days,mature,views,partner,new_id\n"
+        "101,10,True,5,False,2\n100,20,False,7,False,0\n102,30,True,1,False,1\n"
+        "103,40,False,2,False,3\n104,50,True,3,False,4\n105,60,False,3,False,5\n"
+        "106,60,False,3,False,6\n102,30,True,1,False,1\n")
+    (d / "musae_FR_edges.csv").write_text("from,to\n0,1\n1,2\n2,0\n3,4\n4,3\n2,2\n5,6\n4,6\n")
+    (d / "musae_FR_features.json").write_text(json.dumps({"0": [0, 3], "1": [3], "2": [5], "3": [], "4": [0],
+                                                          "5": [3, 3], "6": [0], "9": [9]}))
+    g = load("twitch-fr")
+    assert g.num_nodes == 7 and g.num_classes == 2
+    assert g._labels.tolist() == [0, 1, 1, 0, 1, 0, 0]
+    assert g.edges.tolist() == [[0, 1], [0, 2], [1, 2], [3, 4], [4, 6], [5, 6]]
+    rep = g.meta["canonicalization"]
+    assert rep["duplicate_target_rows"] == 1 and rep["conflicting_duplicate_labels"] == 0
+    assert rep["feature_keys_out_of_range"] == 1 and rep["feature_columns_kept"] == 3
+    assert g.features.tolist() == [[1, 1, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 0, 0]]
+    _check_canonical_and_isolated(g)
+
+
+def test_actor_loader_uses_the_fixed_geom_gcn_splits(tmp_path):
+    from edsp.data.loaders import load
+
+    d = _cache(tmp_path) / "geom-gcn"
+    (d / "film").mkdir(parents=True)
+    (d / "splits").mkdir(parents=True)
+    (d / "film" / "out1_node_feature_label.txt").write_text(
+        "node_id\tfeature\tlabel\n3\t1,4\t2\n0\t0\t0\n1\t2,3\t1\n2\t931\t4\n4\t5\t3\n5\t0,1\t0\n")
+    (d / "film" / "out1_graph_edges.txt").write_text("node_id\tnode_id\n0\t1\n1\t0\n1\t2\n3\t3\n4\t5\n2\t5\n")
+    base = np.array([[1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 1]], dtype=np.uint8)
+    for i in range(10):
+        tr, va, te = np.roll(base, i, axis=1)
+        np.savez(d / "splits" / f"film_split_0.6_0.2_{i}.npz", train_mask=tr, val_mask=va, test_mask=te)
+    g = load("actor")
+    assert g.num_nodes == 6 and g.num_classes == 5
+    assert g._labels.tolist() == [0, 1, 4, 2, 3, 0]
+    assert g.features.shape == (6, 932) and g.features[2, 931] == 1 and g.features.sum() == 9
+    assert g.edges.tolist() == [[0, 1], [1, 2], [2, 5], [4, 5]]
+    assert g.splits[0].test_idx.tolist() == [4, 5] and g.splits[1].test_idx.tolist() == [0, 5]
+    assert g.meta["canonicalization"]["split_sizes"] == [[3, 1, 2]] * 10
+    _check_canonical_and_isolated(g, random=False)
+    np.savez(d / "splits" / "film_split_0.6_0.2_9.npz", train_mask=base[0, :5], val_mask=base[1, :5], test_mask=base[2, :5])
+    with pytest.raises(ValueError, match="length 5"):
+        load("actor")
+
+
+def test_native_mixed_registry_entries():
+    from edsp.data.loaders import LOADERS
+
+    ds = registry()["datasets"]
+    ext = {k for k, v in ds.items() if v.get("extension")}
+    assert ext == NATIVE_MIXED and ext <= set(LOADERS)
+    assert "native-mixed" in registry()["extensions"]
+    for k in ext:
+        v = ds[k]
+        assert v["extension"] == "native-mixed" and v["status"] == "registered"
+        assert v["metric"] in ("accuracy", "roc_auc") and v["cell"] == "C2"
+        assert "TO VERIFY" in v["notes"] and "TO VERIFY" in v["license"]
+        for r in v["routes"]:  # pinned to a commit, never a moving branch
+            assert re.search(r"/[0-9a-f]{40}/", r) and r.startswith("https://raw.githubusercontent.com/")
+    assert ds["penn94"]["loader"] is None and "fb100-penn94" in ds["penn94"]["status"]
+
+
+def test_e1_default_lists_exclude_extension_entries():
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    text = (root / ".github" / "workflows" / "e1.yml").read_text()
+    line = next(x for x in text.splitlines() if 'json.load(open("data/REGISTRY.json"))' in x)
+    code = re.search(r"python3 -c '(.+?)' \"\$\(", line).group(1)
+    ds = registry()["datasets"]
+    for suite in ("E1", "E2"):
+        out = subprocess.run([sys.executable, "-c", code, suite], cwd=root, capture_output=True, text=True, check=True)
+        names = json.loads(out.stdout)
+        assert names and not set(names) & NATIVE_MIXED
+        assert all(not ds[k].get("extension") for k in names)
+        assert ("cora" in names) == (suite == "E1") and ("wiki-editor" in names) == (suite == "E2")

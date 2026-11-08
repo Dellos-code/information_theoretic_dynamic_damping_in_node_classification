@@ -12,6 +12,9 @@ on:
         description: "Also process ogbn-proteins (~40M edges)"
         type: boolean
         default: false
+      datasets:
+        description: "Space-separated dataset names (empty = every registered dataset with a loader)"
+        default: ""
   pull_request:
     paths:
       - "edsp/data/**"
@@ -44,6 +47,7 @@ jobs:
         run: |
           EXTRA=""
           if [ "${{ inputs.include_large }}" = "true" ]; then EXTRA="--include-large"; fi
+          if [ -n "${{ inputs.datasets }}" ]; then EXTRA="$EXTRA --datasets ${{ inputs.datasets }}"; fi
           uv run python scripts/dataset_stats.py $EXTRA
       - uses: actions/upload-artifact@v4
         if: always()

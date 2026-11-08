@@ -10,6 +10,7 @@ locked environment without torch_geometric/ogb.
 
 from __future__ import annotations
 
+import csv
 import gzip
 import io
 import json
@@ -607,3 +608,307 @@ def _is_number(x: str) -> bool:
 for _ch in ("house", "senate"):
     for _s in CONGRESS_SESSIONS:
         LOADERS[f"congress-{_ch}-{_s}"] = congress
+
+
+# ------------------------------------- PR-20 extension "native-mixed" (REGISTRY "extension")
+# Candidate real graphs whose node labels mix natively and close to randomly across
+# edges (k = 2, edge homophily expected near 0.5), plus actor (k = 5, low homophily);
+# their homophily is measured by dataset-stats.yml, not assumed. Registered with
+# "extension": "native-mixed": e1.yml leaves them out of its default E1/E2 lists, so
+# they run only when named in its `datasets` input. Sources are pinned to commits;
+# every download is TO VERIFY on the first Actions run (dataset-stats.yml).
+LINKX_COMMIT = "82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6"  # CUAI/Non-Homophily-Large-Scale
+GEOM_GCN_COMMIT = "1124af17444d7fd09686504ec46caa3f39f4f632"  # graphdml-uiuc-jlu/geom-gcn
+FB100_SCHOOLS = {
+    "fb100-penn94": "Penn94",
+    "fb100-amherst41": "Amherst41",
+    "fb100-cornell5": "Cornell5",
+    "fb100-johnshopkins55": "Johns Hopkins55",
+    "fb100-reed98": "Reed98",
+}
+TWITCH_LANGS = {"twitch-de": "DE", "twitch-en": "ENGB", "twitch-es": "ES", "twitch-fr": "FR",
+                "twitch-pt": "PTBR", "twitch-ru": "RU"}
+# Dense float32 feature matrices above this size are not materialised (GraphData holds
+# dense features only); the graph then has features=None and Track B is NOT-RUN on it.
+MAX_DENSE_FEATURE_BYTES = 1 << 30
+
+
+def _dense_features(X, report: dict) -> np.ndarray | None:
+    """Dense float32 copy of ``X`` (dense or scipy sparse), or None above MAX_DENSE_FEATURE_BYTES."""
+    n, d = X.shape
+    need = int(n) * int(d) * 4
+    if need > MAX_DENSE_FEATURE_BYTES:
+        report["features_omitted"] = {"shape": [int(n), int(d)], "dense_float32_bytes": need,
+                                      "limit_bytes": MAX_DENSE_FEATURE_BYTES,
+                                      "reason": "dense matrix too large; Track B is NOT-RUN on this graph"}
+        return None
+    return (X.toarray() if sp.issparse(X) else np.asarray(X)).astype(np.float32, copy=False)
+
+
+def _label_binarize_columns(cols: np.ndarray) -> tuple[sp.csr_matrix, list[int]]:
+    """Per-column encoding of LINKX's ``load_fb100_dataset`` (sklearn ``label_binarize``
+    with ``classes=np.unique(col)``): >= 3 values -> one-hot; 2 values -> one indicator
+    column of the larger value; 1 value -> one all-zero column. Value 0 ("missing" in
+    FB100) is a category like any other."""
+    blocks, widths = [], []
+    n = cols.shape[0]
+    for j in range(cols.shape[1]):
+        vals, inv = np.unique(cols[:, j], return_inverse=True)
+        if len(vals) >= 3:
+            blocks.append(sp.csr_matrix((np.ones(n, np.float32), (np.arange(n), inv)), shape=(n, len(vals))))
+        else:
+            blocks.append(sp.csr_matrix((inv == 1).astype(np.float32).reshape(-1, 1)))
+        widths.append(blocks[-1].shape[1])
+    return sp.hstack(blocks, format="csr"), widths
+
+
+def fb100(name: str) -> GraphData:
+    """Facebook100 school networks (Traud, Mucha & Porter 2012), the five schools shipped
+    in the LINKX repository (Lim et al., NeurIPS 2021): Penn94, Amherst41, Cornell5,
+    Johns Hopkins55, Reed98.
+
+    Source: ``data/facebook100/<school>.mat`` of CUAI/Non-Homophily-Large-Scale at commit
+    LINKX_COMMIT (not Git LFS); keys ``A`` (sparse friendship adjacency) and
+    ``local_info`` (columns: student/faculty status, gender, major, second major/minor,
+    dorm/house, year, high school; 0 = missing). License: none stated in the LINKX
+    repository; FB100 was released by Facebook to Traud et al. for research (TO VERIFY).
+    Label: gender = ``local_info[:, 1] - 1`` as in LINKX (codes 1/2 -> classes 0/1; the
+    data do not say which code is which gender); 0 (missing) -> -1, kept in the graph,
+    excluded from splits and statistics. Features (Track B): LINKX's encoding of every
+    other ``local_info`` column (:func:`_label_binarize_columns`); PyG's LINKXDataset
+    one-hot encodes binary columns with two columns instead (differs only for columns
+    with <= 2 distinct values). Headline metric: accuracy, as LINKX reports for fb100
+    (its main.py uses ROC-AUC only for yelp-chi, twitch-e, ogbn-proteins and genius).
+    Splits: 10 stratified random 60/20/20 (seeds 0-9) over labelled nodes
+    (PREREGISTRATION §4; LINKX's fixed 5 x 50/25/25 Penn94 splits are not used, see
+    docs/SPEC_AMBIGUITIES.md).
+    """
+    from scipy.io import loadmat
+
+    school = FB100_SCHOOLS[name]
+    path = _fetch(name, "facebook100/" + school.replace(" ", "%20") + ".mat",
+                  "linkx/facebook100/" + school.replace(" ", "") + ".mat")
+    d = loadmat(path)
+    A = sp.coo_matrix(d["A"])
+    info = np.asarray(d["local_info"]).astype(np.int64)
+    del d
+    n = A.shape[0]
+    if A.shape != (n, n) or info.shape[0] != n or info.shape[1] < 2:
+        raise ValueError(f"{name}: unexpected shapes A {A.shape}, local_info {info.shape}")
+    labels = info[:, 1] - 1  # gender label, -1 means unlabelled (LINKX)
+    edges, _, _, report = canonicalize_edges(np.stack([A.row, A.col], axis=1), n)
+    del A
+    X, widths = _label_binarize_columns(np.delete(info, 1, axis=1))
+    report |= {"source": f"CUAI/Non-Homophily-Large-Scale@{LINKX_COMMIT[:7]} data/facebook100/{school}.mat",
+               "label": "local_info[:, 1] - 1 (gender; 0 = missing -> -1)",
+               "gender_code_counts": {int(v): int(c) for v, c in zip(*np.unique(info[:, 1], return_counts=True), strict=True)},
+               "unlabelled_nodes": int(np.sum(labels < 0)),
+               "feature_columns": "local_info columns 0, 2..6 (all but gender), LINKX label_binarize encoding",
+               "feature_widths": widths}
+    feats = _dense_features(X, report)
+    g = GraphData(name, n, edges, int(labels.max() + 1), random_splits(labels, 10, (0.6, 0.2, 0.2), 0), labels,
+                  features=feats, meta={"source": "LINKX facebook100 (Traud et al. 2012)", "domain": "social",
+                                        "extension": "native-mixed"})
+    return _finish(g, report)
+
+
+def genius(name: str = "genius") -> GraphData:
+    """genius (Lim & Benson, ICWSM 2021), as distributed with LINKX (Lim et al. 2021).
+
+    Source: ``data/genius.mat`` of CUAI/Non-Homophily-Large-Scale at LINKX_COMMIT (39 MB,
+    not Git LFS); keys ``edge_index`` (2 x m), ``node_feat`` (n x 12), ``label`` (as read
+    by LINKX's ``load_genius``). Nodes are users of genius.com, edges follow relations;
+    label: binary user flag of the LINKX benchmark ("marked" accounts; exact meaning TO
+    VERIFY against Lim & Benson 2021). License: none stated in the LINKX repository (TO
+    VERIFY). Headline metric: ROC-AUC, as in LINKX (imbalanced binary labels).
+    Memory: ~421k nodes and ~1M edges are read as an edge list (no dense n x n object);
+    the int64 edge array is ~16 MB, so the repository-wide int64 convention is kept.
+    Splits: 10 stratified random 60/20/20 (seeds 0-9); LINKX's fixed 5 x 50/25/25 splits
+    are not used (docs/SPEC_AMBIGUITIES.md).
+    """
+    from scipy.io import loadmat
+
+    d = loadmat(_fetch(name, "genius.mat", "linkx/genius.mat"))
+    labels = np.asarray(d["label"]).ravel().astype(np.int64)
+    n = len(labels)
+    ei = np.asarray(d["edge_index"])
+    if ei.ndim != 2 or 2 not in ei.shape:
+        raise ValueError(f"genius: unexpected edge_index shape {ei.shape}")
+    ei = ei if ei.shape[0] == 2 else ei.T
+    feats = np.asarray(d["node_feat"], dtype=np.float32)
+    del d
+    edges, _, _, report = canonicalize_edges(ei.T, n)
+    del ei
+    report |= {"source": f"CUAI/Non-Homophily-Large-Scale@{LINKX_COMMIT[:7]} data/genius.mat",
+               "label_counts": {int(v): int(c) for v, c in zip(*np.unique(labels, return_counts=True), strict=True)}}
+    g = GraphData(name, n, edges, int(labels.max() + 1), random_splits(labels, 10, (0.6, 0.2, 0.2), 0), labels,
+                  features=feats, meta={"source": "LINKX genius (Lim & Benson 2021)", "domain": "social",
+                                        "extension": "native-mixed"})
+    return _finish(g, report)
+
+
+def deezer_europe(name: str = "deezer-europe") -> GraphData:
+    """Deezer Europe (Rozemberczki & Sarkar, CIKM 2020), the LINKX copy.
+
+    Source: ``data/deezer-europe.mat`` of CUAI/Non-Homophily-Large-Scale at LINKX_COMMIT;
+    keys ``A`` (sparse mutual-follower adjacency), ``label`` (gender) and ``features``
+    (sparse binary liked-artist indicators), as read by LINKX's ``load_deezer_dataset``.
+    PyG's DeezerEurope reads a different file (graphmining.ai npz, 128 features) that is
+    not reachable from the development sandbox; it is not used. License: none stated in
+    the LINKX repository; the original release (benedekrozemberczki/FEATHER) carries an
+    MIT LICENSE file (whether it covers the data: TO VERIFY). Headline metric: accuracy, as LINKX reports for deezer-europe (binary gender).
+    Features are kept only if the dense float32 matrix fits MAX_DENSE_FEATURE_BYTES
+    (otherwise features=None, recorded in ``meta['canonicalization']``).
+    Splits: 10 stratified random 60/20/20 (seeds 0-9).
+    """
+    from scipy.io import loadmat
+
+    d = loadmat(_fetch(name, "deezer-europe.mat", "linkx/deezer-europe.mat"))
+    labels = np.asarray(d["label"]).ravel().astype(np.int64)
+    n = len(labels)
+    A = sp.coo_matrix(d["A"])
+    if A.shape != (n, n):
+        raise ValueError(f"deezer-europe: A has shape {A.shape}, {n} labels")
+    X = d["features"]
+    del d
+    edges, _, _, report = canonicalize_edges(np.stack([A.row, A.col], axis=1), n)
+    report |= {"source": f"CUAI/Non-Homophily-Large-Scale@{LINKX_COMMIT[:7]} data/deezer-europe.mat",
+               "label_counts": {int(v): int(c) for v, c in zip(*np.unique(labels, return_counts=True), strict=True)}}
+    feats = _dense_features(X, report)
+    g = GraphData(name, n, edges, int(labels.max() + 1), random_splits(labels, 10, (0.6, 0.2, 0.2), 0), labels,
+                  features=feats, meta={"source": "LINKX deezer-europe (Rozemberczki & Sarkar 2020)",
+                                        "domain": "social", "extension": "native-mixed"})
+    return _finish(g, report)
+
+
+def twitch(name: str) -> GraphData:
+    """Twitch user networks DE, EN(GB), ES, FR, PT(BR), RU (Rozemberczki, Allen & Sarkar,
+    "Multi-scale Attributed Node Embedding", J. Complex Networks 2021; the "twitch-e"
+    graphs of LINKX).
+
+    Source: the raw MUSAE files ``data/twitch/<LANG>/musae_<LANG>_{target.csv, edges.csv,
+    features.json}`` of CUAI/Non-Homophily-Large-Scale at LINKX_COMMIT, parsed as LINKX's
+    ``load_twitch``: node id = ``new_id`` column, label = ``mature`` == "True" (the
+    streamer uses explicit language), duplicate target rows (the FR file) keep the first
+    row, features = binary indicators of the ids listed in features.json with all-zero
+    columns dropped. PyG's Twitch reads graphmining.ai npz files instead (128 features,
+    not reachable from the development sandbox; not used). License: none stated in the
+    LINKX repository; the original release (benedekrozemberczki/MUSAE) carries a GPL-3.0
+    LICENSE file (whether it covers the data: TO VERIFY). Headline metric: ROC-AUC,
+    as LINKX reports for twitch-e. Splits: 10 stratified random 60/20/20 (seeds 0-9).
+    """
+    lang = TWITCH_LANGS[name]
+    paths = {k: _fetch(name, f"twitch/{lang}/musae_{lang}_{k}", f"linkx/twitch/{lang}/musae_{lang}_{k}")
+             for k in ("target.csv", "edges.csv", "features.json")}
+    with open(paths["target.csv"], newline="", encoding="utf-8") as fh:
+        rows = [r for r in csv.reader(fh) if r]
+    header = [h.strip().lower() for h in rows[0]]
+    c_id = header.index("new_id") if "new_id" in header else 5  # LINKX: row[5]
+    c_y = header.index("mature") if "mature" in header else 2  # LINKX: row[2] == "True"
+    label_of: dict[int, int] = {}
+    duplicates = conflicting = 0
+    for r in rows[1:]:
+        i, y = int(r[c_id]), int(r[c_y].strip() == "True")
+        if i in label_of:
+            duplicates += 1
+            conflicting += int(label_of[i] != y)
+            continue
+        label_of[i] = y
+    n = len(label_of)
+    if sorted(label_of) != list(range(n)):
+        raise ValueError(f"{name}: new_id values are not 0..{n - 1}")
+    labels = np.array([label_of[i] for i in range(n)], dtype=np.int64)
+    with open(paths["edges.csv"], encoding="utf-8") as fh:
+        next(fh)
+        raw = np.array(fh.read().replace(",", " ").split(), dtype=np.int64).reshape(-1, 2)
+    edges, _, _, report = canonicalize_edges(raw, n)
+    feat_lists = json.loads(paths["features.json"].read_text(encoding="utf-8"))
+    rr = [int(k) for k, v in feat_lists.items() for _ in v if int(k) < n]
+    cc = [int(f) for k, v in feat_lists.items() for f in v if int(k) < n]
+    width = (max(cc) + 1) if cc else 0
+    X = sp.csr_matrix((np.ones(len(rr), np.float32), (rr, cc)), shape=(n, width))
+    X.sum_duplicates()
+    X.data[:] = 1.0
+    keep = np.flatnonzero(np.asarray(X.sum(axis=0)).ravel() > 0)
+    report |= {"source": f"CUAI/Non-Homophily-Large-Scale@{LINKX_COMMIT[:7]} data/twitch/{lang}",
+               "duplicate_target_rows": duplicates, "conflicting_duplicate_labels": conflicting,
+               "feature_keys_out_of_range": sum(int(k) >= n for k in feat_lists),
+               "feature_columns_kept": len(keep),
+               "label_counts": {int(v): int(c) for v, c in zip(*np.unique(labels, return_counts=True), strict=True)}}
+    feats = _dense_features(X[:, keep], report)
+    g = GraphData(name, n, edges, 2, random_splits(labels, 10, (0.6, 0.2, 0.2), 0), labels, features=feats,
+                  meta={"source": f"LINKX twitch-e {lang} (Rozemberczki et al. 2021)", "domain": "social",
+                        "extension": "native-mixed"})
+    return _finish(g, report)
+
+
+def actor(name: str = "actor") -> GraphData:
+    """actor ("film"): actor-only induced subgraph of the film-director-actor-writer
+    network (Tang et al. 2009) as built by Geom-GCN (Pei et al., ICLR 2020).
+
+    Source: graphdml-uiuc-jlu/geom-gcn at GEOM_GCN_COMMIT, ``new_data/film/
+    out1_node_feature_label.txt`` (header line, then ``id<TAB>f1,f2,...<TAB>label``),
+    ``new_data/film/out1_graph_edges.txt`` (header line, then ``u<TAB>v``) and the fixed
+    splits ``splits/film_split_0.6_0.2_{0..9}.npz`` (``train_mask``/``val_mask``/
+    ``test_mask``), the files PyG's ``Actor`` reads. Edges: co-occurrence on a Wikipedia
+    page; features: 932 binary keyword indicators (width as in Geom-GCN's
+    ``utils_data.py``); label: one of 5 classes derived from the words of the actor's
+    Wikipedia page. License: none stated in the Geom-GCN repository (TO VERIFY). Headline
+    metric: accuracy (Geom-GCN and every later actor benchmark). Splits: the 10 official
+    Geom-GCN splits; despite the "0.6_0.2" name they are 48/32/20 (TO VERIFY on the
+    first run from the mask sizes, recorded in ``meta['canonicalization']``).
+    """
+    nf = _fetch(name, "new_data/film/out1_node_feature_label.txt", "geom-gcn/film/out1_node_feature_label.txt")
+    ef = _fetch(name, "new_data/film/out1_graph_edges.txt", "geom-gcn/film/out1_graph_edges.txt")
+    split_files = [_fetch(name, f"splits/film_split_0.6_0.2_{i}.npz", f"geom-gcn/splits/film_split_0.6_0.2_{i}.npz")
+                   for i in range(10)]
+    ids, rows, cols, ys = [], [], [], []
+    for line in nf.read_text(encoding="utf-8").splitlines()[1:]:
+        if not line.strip():
+            continue
+        nid, feats_s, lab = line.rstrip().split("\t")
+        ids.append(int(nid))
+        ys.append(int(lab))
+        f = [int(x) for x in feats_s.split(",") if x != ""]
+        rows += [int(nid)] * len(f)
+        cols += f
+    n = len(ids)
+    if sorted(ids) != list(range(n)):
+        raise ValueError(f"actor: node ids are not 0..{n - 1}")
+    labels = np.empty(n, dtype=np.int64)
+    labels[np.asarray(ids)] = ys
+    width = max(932, (max(cols) + 1) if cols else 0)
+    X = sp.csr_matrix((np.ones(len(rows), np.float32), (rows, cols)), shape=(n, width))
+    X.sum_duplicates()
+    X.data[:] = 1.0
+    with open(ef, encoding="utf-8") as fh:
+        next(fh)
+        raw = np.array(fh.read().split(), dtype=np.int64).reshape(-1, 2)
+    edges, _, _, report = canonicalize_edges(raw, n)
+    masks = {k: [] for k in ("train_mask", "val_mask", "test_mask")}
+    for p in split_files:
+        with np.load(p) as z:
+            for k, acc in masks.items():
+                m = np.asarray(z[k]).astype(bool).ravel()
+                if len(m) != n:
+                    raise ValueError(f"actor: {p.name} {k} has length {len(m)}, expected {n}")
+                acc.append(m)
+    splits = _mask_splits(np.stack(masks["train_mask"]), np.stack(masks["val_mask"]), np.stack(masks["test_mask"]),
+                          "official Geom-GCN film splits (film_split_0.6_0.2_{0..9})")
+    report |= {"source": f"graphdml-uiuc-jlu/geom-gcn@{GEOM_GCN_COMMIT[:7]} new_data/film",
+               "split_sizes": [[len(s.train_idx), len(s.val_idx), len(s.test_idx)] for s in splits],
+               "label_counts": np.bincount(labels).tolist()}
+    feats = _dense_features(X, report)
+    g = GraphData(name, n, edges, int(labels.max() + 1), splits, labels, features=feats,
+                  meta={"source": "Geom-GCN film (Pei et al. 2020)", "domain": "web/wiki (co-occurrence)",
+                        "extension": "native-mixed"})
+    return _finish(g, report)
+
+
+LOADERS.update({
+    **dict.fromkeys(FB100_SCHOOLS, fb100),
+    **dict.fromkeys(TWITCH_LANGS, twitch),
+    "genius": genius,
+    "deezer-europe": deezer_europe,
+    "actor": actor,
+})
