@@ -68,11 +68,46 @@ for the other 3 nor for either k = 5 condition. Most of the size of the MIX wins
 from the generator's locality; a smaller, still significant advantage remains for k = 2
 with strongly heterogeneous, chaotic, regional or class-dependent mixing.
 
+## (iii) Whose win is it? Ablation A10 — **the learned polarity's, not EDSP's propagation**
+
+The A8 wins used H-LEARNED: a train-only edge classifier predicting which edges are
+heterophilic. A10 gives the *same* predicted polarity, as signs, to the two simple
+signed baselines (`signed_vote+HL`, `signed_lgc+HL`). Records:
+`results/runs/e2u-ablation/` (Actions run
+[42414234730](https://github.com/Dellos-code/information_theoretic_dynamic_damping_in_node_classification/actions/runs/42414234730),
+branch pr-16-ablation), no NOT-RUN. EDSP-tuned vs the better of the two (×100; Wilcoxon over
+splits, Holm over the 11 ranked datasets):
+
+| dataset (signs hidden) | EDSP-tuned | signed_vote+HL | signed_lgc+HL | verdict |
+|---|---|---|---|---|
+| congress-house-93 | 80.22 | 80.79 | 82.81 | tie |
+| congress-house-100 | 87.19 | 87.08 | 87.08 | tie |
+| congress-house-107 | 95.84 | 95.73 | 95.62 | tie |
+| congress-house-114 | 96.18 | 96.29 | 96.18 | tie |
+| congress-senate-93 | 70.48 | 69.52 | 71.90 | tie |
+| congress-senate-100 | 76.50 | 74.50 | 75.50 | tie |
+| congress-senate-107 | 93.16 | 94.21 | 94.21 | tie |
+| congress-senate-114 | 98.00 | 98.50 | 98.50 | tie |
+| wiki-editor | 74.01 | 73.65 | 74.01 | tie |
+| amazon-fraud [AUC] | 82.79 | 81.05 | 51.86 | win (+1.74) |
+| yelpchi [AUC] | 62.86 | 58.22 | 52.59 | win (+4.64) |
+
+**On every Congress graph the A8 advantage disappears**: once the simple signed
+methods receive the same learned polarity, they match EDSP-tuned (differences −2.6 to
++1.0, none significant). The A8 wins are therefore due to the **learned edge polarity**
+(H-LEARNED, part of the evaluation framework's regimes, not of EDSP), and any signed
+propagation using it would get them. EDSP's propagation adds value only on the two
+fraud graphs, where the predicted polarity is poor and a vote/spreading on it fails
+(signed_lgc+HL ≈ 52 AUC); there, however, EDSP-tuned is itself only tied with (amazon-fraud)
+or below (yelpchi) the plain sign-blind LGC. The same mechanism (H-LEARNED selected in
+81 of 81 runs) drives the MIX k = 2 wins, which therefore most likely have the same origin;
+this was not tested separately.
+
 ## Bottom line
 
-The niche where EDSP wins is real, narrower than MIX suggested: **two classes, edge
-polarity present but not recorded, and recoverable from structure** — demonstrated on
-real data by the Congress networks with their signs hidden (7 of 8 significant wins,
-+4 to +15 points over the best sign-blind propagation method), and on re-wired graphs
-without the locality aid in 5 of 8 heterogeneous conditions. With k = 5, the advantage
-does not survive the removal of locality.
+The niche found in (i)–(ii) — **two classes, edge polarity present but not recorded,
+and recoverable from structure** — is real, but (iii) shows that the advantage there
+belongs to the **learned edge polarity** (H-LEARNED), not to EDSP's propagation: simple
+signed propagation fed with the same predicted polarity does as well. As a method,
+EDSP is therefore *competitive* (it is one of the propagation schemes that can use
+predicted or given polarity), not the source of the gains.
