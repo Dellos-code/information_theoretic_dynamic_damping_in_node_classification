@@ -156,3 +156,47 @@ strong heterophily (h = 0) or U-shaped heterogeneous mixing. Its gains under
 heterogeneous mixing come from H-LEARNED exploiting structure that the
 generator's locality rule makes visible (§3). It loses in every other condition we
 tried, including all conditions on cora, citeseer and roman-empire.
+
+## 5. Whose win is it? (PREREGISTRATION A11)
+
+A10 showed that on the sign-blind Congress graphs EDSP's advantage belongs to H-LEARNED's
+predicted edge polarity: simple signed propagation fed the same polarity ties EDSP. A11
+(written before the run) applies the same ablation to the 17 confirmed MIX wins (§4,
+loc = 0.8, seeds 10–19) and to the 10 A8 `loc = 0` conditions (seeds 20–29): EDSP-tuned vs
+the better (by mean) of `signed_vote+HL` / `signed_lgc+HL` on the **same** re-wired graphs,
+30 pairs, Wilcoxon, Holm per base within each family. Actions runs 42477109436,
+42477114897, 42477120225, 42477125650 (branch `pr-19-mix-attribution`); records in
+`results/perturbed/attribution/runs/`, table in
+`results/perturbed/attribution/aggregates/ATTRIBUTION_SUMMARY.md`.
+
+**The 17 A4 wins (loc = 0.8):** 9 survive (EDSP's propagation adds value beyond the
+learned polarity), 2 tie, 6 are lost to `signed_lgc+HL`.
+
+| | conditions (Δ vs best +HL baseline, points) |
+|---|---|
+| **win — EDSP's own** (9) | wiki-editor global h = 0.1 / 0.2 / 0.3 / 0.4 (+0.20 / +1.03 / +2.17 / +0.47), permutation h = 0.1 / 0.3 (+0.18 / +2.30), beta (0.2, 0.5) +0.68, community +0.35; amazon-ratings beta (0.5, 0.5) +0.70 |
+| tie (2) | wiki-editor beta (0.5, 5) +0.05, regional 20 −0.09 |
+| **loss — the learned polarity's** (6) | wiki-editor beta (0.5, 0.5) −0.51, beta (0.8, 0.5) −0.49, uniform −0.52, logistic −0.63; amazon-ratings global h = 0 −0.90, beta (0.2, 0.5) −1.07 |
+
+**The A8 `loc = 0` conditions:** none of the 5 wiki-editor wins that survived `loc = 0` in
+A8 is EDSP's own (beta (0.5, 0.5) and community tie; uniform, logistic and regional are
+losses, −0.5 to −1.1). amazon-ratings beta (0.5, 0.5) at `loc = 0` is a large win over the
++HL baselines (+28.2, the learned-polarity baselines collapse to ~31 %), but EDSP-tuned was
+not ahead of the sign-blind baselines there in A8 (−0.39 vs harmonic+CMN), so it is not a
+win overall.
+
+**Reading.** The wins that remain EDSP's own *and* are free of the generator-locality caveat
+of §3 are the six `global` / `permutation` conditions on wiki-editor (these modes have no
+locality): edges re-wired uniformly at a fixed heterophily level h = 0.1–0.4, where
+EDSP-tuned beats every sign-blind baseline (§4) and simple signed propagation given the same
+learned polarity, by +0.2 to +2.3 points. All heterogeneous-mixing wins (beta, uniform,
+logistic, regional, community) are either the learned polarity's or depend on the
+generator's locality. Single base graph (wiki-editor, k = 2) for all six; PERTURBED-REAL,
+never mixed into the real-world tables (rule R4).
+
+**Determinism check.** Same seeds, so EDSP-tuned should reproduce the A4 / A8 records: it does
+exactly in 17 of 27 conditions and within ≤ 0.10 points (max |Δ| 9.9e-4) in the other 10,
+all on wiki-editor; consistent with floating-point differences between runner machines.
+The A11 comparisons are paired within one run, so this does not affect any verdict.
+
+**Correction to an earlier summary:** the 3 amazon-ratings MIX wins are k = 5, not k = 2.
