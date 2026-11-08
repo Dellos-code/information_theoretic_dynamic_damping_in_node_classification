@@ -53,6 +53,8 @@ def main() -> int:
     ap.add_argument("--prefer", default=None, help="ref whose record wins a conflict")
     ap.add_argument("--exclude", nargs="*", default=[], help="run ids whose branches are skipped")
     ap.add_argument("--datasets", nargs="*", default=None, help="keep only these datasets")
+    ap.add_argument("--drop", nargs="*", default=[], metavar="DATASET:METHOD",
+                    help="records left out on purpose (e.g. amazon-fraud:gcn, NOT-RUN by PREREGISTRATION A9); listed in ASSEMBLY.md")
     ap.add_argument("--relabel-hidden", nargs="*", default=[], metavar="DATASET:METHOD:HIDDEN",
                     help="records of METHOD on DATASET whose config.hidden is HIDDEN become METHOD(hHIDDEN), "
                          "e.g. tolokers:gat:64 (A14); the original name is kept in relabelled_from")
@@ -62,6 +64,7 @@ def main() -> int:
     scored: dict = {}
     sources: dict = defaultdict(set)
     kept_from: dict = {}
+    dropped: dict = defaultdict(int)
     conflicts: list = []
     stats: dict = {}
     not_run: list = []
@@ -88,6 +91,9 @@ def main() -> int:
                 if hid is not None and f"{d}:{m}:{hid}" in args.relabel_hidden:
                     r = {**r, "method": f"{m}(h{hid})", "relabelled_from": m}
                     m = r["method"]
+                if f"{d}:{m}" in args.drop:
+                    dropped[f"{d}:{m}"] += 1
+                    continue
                 if m == "DATASET-STATS":
                     stats.setdefault(d, r)
                     continue
@@ -133,6 +139,8 @@ def main() -> int:
     md += ["| dataset | method: splits |", "|---|---|"]
     for d in sorted(counts):
         md.append(f"| {d} | " + ", ".join(f"{m}: {len(v)}" for m, v in sorted(counts[d].items())) + " |")
+    if dropped:
+        md += ["", "## Left out on purpose (--drop)", ""] + [f"- {k}: {v} records" for k, v in sorted(dropped.items())]
     if conflicts:
         md += ["", "## Conflicting duplicates (first kept)", "", "| dataset | split | method | kept from | dropped from | kept | dropped |",
                "|---|---|---|---|---|---|---|"]
