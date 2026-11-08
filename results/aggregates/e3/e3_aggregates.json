@@ -1,0 +1,97 @@
+{
+  "git_sha": [
+    "d8543a63f80a"
+  ],
+  "runners": [
+    "actions-run-42458919783"
+  ],
+  "datasets": {
+    "amazon-computers": {
+      "metric": "accuracy",
+      "constructed": false,
+      "methods": {
+        "gat": {
+          "mean": 91.67272727272727,
+          "std": 0.0,
+          "ci95": [
+            91.67272727272727,
+            91.67272727272727
+          ],
+          "n": 1
+        },
+        "gprgnn": {
+          "mean": 91.45454545454545,
+          "std": 0.0,
+          "ci95": [
+            91.45454545454545,
+            91.45454545454545
+          ],
+          "n": 1
+        },
+        "bwgnn": {
+          "mean": 91.52727272727273,
+          "std": 0.0,
+          "ci95": [
+            91.52727272727273,
+            91.52727272727273
+          ],
+          "n": 1
+        }
+      }
+    }
+  },
+  "not_run": [],
+  "win_tie_loss_edsp_tuned": {
+    "feature_lr": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "correct_and_smooth": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "mlp": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gcn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "sage": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gat": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "gprgnn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    },
+    "bwgnn": {
+      "win": [],
+      "loss": [],
+      "tie": 0
+    }
+  },
+  "h7": {
+    "amazon-computers": {
+      "non_converged_rate": null,
+      "oscillation_rate": null,
+      "moving_fraction": null,
+      "gs_damped_l1_mean": null,
+      "gs_damped_l1_p95": null,
+      "h7_splits": 0
+    }
+  },
+  "stratified": {}
+}
