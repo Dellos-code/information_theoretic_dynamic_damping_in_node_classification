@@ -31,6 +31,9 @@ on:
       max_splits:
         description: "Limit splits per dataset (empty = all)"
         default: ""
+      rescue_run:
+        description: "Run id whose run-* artifacts are collected and pushed again (no experiment runs); for runs whose own push failed"
+        default: ""
   pull_request:
     paths:
       - "scripts/run_e1.py"
@@ -44,6 +47,7 @@ permissions:
 
 jobs:
   plan:
+    if: inputs.rescue_run == ''
     runs-on: ubuntu-latest
     outputs:
       datasets: ${{ steps.p.outputs.datasets }}
@@ -132,8 +136,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read
     env:
-      SUITE: ${{ needs.plan.outputs.suite }}
+      SUITE: ${{ needs.plan.outputs.suite || inputs.suite }}
+      RESCUE: ${{ inputs.rescue_run }}
     steps:
       - uses: actions/checkout@v4
       - name: Install uv from PyPI (GitHub release downloads returned HTTP 504 on 2026-11-08)
@@ -146,10 +152,19 @@ jobs:
           S=$(echo "$SUITE" | tr '[:upper:]' '[:lower:]')
           rm -rf "results/runs/$S" "results/aggregates/$S"
       - uses: actions/download-artifact@v4
+        if: inputs.rescue_run == ''
         with:
           pattern: runs-*
           path: results/runs
           merge-multiple: true
+      - uses: actions/download-artifact@v4
+        if: inputs.rescue_run != ''
+        with:
+          pattern: runs-*
+          path: results/runs
+          merge-multiple: true
+          run-id: ${{ inputs.rescue_run }}
+          github-token: ${{ github.token }}
       - run: uv run python scripts/aggregate_e1.py --suite "$SUITE"
       - uses: actions/upload-artifact@v4
         with:
@@ -163,7 +178,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           S=$(echo "$SUITE" | tr '[:upper:]' '[:lower:]')
-          git checkout -b "results/$S-${{ github.run_id }}"
+          # a re-run attempt or a rescue must not collide with a branch pushed earlier
+          BR="results/$S-${RESCUE:-${{ github.run_id }}}"
+          if [ -n "$RESCUE" ]; then BR="$BR-rescue-${{ github.run_id }}"; fi
+          if [ "${{ github.run_attempt }}" != "1" ]; then BR="$BR-a${{ github.run_attempt }}"; fi
+          git checkout -b "$BR"
           git add -f "results/runs/$S" "results/aggregates/$S"
-          git commit -m "$SUITE results from Actions run ${{ github.run_id }} (commit ${{ github.sha }})"
-          git push origin "results/$S-${{ github.run_id }}"
+          git commit -m "$SUITE results from Actions run ${RESCUE:-${{ github.run_id }}} (attempt ${{ github.run_attempt }}; commit ${{ github.sha }})"
+          git push origin "$BR"
