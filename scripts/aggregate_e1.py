@@ -46,11 +46,15 @@ def main() -> int:
     ap.add_argument("--suite", default="E1")
     ap.add_argument("--runs", default=None)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--gat-fallback", choices=["h64", "omit"], default="h64",
+                    help="E3, PREREGISTRATION A14: where full-size GAT+ is incomplete, use GAT+(h64) in its place "
+                         "(h64) or leave GAT+ out for that dataset (omit)")
     args = ap.parse_args()
     if args.suite == "E3":  # Track B: feature priors; baselines are B0 / C&S / GNNs
         global METHODS, RANKED, BASELINES
         gnns = ["mlp", "gcn", "sage", "gat", "gprgnn", "bwgnn"]
-        METHODS = ["EDSP-default", "EDSP-tuned", "majority", "train_prior", "feature_lr", "correct_and_smooth", *gnns]
+        METHODS = ["EDSP-default", "EDSP-tuned", "majority", "train_prior", "feature_lr", "correct_and_smooth", *gnns,
+                   "gat(h64)"]
         RANKED = ["EDSP-default", "EDSP-tuned", "feature_lr", "correct_and_smooth", *gnns]
         BASELINES = ["feature_lr", "correct_and_smooth", *gnns]
     s = args.suite.lower()
@@ -68,6 +72,19 @@ def main() -> int:
         by[(r["dataset"], r["method"])][r["split"]] = r
         meta[r["dataset"]] = (r["headline_metric"], r.get("constructed_benchmark", False))
     datasets = sorted(meta)
+    gat_fallback = {}
+    if args.suite == "E3":  # A14: never mix GAT sizes within a dataset; incomplete full-size rows are not reported
+        for d in datasets:
+            n = len(by.get((d, "EDSP-tuned"), {}))
+            full = by.get((d, "gat"), {})
+            if n and len(full) < n and (d, "gat(h64)") in by:
+                by.pop((d, "gat"), None)
+                h64 = by[(d, "gat(h64)")]
+                if args.gat_fallback == "h64" and len(h64) >= n:
+                    by[(d, "gat")] = h64
+                    gat_fallback[d] = f"GAT+ column = GAT+(h64) ({len(h64)} splits); full-size GAT+ had {len(full)}/{n} splits"
+                else:
+                    gat_fallback[d] = f"GAT+ omitted (full-size {len(full)}/{n} splits, h64 {len(h64)}/{n})"
     shas = sorted({r["run_record"]["git_sha"][:12] for r in recs})
     runners = sorted({r["run_record"]["runner_type"] for r in recs})
 
@@ -325,6 +342,9 @@ def main() -> int:
             md += ["", (f"EDSP-B ≈ C&S (no significant difference) on {same}/{n}; best GNN significantly better on "
                    f"{gnn_better}/{n} → H4 **{'supported' if ok else ('not supported' if bad else 'inconclusive')}**.")]
             agg["H4"] = {"rows": rows, "same_as_cs": same, "gnn_better": gnn_better, "n": n}
+    if gat_fallback:
+        md += ["", f"## GAT+ size (PREREGISTRATION A14, mode `{args.gat_fallback}`)", ""] + [f"- {d}: {t}" for d, t in sorted(gat_fallback.items())]
+        agg["gat_fallback"] = {"mode": args.gat_fallback, "datasets": gat_fallback}
     if not_run:
         md += ["", "## Not run", ""] + [f"- {r['dataset']} split {r['split']}: {r['reason']}" for r in not_run]
 
