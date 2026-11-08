@@ -1,0 +1,85 @@
+WTL E1 harmonic: 4/9/1
+WTL E1 harmonic_cmn: 2/10/2
+WTL E1 lgc: 0/4/10
+WTL E1 ppr_lp: 1/9/4
+WTL E1 linbp: 10/2/2
+WTL E1 train_prior: 12/0/2
+WTL E2 harmonic: 9/1/1
+WTL E2 harmonic_cmn: 9/1/1
+WTL E2 lgc: 9/1/1
+WTL E2 ppr_lp: 10/0/1
+WTL E2 linbp: 11/0/0
+WTL E2 train_prior: 11/0/0
+WTL E2 signed_vote: 1/8/0
+WTL E2 signed_lgc: 0/9/0
+WTL E3 feature_lr: 9/4/0
+WTL E3 correct_and_smooth: 4/3/6
+WTL E3 mlp: 7/3/3
+WTL E3 gcn: 0/3/9
+WTL E3 sage: 0/1/11
+WTL E3 gat: 0/3/9
+WTL E3 gprgnn: 0/2/10
+WTL E3 bwgnn: 1/2/10
+RANK E1 lgc: 1.50
+RANK E1 harmonic_cmn: 3.32
+RANK E1 ppr_lp: 3.71
+RANK E1 EDSP-tuned: 4.14
+RANK E1 harmonic: 4.68
+RANK E1 EDSP-default: 5.64
+RANK E1 linbp: 6.00
+RANK E1 train_prior: 7.00
+RANK E1 datasets=14 friedman_p=2.29e-08
+RANK E2 EDSP-tuned: 1.73
+RANK E2 EDSP-default: 2.45
+RANK E2 lgc: 4.36
+RANK E2 linbp: 4.45
+RANK E2 ppr_lp: 5.36
+RANK E2 train_prior: 5.45
+RANK E2 harmonic_cmn: 6.00
+RANK E2 harmonic: 6.18
+RANK E2 datasets=11 friedman_p=1.37e-05
+RANK E3 sage: 2.92
+RANK E3 gat: 3.08
+RANK E3 bwgnn: 3.17
+RANK E3 gcn: 3.75
+RANK E3 gprgnn: 3.92
+RANK E3 correct_and_smooth: 5.83
+RANK E3 EDSP-tuned: 7.17
+RANK E3 mlp: 7.83
+RANK E3 EDSP-default: 8.25
+RANK E3 feature_lr: 9.08
+RANK E3 datasets=12 friedman_p=3.11e-11
+H4 [GAT+(h64)] amazon-ratings: best=sage EDSP-C&S=-6.63 GNN-EDSP=+10.96
+H4 [GAT+(h64)] chameleon-filtered: best=sage EDSP-C&S=-2.46 GNN-EDSP=+7.15
+H4 [GAT+(h64)] questions: best=gat EDSP-C&S=-0.67 GNN-EDSP=+4.23
+H4 [GAT+(h64)] roman-empire: best=sage EDSP-C&S=+13.02 GNN-EDSP=+24.21
+H4 [GAT+(h64)] squirrel-filtered: best=gat EDSP-C&S=+14.52 GNN-EDSP=+0.86
+H4 [GAT+(h64)] tolokers: best=gat EDSP-C&S=-1.97 GNN-EDSP=+9.95
+H4 [GAT+(h64)] same_as_cs=2/6 gnn_better=5/6
+H4 [GAT+ omitted] amazon-ratings: best=sage EDSP-C&S=-6.63 GNN-EDSP=+10.96
+H4 [GAT+ omitted] chameleon-filtered: best=sage EDSP-C&S=-2.46 GNN-EDSP=+7.15
+H4 [GAT+ omitted] questions: best=gat EDSP-C&S=-0.67 GNN-EDSP=+4.23
+H4 [GAT+ omitted] roman-empire: best=sage EDSP-C&S=+13.02 GNN-EDSP=+24.21
+H4 [GAT+ omitted] squirrel-filtered: best=gat EDSP-C&S=+14.52 GNN-EDSP=+0.86
+H4 [GAT+ omitted] tolokers: best=gcn EDSP-C&S=-1.97 GNN-EDSP=+9.39
+H4 [GAT+ omitted] same_as_cs=2/6 gnn_better=5/6
+A13 verdict: INCONCLUSIVE wins=4 ties=0 losses=9
+A13 fb100-penn94: EDSP=71.94 a=+8.43 win b=-0.64 (loss)
+A13 fb100-amherst41: EDSP=71.65 a=+7.89 win b=+0.52 (tie)
+A13 fb100-cornell5: EDSP=71.53 a=+3.61 win b=-0.76 (loss)
+A13 fb100-johnshopkins55: EDSP=70.03 a=+2.77 win b=-1.05 (tie)
+A13 fb100-reed98: EDSP=59.42 a=-1.39 loss b=--
+A13 genius: EDSP=59.16 a=-11.21 loss b=--
+A13 deezer-europe: EDSP=54.89 a=-1.51 loss b=--
+A13 twitch-de: EDSP=67.72 a=-2.68 loss b=--
+A13 twitch-en: EDSP=57.57 a=-3.72 loss b=--
+A13 twitch-es: EDSP=66.41 a=-1.32 loss b=--
+A13 twitch-fr: EDSP=64.76 a=-1.68 loss b=--
+A13 twitch-pt: EDSP=65.12 a=-1.27 loss b=--
+A13 twitch-ru: EDSP=56.94 a=-1.42 loss b=--
+A11 loc = 0 loss: 7
+A11 loc = 0 tie: 2
+A11 loc = 0 win: 1
+A11 loc = 0.8 loss: 6
+A11 loc = 0.8 tie: 2
+A11 loc = 0.8 win: 9

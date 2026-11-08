@@ -1,0 +1,33 @@
+\begin{tabular}{lllrl}
+\toprule
+Base & Locality & Condition & $\Delta$ vs best +HL & Verdict \\
+\midrule
+amazon-ratings & loc = 0.8 & beta:m=0.2,c=0.5 & -1.07 & loss \\
+amazon-ratings & loc = 0 & beta:m=0.2,c=0.5,loc=0 & -6.05 & loss \\
+amazon-ratings & loc = 0.8 & beta:m=0.5,c=0.5 & +0.70 & win \\
+amazon-ratings & loc = 0 & beta:m=0.5,c=0.5,loc=0 & +28.18 & win \\
+amazon-ratings & loc = 0.8 & global:h=0 & -0.90 & loss \\
+wiki-editor & loc = 0.8 & beta:m=0.2,c=0.5 & +0.68 & win \\
+wiki-editor & loc = 0 & beta:m=0.2,c=0.5,loc=0 & -0.70 & loss \\
+wiki-editor & loc = 0.8 & beta:m=0.5,c=0.5 & -0.51 & loss \\
+wiki-editor & loc = 0 & beta:m=0.5,c=0.5,loc=0 & -0.25 & tie \\
+wiki-editor & loc = 0.8 & beta:m=0.5,c=5 & +0.05 & tie \\
+wiki-editor & loc = 0 & beta:m=0.5,c=5,loc=0 & -1.08 & loss \\
+wiki-editor & loc = 0.8 & beta:m=0.8,c=0.5 & -0.49 & loss \\
+wiki-editor & loc = 0 & beta:m=0.8,c=0.5,loc=0 & -1.81 & loss \\
+wiki-editor & loc = 0.8 & community:hi=0.9,lo=0.1 & +0.35 & win \\
+wiki-editor & loc = 0 & community:hi=0.9,lo=0.1,loc=0 & +0.22 & tie \\
+wiki-editor & loc = 0.8 & global:h=0.1 & +0.20 & win \\
+wiki-editor & loc = 0.8 & global:h=0.2 & +1.03 & win \\
+wiki-editor & loc = 0.8 & global:h=0.3 & +2.17 & win \\
+wiki-editor & loc = 0.8 & global:h=0.4 & +0.47 & win \\
+wiki-editor & loc = 0.8 & logistic & -0.63 & loss \\
+wiki-editor & loc = 0 & logistic:loc=0 & -0.84 & loss \\
+wiki-editor & loc = 0.8 & permutation:h=0.1 & +0.18 & win \\
+wiki-editor & loc = 0.8 & permutation:h=0.3 & +2.30 & win \\
+wiki-editor & loc = 0.8 & regional:s=20,hi=0.9,lo=0.1 & -0.09 & tie \\
+wiki-editor & loc = 0 & regional:s=20,hi=0.9,lo=0.1,loc=0 & -0.54 & loss \\
+wiki-editor & loc = 0.8 & uniform & -0.52 & loss \\
+wiki-editor & loc = 0 & uniform:loc=0 & -1.05 & loss \\
+\bottomrule
+\end{tabular}
