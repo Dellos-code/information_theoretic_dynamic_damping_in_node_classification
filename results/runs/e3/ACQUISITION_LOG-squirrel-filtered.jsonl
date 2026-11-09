@@ -1,1 +1,0 @@
-{"cell_id": "C2", "dataset": "squirrel-filtered", "environment": "actions-run-42475979970", "outcome": "PROCESSED", "report": {"duplicates_merged": 0, "input_rows": 46998, "self_loops_removed": 0, "undirected_edges": 46998}, "sha256_processed": "sha256:6bcd5db2fa461b38d6c1a3771b2493d764e39288f43e5797cda6b752d3cf81a7", "timestamp_utc": "2026-11-08T11:49:11.792033+00:00"}
