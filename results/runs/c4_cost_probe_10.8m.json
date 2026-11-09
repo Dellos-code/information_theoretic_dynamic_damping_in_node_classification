@@ -1,0 +1,173 @@
+{
+  "kind": "SYNTHETIC COST PROBE (not a result; scripts/c4_cost_probe.py)",
+  "git_sha": "f2eec3da8f3f82ef22df65a7fe9410fa32116e3c",
+  "runner_type": "agent-session",
+  "nodes": 132534,
+  "undirected_edges": 10842581,
+  "tasks_run": 1,
+  "generate_seconds": 23.87,
+  "runner_setup_seconds": 3.03,
+  "task_seconds": [
+    1434.9
+  ],
+  "edsp_csr_setup_plus_1_iteration_seconds": 1.687,
+  "peak_rss_mib_after_graph": 2176.5,
+  "graph_arrays_mib": 413.7,
+  "traced_mib_at_start": 0.0,
+  "traced_resident_mib": {
+    "runner (directed plan + noisy-OR weights)": 331.4,
+    "after one task (+ shared adjacency, weighted adjacency, components, embedding)": 846.1
+  },
+  "traced_peak_mib_per_block": {
+    "EDSP-const-default + EDSP-const-tuned": 1781.6,
+    "EDSP-native-default + EDSP-native-tuned": 1781.6,
+    "majority": 352.8,
+    "train_prior": 352.8,
+    "harmonic": 1014.5,
+    "harmonic_cmn": 917.2,
+    "lgc": 1367.4,
+    "ppr_lp": 1119.9,
+    "linbp": 892.1,
+    "harmonic+w": 1181.0,
+    "harmonic_cmn+w": 1162.8,
+    "lgc+w": 1573.6,
+    "ppr_lp+w": 1369.1,
+    "linbp+w": 1141.3
+  },
+  "peak_rss_mib": 2405.4,
+  "methods": {
+    "EDSP-const-default": {
+      "seconds_mean": 36.44686902000012,
+      "iterations": [
+        223
+      ],
+      "converged": [
+        true
+      ]
+    },
+    "EDSP-const-tuned": {
+      "seconds_mean": 583.3898608790005,
+      "seconds_per_config": [
+        35.813,
+        36.447,
+        39.255,
+        15.274,
+        16.247,
+        17.158,
+        139.483,
+        143.558,
+        140.155
+      ],
+      "iterations": [
+        1000
+      ],
+      "converged": [
+        false
+      ]
+    },
+    "EDSP-native-default": {
+      "seconds_mean": 34.90627458400013,
+      "iterations": [
+        224
+      ],
+      "converged": [
+        true
+      ]
+    },
+    "EDSP-native-tuned": {
+      "seconds_mean": 559.0198871590001,
+      "seconds_per_config": [
+        34.906,
+        34.092,
+        34.331,
+        16.381,
+        17.783,
+        17.018,
+        137.868,
+        130.557,
+        136.083
+      ],
+      "iterations": [
+        1000
+      ],
+      "converged": [
+        false
+      ]
+    },
+    "majority": {
+      "seconds_mean": 0.006747334000465344
+    },
+    "train_prior": {
+      "seconds_mean": 0.00624169900038396
+    },
+    "harmonic": {
+      "seconds_mean": 1.9743191249999654,
+      "converged": [
+        true
+      ]
+    },
+    "harmonic_cmn": {
+      "seconds_mean": 0.6864744300000893,
+      "converged": [
+        true
+      ]
+    },
+    "lgc": {
+      "seconds_mean": 25.304390020999563,
+      "converged": [
+        true
+      ]
+    },
+    "ppr_lp": {
+      "seconds_mean": 16.42896750900036,
+      "converged": [
+        true
+      ]
+    },
+    "linbp": {
+      "seconds_mean": 61.21079976300007,
+      "iterations": [
+        125
+      ],
+      "converged": [
+        true
+      ]
+    },
+    "harmonic+w": {
+      "seconds_mean": 2.3007167080004365,
+      "converged": [
+        true
+      ]
+    },
+    "harmonic_cmn+w": {
+      "seconds_mean": 0.4183417889998964,
+      "converged": [
+        true
+      ]
+    },
+    "lgc+w": {
+      "seconds_mean": 24.621239781999975,
+      "converged": [
+        true
+      ]
+    },
+    "ppr_lp+w": {
+      "seconds_mean": 15.441690983000626,
+      "converged": [
+        true
+      ]
+    },
+    "linbp+w": {
+      "seconds_mean": 60.142784939000194,
+      "iterations": [
+        257
+      ],
+      "converged": [
+        true
+      ]
+    }
+  },
+  "edsp_csr_seconds_per_iteration_as_recorded_WRONG": 0.3138,
+  "edsp_csr_seconds_per_iteration": 0.1451,
+  "note": "Run at commit f2eec3d with --edges 13000000 --tasks 1 --iter-probe 10 (10,842,581 unique edges). That commit's probe divided (second call) by the iteration count without subtracting the first call (setup + 1 iteration); edsp_csr_seconds_per_iteration is recomputed from the two recorded values ((10 x 0.3138) - 1.687) / 10; the formula is fixed in commit 96a85fe. All other fields are as recorded. Memory fields are tracemalloc peaks of numpy/Python allocations per method block; the graph arrays (graph_arrays_mib) were allocated before tracing started and are not included."
+}

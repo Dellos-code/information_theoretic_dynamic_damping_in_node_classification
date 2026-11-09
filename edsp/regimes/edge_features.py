@@ -17,6 +17,7 @@ from __future__ import annotations
 import numpy as np
 import scipy.sparse as sp
 
+from edsp.utils.memo import memo
 from edsp.utils.numerics import randomized_svd
 
 LARGE_EDGE_COUNT = 5_000_000  # above this, neighbourhood-overlap features are skipped
@@ -41,12 +42,41 @@ def _adjacency(n: int, edges: np.ndarray) -> sp.csr_matrix:
 
 
 def structural_node_embedding(n: int, edges: np.ndarray, dim: int = 16, seed: int = 0) -> np.ndarray:
-    A = _adjacency(n, edges)
-    deg = np.asarray(A.sum(axis=1)).ravel()
-    inv = np.zeros(n)
-    np.divide(1.0, np.sqrt(deg), out=inv, where=deg > 0)
-    D = sp.diags(inv)
-    return randomized_svd(D @ A @ D, dim, seed=seed)
+    """Label-free; computed once per edge array inside edsp.utils.memo.shared_structure()."""
+    def compute() -> np.ndarray:
+        A = _adjacency(n, edges)
+        deg = np.asarray(A.sum(axis=1)).ravel()
+        inv = np.zeros(n)
+        np.divide(1.0, np.sqrt(deg), out=inv, where=deg > 0)
+        D = sp.diags(inv)
+        return randomized_svd(D @ A @ D, dim, seed=seed)
+
+    return memo(f"structural_embedding:{n}:{dim}:{seed}", (edges,), compute)
+
+
+def batched_edge_scores(
+    n: int, edges: np.ndarray, emb: np.ndarray | None, predictors: list, batch: int = 1_000_000
+) -> list[np.ndarray]:
+    """Scores of every edge for several predictors on graphs above LARGE_EDGE_COUNT, without
+    materialising the (m, d) feature matrix (C4: 39.5M edges x 34 float64 = 10.7 GB).
+
+    Features are those of :func:`structural_edge_features` for such graphs (log-degree
+    sum / difference and the embedding products; no neighbourhood overlap), computed per
+    batch of edges with the same arithmetic; ``predictors`` map a feature block to scores."""
+    if len(edges) <= LARGE_EDGE_COUNT:
+        raise ValueError("batched_edge_scores is for graphs above LARGE_EDGE_COUNT")
+    deg = np.bincount(np.asarray(edges).ravel(), minlength=n).astype(np.float64)
+    ld = np.log1p(deg)
+    outs = [np.empty(len(edges)) for _ in predictors]
+    for start in range(0, len(edges), batch):
+        q = edges[start:start + batch]
+        u, v = q[:, 0], q[:, 1]
+        feats = np.column_stack([ld[u] + ld[v], np.abs(ld[u] - ld[v])])
+        if emb is not None:
+            feats = np.hstack([feats, emb[u] * emb[v], np.abs(emb[u] - emb[v])])
+        for out, f in zip(outs, predictors, strict=True):
+            out[start:start + batch] = f(feats)
+    return outs
 
 
 def structural_edge_features(

@@ -1,0 +1,20 @@
+{
+  "kind": "SYNTHETIC ITERATION PROBE (uniform random graph; scripts/c4_cost_probe.py --iteration-only)",
+  "git_sha": "96a85fe91328d35367c52588302a26dd49690668",
+  "runner_type": "agent-session",
+  "nodes": 132534,
+  "edge_rows_incl_duplicate_pairs": 1999973,
+  "k": 2,
+  "rss_mib_after_generation": 220.3,
+  "directed_plan_seconds": 0.6,
+  "edsp_csr": {
+    "setup_plus_1_iteration_seconds": 0.28,
+    "seconds_per_iteration": 0.0477,
+    "peak_rss_mib_so_far": 327.8
+  },
+  "edsp.core.edsp (reference)": {
+    "setup_plus_1_iteration_seconds": 2.017,
+    "seconds_per_iteration": 0.3999,
+    "peak_rss_mib_so_far": 556.7
+  }
+}

@@ -196,6 +196,54 @@ in E1.
   reported as such
 - EDSP-TL against LGC and harmonic under the same noise
 
+### A15 (2026-11-09, PR-27) — H5 "P-NATIVE > P-CONST" on ogbn-proteins: how it is tested
+
+Written before any method has run on ogbn-proteins. The only record so far is the label-free
+loader check (dataset-stats run 42602654331: 132,534 nodes, 39,561,252 edges).
+
+**Data.**
+- ogbn-proteins (C4) with its official species split (one split).
+- Each of the 112 binary GO tasks is run as a k = 2 view (`GraphData.task_view`).
+- Headline metric per task: ROC-AUC. Dataset summary: the mean over tasks (OGB convention).
+- Uncertain DBLP, the US-Patent assignee graph and raw STRING + GO-slim cannot be obtained
+  as specified. The evidence is in `docs/SPEC_AMBIGUITIES.md` and `data/REGISTRY.json`.
+  They are NOT-RUN, so H5 is tested on ogbn-proteins alone.
+
+**Methods.** `scripts/run_c4.py`: Track A, T_L = ∞, selection by validation ROC-AUC, and an
+equal budget of 9 configurations per tuned variant.
+- **EDSP-const-default:** P-CONST(0.5), H-TRAINONLY(b1).
+- **EDSP-native-default:** P-NATIVE noisy-OR of the 8 channels, H-TRAINONLY(b1).
+- **EDSP-const-tuned:** p₀ ∈ {0.1, 0.5, 0.9} × H ∈ {TRAINONLY(b1), LEARNED, ALL1}.
+- **EDSP-native-tuned:** P-NATIVE mode ∈ {noisy-or, max-channel, mean-channel} × the same H.
+  OGB does not document which columns are STRING's "experimental" and "textmining"
+  channels, so the max and mean channels stand in for the single-channel modes of §2.2.
+- **Baselines:** majority, train_prior, harmonic, harmonic+CMN, LGC, PPR-LP, LinBP, each
+  unweighted and also weighted by the noisy-OR p (`+w`).
+
+**Test.**
+- **Primary:** EDSP-native-tuned vs EDSP-const-tuned. Two-sided Wilcoxon over the tasks,
+  paired by task, on test ROC-AUC.
+- **Supported** if p < 0.05 and the mean Δ > 0. **Not supported** otherwise.
+- Tasks recorded as NOT-RUN by the time budget are left out and counted.
+- **Secondary, descriptive:**
+  - the same comparison for the two defaults
+  - EDSP-native-tuned against the best weighted baseline and against the best unweighted one
+    (win / tie / loss over tasks)
+  - mean ROC-AUC per method
+
+**Reading notes fixed in advance.**
+- The tasks share one graph and one split, so the p-value measures how consistent the effect
+  is across tasks, not sampling over graphs.
+- At the mean degree of ogbn-proteins (≈ 597) the escape probability under P-CONST is ≈ 1 at
+  almost every node, so p₀ barely matters there. In practice the primary contrast is
+  edges weighted by their native confidence against equally weighted edges.
+
+**Runs.**
+- A pilot of tasks 0–1 runs first. It only sets the task-chunk size and changes nothing above.
+  Its records are part of the data.
+- The full run then covers tasks 0–111. Each job has a 290-minute budget, and any task that
+  would not fit is NOT-RUN.
+
 ### A14 (2026-11-08 14:20 UTC, PR-21) — fallback if a single-split GAT job exceeds the time limit
 
 Written while the GAT jobs of tolokers (splits 0, 2–9) and questions (0–9) are still running,

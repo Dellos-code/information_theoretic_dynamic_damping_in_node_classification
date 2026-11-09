@@ -4,7 +4,8 @@ Large suites run as many workflow dispatches (one per split or per method group)
 pushing its records to its own branch `results/<suite>-<run_id>`. This script merges
 them for the aggregators, without changing any record:
 
-- key = (dataset, split, method); identical duplicates (same headline value) are kept once;
+- key = (dataset, split, method), with the split written `split#t<task>` for per-task records
+  (suite C4); identical duplicates (same headline value) are kept once;
 - conflicting duplicates (same key, different value) keep the record from the
   `--prefer` ref if it has one, otherwise the one from the earliest run, and are listed;
 - NOT-RUN records are kept only for (dataset, split) pairs with no scored record of the
@@ -26,6 +27,12 @@ import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+
+def split_key(r: dict) -> str:
+    """The split, plus the task for per-task records (C4 runs every task on one split)."""
+    t = r.get("task")
+    return str(r.get("split")) if t is None else f"{r.get('split')}#t{t}"
 
 
 def git(*args: str) -> str:
@@ -101,7 +108,7 @@ def main() -> int:
                 if m == "NOT-RUN":
                     not_run.append((ref, r))
                     continue
-                key = (d, str(r.get("split")), m)
+                key = (d, split_key(r), m)
                 value = r["metrics"][r["headline_metric"]]
                 if key in scored:
                     old = scored[key]
@@ -124,8 +131,8 @@ def main() -> int:
 
     def superseded(r: dict) -> bool:
         if r.get("baseline"):  # per-method NOT-RUN (B5 / B6, PR-29): only a scored record of that method replaces it
-            return (r.get("dataset"), str(r.get("split")), r["baseline"]) in scored
-        return (r.get("dataset"), str(r.get("split"))) in have
+            return (r.get("dataset"), split_key(r), r["baseline"]) in scored
+        return (r.get("dataset"), split_key(r)) in have
 
     kept_nr = [(ref, r) for ref, r in not_run if not superseded(r)]
     for ref, r in kept_nr:
@@ -143,7 +150,7 @@ def main() -> int:
     counts = defaultdict(lambda: defaultdict(set))
     for (d, s, m) in scored:
         counts[d][m].add(s)
-    md += ["| dataset | method: splits |", "|---|---|"]
+    md += ["| dataset | method: splits (split × task for C4) |", "|---|---|"]
     for d in sorted(counts):
         md.append(f"| {d} | " + ", ".join(f"{m}: {len(v)}" for m, v in sorted(counts[d].items())) + " |")
     if dropped:
@@ -154,7 +161,7 @@ def main() -> int:
         md += [f"| {k[0]} | {k[1]} | {k[2]} | {a} | {b} | {x:.6f} | {y:.6f} |" for k, a, b, x, y in conflicts]
     if not_run:
         md += ["", "## NOT-RUN records", "", "| ref | dataset | split | kept | reason |", "|---|---|---|---|---|"]
-        md += [f"| {ref} | {r.get('dataset')} | {r.get('split')} | {'yes' if (ref, r) in kept_nr else 'superseded'} | "
+        md += [f"| {ref} | {r.get('dataset')} | {split_key(r)} | {'yes' if (ref, r) in kept_nr else 'superseded'} | "
                f"{str(r.get('reason', ''))[:120]} |" for ref, r in not_run]
     (out / "ASSEMBLY.md").write_text("\n".join(md) + "\n")
     print("\n".join(md[:6]), file=sys.stderr)

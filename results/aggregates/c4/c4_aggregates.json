@@ -1,0 +1,403 @@
+{
+  "git_sha": [
+    "d501eec4ce55",
+    "d55872bbb885"
+  ],
+  "datasets": {
+    "ogbn-proteins|species": {
+      "metric": "roc_auc",
+      "methods": {
+        "EDSP-const-default": {
+          "tasks": 112,
+          "mean": 77.73370037504176,
+          "std": 7.953995187658738,
+          "ci95": [
+            76.24726614354046,
+            79.18732700749737
+          ],
+          "non_converged": 0,
+          "oscillation": 0,
+          "median_iterations": 155.5,
+          "chosen": {
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"name\": \"const\", \"p0\": 0.5}}": 112
+          }
+        },
+        "EDSP-native-default": {
+          "tasks": 112,
+          "mean": 78.55646550188979,
+          "std": 8.096245226434787,
+          "ci95": [
+            77.03716213078191,
+            80.0238438750374
+          ],
+          "non_converged": 0,
+          "oscillation": 0,
+          "median_iterations": 139.5,
+          "chosen": {
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"mode\": \"noisy-or\", \"name\": \"native\"}}": 112
+          }
+        },
+        "EDSP-const-tuned": {
+          "tasks": 112,
+          "mean": 77.79364939241852,
+          "std": 7.918094488490703,
+          "ci95": [
+            76.31389828144631,
+            79.23145151912335
+          ],
+          "non_converged": 0,
+          "oscillation": 0,
+          "median_iterations": 155.0,
+          "chosen": {
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"name\": \"const\", \"p0\": 0.1}}": 23,
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"name\": \"const\", \"p0\": 0.9}}": 1,
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"name\": \"const\", \"p0\": 0.1}}": 87,
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"name\": \"const\", \"p0\": 0.5}}": 1
+          }
+        },
+        "EDSP-native-tuned": {
+          "tasks": 112,
+          "mean": 78.80505109250244,
+          "std": 8.050541870003489,
+          "ci95": [
+            77.29301690606425,
+            80.26638873558811
+          ],
+          "non_converged": 17,
+          "oscillation": 6,
+          "median_iterations": 128.0,
+          "chosen": {
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"mode\": \"mean\", \"name\": \"native\"}}": 7,
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"mode\": \"max\", \"name\": \"native\"}}": 20,
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"mode\": \"max\", \"name\": \"native\"}}": 57,
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"mode\": \"mean\", \"name\": \"native\"}}": 23,
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"mode\": \"noisy-or\", \"name\": \"native\"}}": 5
+          }
+        },
+        "majority": {
+          "tasks": 112,
+          "mean": 50.0,
+          "std": 0.0,
+          "ci95": [
+            50.0,
+            50.0
+          ]
+        },
+        "train_prior": {
+          "tasks": 112,
+          "mean": 50.0,
+          "std": 0.0,
+          "ci95": [
+            50.0,
+            50.0
+          ]
+        },
+        "harmonic": {
+          "tasks": 112,
+          "mean": 77.78296931946639,
+          "std": 7.937965093745826,
+          "ci95": [
+            76.29980674817647,
+            79.22577152597675
+          ]
+        },
+        "harmonic_cmn": {
+          "tasks": 112,
+          "mean": 77.78296926024986,
+          "std": 7.937964690263555,
+          "ci95": [
+            76.29980662181072,
+            79.22577141248463
+          ]
+        },
+        "lgc": {
+          "tasks": 112,
+          "mean": 83.20426218983705,
+          "std": 8.23793904036008,
+          "ci95": [
+            81.65831978642356,
+            84.67025079331879
+          ]
+        },
+        "ppr_lp": {
+          "tasks": 112,
+          "mean": 83.31806992009899,
+          "std": 8.093343115847324,
+          "ci95": [
+            81.79221207487919,
+            84.76046818778192
+          ]
+        },
+        "linbp": {
+          "tasks": 112,
+          "mean": 74.73168844133815,
+          "std": 9.65698302623496,
+          "ci95": [
+            72.90069459823772,
+            76.52767030420594
+          ]
+        },
+        "harmonic+w": {
+          "tasks": 112,
+          "mean": 78.63433423335202,
+          "std": 8.0170025697589,
+          "ci95": [
+            77.13562900212108,
+            80.09234277854533
+          ]
+        },
+        "harmonic_cmn+w": {
+          "tasks": 112,
+          "mean": 78.63433433311474,
+          "std": 8.01700255857801,
+          "ci95": [
+            77.13562909962613,
+            80.0923427812758
+          ]
+        },
+        "lgc+w": {
+          "tasks": 112,
+          "mean": 83.3398317294751,
+          "std": 8.232448087366738,
+          "ci95": [
+            81.78917350936933,
+            84.80440840775427
+          ]
+        },
+        "ppr_lp+w": {
+          "tasks": 112,
+          "mean": 83.47177187960081,
+          "std": 8.087141934925175,
+          "ci95": [
+            81.94950766030735,
+            84.90779490219077
+          ]
+        },
+        "linbp+w": {
+          "tasks": 112,
+          "mean": 75.1521635663565,
+          "std": 9.577391463467809,
+          "ci95": [
+            73.33308871762061,
+            76.92033342975384
+          ]
+        }
+      },
+      "pairs": {
+        "EDSP-native-default vs EDSP-const-default": {
+          "tasks": 112,
+          "mean_delta": 0.8227651268480238,
+          "p": 1.4421280499113072e-19,
+          "a_better": 105,
+          "tie": 0,
+          "b_better": 7
+        },
+        "EDSP-native-tuned vs EDSP-const-tuned": {
+          "tasks": 112,
+          "mean_delta": 1.0114017000839193,
+          "p": 1.880510352352555e-19,
+          "a_better": 108,
+          "tie": 0,
+          "b_better": 4
+        },
+        "harmonic+w vs harmonic": {
+          "tasks": 112,
+          "mean_delta": 0.8513649138856481,
+          "p": 5.3623014757962196e-20,
+          "a_better": 109,
+          "tie": 0,
+          "b_better": 3
+        },
+        "harmonic_cmn+w vs harmonic_cmn": {
+          "tasks": 112,
+          "mean_delta": 0.8513650728648936,
+          "p": 5.3623014757962196e-20,
+          "a_better": 109,
+          "tie": 0,
+          "b_better": 3
+        },
+        "lgc+w vs lgc": {
+          "tasks": 112,
+          "mean_delta": 0.13556953963801788,
+          "p": 2.902618786919282e-18,
+          "a_better": 103,
+          "tie": 0,
+          "b_better": 9
+        },
+        "ppr_lp+w vs ppr_lp": {
+          "tasks": 112,
+          "mean_delta": 0.15370195950182278,
+          "p": 2.3862232598400057e-19,
+          "a_better": 106,
+          "tie": 0,
+          "b_better": 6
+        },
+        "linbp+w vs linbp": {
+          "tasks": 112,
+          "mean_delta": 0.42047512501835455,
+          "p": 1.177739314952378e-18,
+          "a_better": 109,
+          "tie": 0,
+          "b_better": 3
+        },
+        "EDSP-native-tuned vs harmonic+w": {
+          "tasks": 112,
+          "mean_delta": 0.1707168591504005,
+          "p": 0.0050406762654762105,
+          "a_better": 69,
+          "tie": 0,
+          "b_better": 43
+        },
+        "EDSP-native-tuned vs harmonic_cmn+w": {
+          "tasks": 112,
+          "mean_delta": 0.17071675938768088,
+          "p": 0.0050406762654762105,
+          "a_better": 69,
+          "tie": 0,
+          "b_better": 43
+        },
+        "EDSP-native-tuned vs lgc+w": {
+          "tasks": 112,
+          "mean_delta": -4.534780636972651,
+          "p": 1.691260041594557e-19,
+          "a_better": 4,
+          "tie": 0,
+          "b_better": 108
+        },
+        "EDSP-native-tuned vs ppr_lp+w": {
+          "tasks": 112,
+          "mean_delta": -4.666720787098384,
+          "p": 6.300299589085754e-20,
+          "a_better": 3,
+          "tie": 0,
+          "b_better": 109
+        },
+        "EDSP-native-tuned vs linbp+w": {
+          "tasks": 112,
+          "mean_delta": 3.6528875261459093,
+          "p": 2.76517474688274e-10,
+          "a_better": 82,
+          "tie": 0,
+          "b_better": 30
+        }
+      }
+    }
+  },
+  "not_run": [],
+  "dataset_stats": {
+    "ogbn-proteins": {
+      "num_nodes": 132534,
+      "num_edges": 39561252,
+      "num_tasks": 112,
+      "components": 1,
+      "degree": {
+        "mean": 596.9977817012993,
+        "quantiles_0_10_25_50_75_90_100": [
+          1.0,
+          48.0,
+          166.0,
+          402.0,
+          812.0,
+          1374.0,
+          7750.0
+        ],
+        "fraction_zero": 0.0
+      },
+      "isolated_nodes": 0,
+      "splits": {
+        "species": {
+          "sizes": [
+            86619,
+            21236,
+            24679
+          ],
+          "source": "official OGB species split",
+          "edges_by_part": {
+            "train-train": 20423358,
+            "train-val": 1915544,
+            "train-test": 2851907,
+            "train-none": 0,
+            "val-val": 5972337,
+            "val-test": 1339879,
+            "val-none": 0,
+            "test-test": 7058227,
+            "test-none": 0,
+            "none-none": 0
+          },
+          "test_nodes_with_train_neighbour": 0.96904250577414,
+          "val_nodes_with_train_neighbour": 0.9615746844980222
+        }
+      },
+      "p_native": {
+        "noisy-or": {
+          "mean": 0.35624881104678174,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.15692519410000594,
+            0.17777864702517387,
+            0.21352740021563021,
+            0.28688827940450734,
+            0.5044825258277101,
+            0.5055113292549958,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        },
+        "max": {
+          "mean": 0.31493240596693406,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.07400000095367432,
+            0.15000000596046448,
+            0.1679999977350235,
+            0.22699999809265137,
+            0.5009999871253967,
+            0.5009999871253967,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        },
+        "mean": {
+          "mean": 0.048561671058515624,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.01974999917729292,
+            0.02237500077171717,
+            0.027625000235275365,
+            0.03812500102503691,
+            0.06349999843223486,
+            0.06850000045960769,
+            0.7937499971449142
+          ],
+          "fraction_zero": 0.0
+        }
+      },
+      "p_esc": {
+        "noisy-or": {
+          "mean": 0.9863132458236472,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.15692519410000605,
+            0.9999999986953017,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        },
+        "const-0.5": {
+          "mean": 0.9928249349978454,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.5,
+            0.9999999999999964,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        }
+      },
+      "load_seconds": 132.0
+    }
+  }
+}

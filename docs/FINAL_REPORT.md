@@ -18,8 +18,8 @@ What is evaluated:
   classifier trained on train–train edges, used as one polarity regime. Because it turned out
   to carry most of the wins, A10, A11 and A13 test its contribution separately: they give
   simple signed propagation the same learned polarity (`+HL`).
-- **Protocol.** Preregistered hypotheses H1–H7 plus amendments A1–A17 (`docs/PREREGISTRATION.md`;
-  A15, for H5, arrives with the H5 PR), each written before the runs it governs. Wilcoxon over splits, Holm across datasets,
+- **Protocol.** Preregistered hypotheses H1–H7 plus amendments A1–A17 (`docs/PREREGISTRATION.md`),
+  each written before the runs it governs. Wilcoxon over splits, Holm across datasets,
   Friedman/Nemenyi for ranks. Real data first. PERTURBED-REAL results (MIX) are kept apart
   from the real-world tables.
 
@@ -63,6 +63,13 @@ What is evaluated:
    - the 8 sign-blind Congress / wiki-elec wins (E2U, A10)
    - 6 of the 17 MIX wins (A11)
    - the 4 Facebook100 wins on natively mixed graphs (A13)
+4. **H5 is supported, on one graph (ogbn-proteins, 112 tasks, A15).**
+   - EDSP with the native edge confidences beats EDSP with a constant edge probability:
+     +1.01 ROC-AUC points, better on 108 of 112 tasks (p = 1.9 × 10⁻¹⁹).
+   - The gain is generic edge weighting. Harmonic propagation gains as much from the same
+     weights (+0.85), and EDSP's untuned gain is indistinguishable from harmonic's.
+   - EDSP stays 4.7 points below PPR-LP+w and LGC+w, and below them on 108–109 of 112 tasks.
+   - `docs/H5_REPORT.md`.
 
 ## 2. Preregistered hypotheses
 
@@ -72,7 +79,7 @@ What is evaluated:
 | H2 | Track-A near chance on minesweeper, tolokers, questions | **descriptive** | Near chance on minesweeper only; tolokers and questions are clearly above chance; E1 |
 | H3 | EDSP-fullH > EDSP on structured-compatibility graphs, gap growing with k | **not supported** | C3d: 1 win / 2 ties / 2 losses; gap vs k Spearman ρ = −0.36 (p = 0.89); roman-empire +16.6, wikics −23.5; `docs/E5_REPORT.md` |
 | H4 | Track-B EDSP ≈ C&S < tuned GNNs on feature-rich heterophilous graphs | **inconclusive** (both A14 modes) | EDSP-B ≈ C&S on 2 / 6 C2 graphs, best GNN significantly better on 5 / 6; `docs/E3_REPORT.md` |
-| H5 | P-NATIVE > P-CONST on ogbn-proteins / uncertain DBLP | **NOT-RUN** | ogbn-proteins (multi-label, C4) and the uncertain-DBLP source were not acquired; see §5 |
+| H5 | P-NATIVE > P-CONST on ogbn-proteins / uncertain DBLP | **supported** (ogbn-proteins only) | 112 tasks (A15): EDSP-native-tuned − EDSP-const-tuned +1.01 AUC [0.85, 1.18], 108 / 4, p = 1.9 × 10⁻¹⁹. One graph, one split. The effect matches weighted vs unweighted harmonic propagation (+0.85). Uncertain DBLP not obtainable; `docs/H5_REPORT.md` |
 | H6 | Finite T_L helps under label noise | **not supported** | 14 graphs × 11 noise conditions (A16): EDSP-TL vs EDSP-default 1 win / 13 ties in both primary conditions (uniform and pairwise 30 %); mean effect ≤ 0.05 points; `docs/H6_REPORT.md` |
 | H7 | Convergence / oscillation / fixed-point non-uniqueness (descriptive) | **reported** | EDSP-default did not converge in 3 of 153 E1 real-graph runs (Planetoid public splits); no period-2 oscillation flagged; E1 report §H7 |
 
@@ -121,7 +128,10 @@ Average ranks (Friedman over the graphs where every ranked method exists; `tab_r
   calibration advantage is claimed.
 
 ## 5. Not run, and limitations
-- **H5:** ogbn-proteins and uncertain-DBLP were not acquired.
+- **H5** rests on one graph and one split: ogbn-proteins, 112 tasks. Uncertain DBLP, the
+  US-Patent assignee graph and raw STRING + GO-slim could not be obtained as specified. The
+  single-channel P-NATIVE modes are substituted by max- and mean-channel modes, because OGB does
+  not name the columns.
 - **Signed GNNs (B5)** run as label-free link-sign embeddings plus logistic regression, on
   undirected graphs. The direction-specific parts of SDGNN and SiGAT are inert, which favours
   EDSP.
@@ -150,6 +160,7 @@ Average ranks (Friedman over the graphs where every ranked method exists; `tab_r
 | `docs/A13_REPORT.md` | Native mixing |
 | `docs/E3_REPORT.md` | Track B, H4 |
 | `docs/B5B6_REPORT.md` | Signed GNNs and fraud GNNs (A17) |
+| `docs/H5_REPORT.md` | H5, native edge probabilities (ogbn-proteins) |
 | `docs/H6_REPORT.md` | H6, label noise |
 | `docs/AUDIT_2026-11-07.md` | Independent audit |
 

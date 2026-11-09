@@ -9,12 +9,16 @@ name: e1
 # checks the pipeline end to end. Registry entries with an "extension" field (e.g. the
 # PR-20 "native-mixed" graphs) are left out of the default lists, so the suites already
 # run keep their dataset set; name them in the `datasets` input to run them.
+# C4 (H5, PR-27): the native probabilistic multi-label graphs (default: ogbn-proteins) run
+# scripts/run_c4.py per task view instead of run_e1.py; `chunks` (name:total:size[:start]) then splits TASKS, e.g.
+# "ogbn-proteins:112:4" = one job per 4 tasks (--tasks 0:4, 4:8, ...), and the run records
+# are aggregated by scripts/aggregate_c4.py into results/aggregates/c4.
 
 on:
   workflow_dispatch:
     inputs:
       suite:
-        description: "E1 or E2"
+        description: "E1, E2 or C4"
         default: "E1"
       datasets:
         description: "Space-separated dataset names (empty = every dataset of the suite, without registry extensions)"
@@ -26,7 +30,7 @@ on:
         description: "Extra runner flags, e.g. --fullh (E5); B5: --gnn-only --signed-gnn sgcn,snea,sdgnn,sigat; B6: --track B --gnn-only --gnn= --fraud-gnn care,pcgnn"
         default: ""
       chunks:
-        description: "Datasets run as one job per split range, as name:n_splits:splits_per_job"
+        description: "Datasets run as one job per split range, as name:n_splits:splits_per_job (C4: name:n_tasks:tasks_per_job)"
         default: "yelpchi:10:1 amazon-fraud:10:2 questions:10:2 coauthor-physics:10:2"
       max_splits:
         description: "Limit splits per dataset (empty = all)"
@@ -65,6 +69,8 @@ jobs:
           else
             if [ -n "${{ inputs.datasets }}" ]; then
               LIST=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1].split()))' "${{ inputs.datasets }}")
+            elif [ "$SUITE" = C4 ]; then
+              LIST='["ogbn-proteins"]'
             else
               LIST=$(python3 -c 'import json,sys; d=json.load(open("data/REGISTRY.json"))["datasets"]; e2=lambda v: v.get("cell") in ("C3a","C5"); print(json.dumps(sorted(k for k,v in d.items() if v.get("loader") and k!="ogbn-proteins" and not v.get("extension") and (e2(v) if sys.argv[1]=="E2" else not e2(v) or k=="sampson"))))' "$([ "$SUITE" = E2 ] && echo E2 || echo E1)")
             fi
@@ -73,13 +79,13 @@ jobs:
           import json, sys
           names, chunks = json.loads(sys.argv[1]), {}
           for c in sys.argv[2].split():
-              n, total, size = c.split(":")
-              chunks[n] = (int(total), int(size))
+              n, total, size, *start = c.split(":")
+              chunks[n] = (int(total), int(size), int(start[0]) if start else 0)
           inc = []
           for n in names:
               if n in chunks:
-                  total, size = chunks[n]
-                  inc += [{"dataset": n, "range": f"{a}:{min(a + size, total)}", "tag": f"{n}-{a:02d}"} for a in range(0, total, size)]
+                  total, size, first = chunks[n]
+                  inc += [{"dataset": n, "range": f"{a}:{min(a + size, total)}", "tag": f"{n}-{a:02d}"} for a in range(first, total, size)]
               else:
                   inc.append({"dataset": n, "range": "", "tag": n})
           print(json.dumps(inc))' "$LIST" "$CH")
@@ -123,8 +129,14 @@ jobs:
           # start from an empty output directory: committed records of earlier runs
           # must never be mixed with this run's records (rule R1)
           rm -rf "$OUT" results/runs/acq
+          if [ "$SUITE" = C4 ]; then
+            # per-task binary views; stop starting new tasks before the 330-minute job limit
+            uv run python scripts/run_c4.py --suite "$SUITE" --out "$OUT" --datasets ${{ matrix.dataset }} --time-budget-min 290 \
+              ${{ needs.plan.outputs.extra }} ${{ matrix.range && format('--tasks {0}', matrix.range) || '' }}
+          else
           uv run python scripts/run_e1.py --suite "$SUITE" --out "$OUT" --datasets ${{ matrix.dataset }} ${{ needs.plan.outputs.extra }} \
             ${{ matrix.range && format('--split-range {0}', matrix.range) || '' }}
+          fi
           mkdir -p "$OUT" && cp results/runs/acq/*.jsonl "$OUT"/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
@@ -169,7 +181,12 @@ jobs:
           run-id: ${{ inputs.rescue_run }}
           github-token: ${{ github.token }}
       - name: Aggregate (a failure here must not lose the records)
-        run: uv run python scripts/aggregate_e1.py --suite "$SUITE" || echo "::warning::aggregate_e1.py failed for suite $SUITE; records are pushed unaggregated"
+        run: |
+          if [ "$SUITE" = C4 ]; then
+            uv run python scripts/aggregate_c4.py --suite "$SUITE" || echo "::warning::aggregate_c4.py failed; records are pushed unaggregated"
+          else
+            uv run python scripts/aggregate_e1.py --suite "$SUITE" || echo "::warning::aggregate_e1.py failed for suite $SUITE; records are pushed unaggregated"
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: aggregate-${{ github.run_id }}

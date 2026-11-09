@@ -146,11 +146,25 @@ def _phi_step(
     transformed = np.where(h[:, None] == 0, current[source], het)
     aggregate = np.zeros_like(current)
     np.add.at(aggregate, target, weights[:, None] * transformed)
+    return _update_from_aggregate(aggregate, v, den, p_esc, base_entropy, hmax, k)
+
+
+def _update_from_aggregate(
+    aggregate: np.ndarray,
+    v: np.ndarray,
+    den: np.ndarray,
+    p_esc: np.ndarray,
+    base_entropy: np.ndarray,
+    hmax: float,
+    k: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Canonical update V = (1 - alpha) v + alpha S from the neighbour aggregate S
+    (shared by the reference iteration above and edsp.sparse_backend)."""
     aggregate[den == 0] = 1.0 / k
     aggregate_entropy = entropy(aggregate)
     numerator = (hmax - aggregate_entropy) * p_esc
     denominator = numerator + (hmax - base_entropy)
-    alpha = np.divide(numerator, denominator, out=np.zeros(current.shape[0]), where=denominator > _BOUNDARY)
+    alpha = np.divide(numerator, denominator, out=np.zeros(aggregate.shape[0]), where=denominator > _BOUNDARY)
     boundary = (
         ((np.abs(hmax - base_entropy) <= _EPS * hmax) & (np.abs(hmax - aggregate_entropy) <= _EPS * hmax))
         | ((p_esc == 0) & (np.abs(hmax - base_entropy) <= _EPS * hmax))

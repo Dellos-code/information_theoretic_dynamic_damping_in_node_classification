@@ -21,6 +21,8 @@ from edsp.selection import select_by_val_edge_auc, select_threshold_by_val_edge_
 from edsp.utils.numerics import fit_logreg
 
 from .edge_features import (
+    LARGE_EDGE_COUNT,
+    batched_edge_scores,
     pair_features,
     reduce_features,
     structural_edge_features,
@@ -182,8 +184,15 @@ def h_learned(
                           + model.predict_proba(featurize(all_ids, True))[:, 1])
     elif track == "A":
         emb = structural_node_embedding(n, edges, 16, seed)
-        X_all = structural_edge_features(n, edges, edges, emb)
-        X_train, y_train = X_all[train_ids], target[train_ids]
+        if len(edges) > LARGE_EDGE_COUNT:
+            # C4 (ogbn-proteins, 39.5M edges): the same features, computed for the training
+            # edges and then batch-wise for scoring, so the (m, 34) matrix is never held
+            X_train = structural_edge_features(n, edges, edges[train_ids], emb)
+            y_train = target[train_ids]
+            X_all = None
+        else:
+            X_all = structural_edge_features(n, edges, edges, emb)
+            X_train, y_train = X_all[train_ids], target[train_ids]
 
         def predict(model) -> np.ndarray:
             return model.predict_proba(X_all)[:, 1]
@@ -191,7 +200,11 @@ def h_learned(
         raise ValueError("track must be 'A' or 'B'")
 
     candidates = [fit_logreg(X_train, y_train, 2, l2=l2, balanced=True) for l2 in l2_grid]
-    scores = [predict(m) for m in candidates]
+    if track == "A" and X_all is None:
+        scores = batched_edge_scores(n, edges, emb, [lambda X, m=m: m.predict_proba(X)[:, 1] for m in candidates])
+        diag["features"] = "batched (graph above LARGE_EDGE_COUNT)"
+    else:
+        scores = [predict(m) for m in candidates]
     best, val_aucs = select_by_val_edge_auc(vault, edges, scores)
     q_raw = scores[best]
     pi = float(np.mean(target[train_mask]))
