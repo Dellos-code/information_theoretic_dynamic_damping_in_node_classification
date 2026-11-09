@@ -102,7 +102,9 @@ def iteration_probe(m: int, iters: int, reference: bool) -> dict:
         b = time.perf_counter()
         fn(e, p, h, prior, prior_trust=trust, max_iter=1 + iters, epsilon=0.0, **kw)
         c = time.perf_counter()
-        out[name] = {"setup_plus_1_iteration_seconds": round(b - a, 3), "seconds_per_iteration": round((c - b) / iters, 4),
+        # second call = setup + (1 + iters) iterations, first call = setup + 1 iteration
+        out[name] = {"setup_plus_1_iteration_seconds": round(b - a, 3),
+                     "seconds_per_iteration": round(((c - b) - (b - a)) / iters, 4),
                      "peak_rss_mib_so_far": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}
     return out
 
@@ -186,7 +188,7 @@ def main() -> int:
         "tasks_run": args.tasks, "generate_seconds": round(gen, 2), "runner_setup_seconds": round(setup, 2),
         "task_seconds": [round(x, 1) for x in task_seconds],
         "edsp_csr_setup_plus_1_iteration_seconds": round(b - a, 3),
-        "edsp_csr_seconds_per_iteration": round((c - b) / args.iter_probe, 4),
+        "edsp_csr_seconds_per_iteration": round(((c - b) - (b - a)) / args.iter_probe, 4),
         "peak_rss_mib_after_graph": round(rss_graph, 1),
         "graph_arrays_mib": round(float(g.edges.nbytes + g.edge_attr.nbytes + g.num_nodes * g.num_tasks) / 2**20, 1),
         "traced_mib_at_start": round(graph_mib, 1),
