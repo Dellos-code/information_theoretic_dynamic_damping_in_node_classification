@@ -37,7 +37,7 @@ REF, BASE = "EDSP-tuned", "feature_lr"
 COMPARATORS = ["correct_and_smooth", "cs_ref", "cs_2hop", "cs_2hop_ref", "clp", "clp_es", "linbp_b"]
 
 
-def load(dirs: list[Path], suite: str) -> tuple[dict, dict, dict]:
+def load(dirs: list[Path], suite: str, exclude: set[tuple[str, str]] = frozenset()) -> tuple[dict, dict, dict]:
     by: dict = defaultdict(dict)  # (dataset, method) -> {split: value×100}
     metric, hadj = {}, {}
     for d in dirs:
@@ -56,6 +56,8 @@ def load(dirs: list[Path], suite: str) -> tuple[dict, dict, dict]:
                         hadj[r["dataset"]] = float(h)
                     continue
                 if r.get("method") == "NOT-RUN" or r.get("track") not in (None, "B"):
+                    continue
+                if (r["dataset"], str(r["split"])) in exclude:
                     continue
                 v = r["metrics"].get(r["headline_metric"])
                 if v is None or not np.isfinite(v):
@@ -101,11 +103,14 @@ def main() -> int:
     ap.add_argument("--ratio", type=float, default=1 / 3, help="n_test / n_train of the split protocol")
     ap.add_argument("--ratio-for", nargs="*", default=[], help="DATASET=RATIO overrides")
     ap.add_argument("--het-threshold", type=float, default=0.2, help="heterophilous iff adjusted homophily < this")
+    ap.add_argument("--exclude-split", nargs="*", default=[],
+                    help="DATASET:SPLIT pairs left out for every method (e.g. base predictor not identical across runs)")
     ap.add_argument("--label", default="exploratory")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     ratios = {k: float(v) for k, v in (x.split("=") for x in args.ratio_for)}
-    by, metric, hadj = load([Path(x) for x in args.runs], args.suite)
+    exclude = {tuple(x.split(":", 1)) for x in args.exclude_split}
+    by, metric, hadj = load([Path(x) for x in args.runs], args.suite, exclude)
     graphs = sorted(d for d in metric if (args.datasets is None or d in args.datasets)
                     and by.get((d, REF)) and by.get((d, BASE)))
     methods = [REF] + [c for c in COMPARATORS if any(by.get((d, c)) for d in graphs)]
@@ -163,7 +168,8 @@ def main() -> int:
     md = [f"# A18 post-hoc smoothers — {args.label}", "",
           (f"Base = `{BASE}`; d = method − base per split (headline metric ×100). NI margin δ = {args.delta}; "
            f"one-sided α = {args.alpha}; Nadeau–Bengio corrected t (default n_test/n_train = {args.ratio:.3g}); "
-           f"heterophilous iff adjusted homophily < {args.het_threshold}."), "",
+           f"heterophilous iff adjusted homophily < {args.het_threshold}."
+           + (f" Left out: {', '.join(sorted(args.exclude_split))}." if args.exclude_split else "")), "",
           "Mean d (sd; one-sided NI p). NI holds where p < α.", "",
           "| graph [metric] | h_adj | " + " | ".join(methods) + " |", "|---|---|" + "---|" * len(methods)]
     for g in graphs:
