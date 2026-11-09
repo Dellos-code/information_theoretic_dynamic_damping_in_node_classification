@@ -1,0 +1,397 @@
+{
+  "git_sha": [
+    "d55872bbb885"
+  ],
+  "datasets": {
+    "ogbn-proteins|species": {
+      "metric": "roc_auc",
+      "methods": {
+        "EDSP-const-default": {
+          "tasks": 2,
+          "mean": 52.23765105012055,
+          "std": 1.1127005353995079,
+          "ci95": [
+            51.124950514721036,
+            53.35035158552005
+          ],
+          "non_converged": 0,
+          "oscillation": 0,
+          "median_iterations": 147.5,
+          "chosen": {
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"name\": \"const\", \"p0\": 0.5}}": 2
+          }
+        },
+        "EDSP-native-default": {
+          "tasks": 2,
+          "mean": 52.27231179936498,
+          "std": 1.4457450726628907,
+          "ci95": [
+            50.8265667267021,
+            53.71805687202787
+          ],
+          "non_converged": 0,
+          "oscillation": 0,
+          "median_iterations": 133.0,
+          "chosen": {
+            "{\"h\": {\"fill\": \"b1\", \"name\": \"trainonly\"}, \"p\": {\"mode\": \"noisy-or\", \"name\": \"native\"}}": 2
+          }
+        },
+        "EDSP-const-tuned": {
+          "tasks": 2,
+          "mean": 52.66831699842688,
+          "std": 3.338072845632864,
+          "ci95": [
+            49.330244152794016,
+            56.00638984405975
+          ],
+          "non_converged": 0,
+          "oscillation": 0,
+          "median_iterations": 128.0,
+          "chosen": {
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"name\": \"const\", \"p0\": 0.1}}": 1,
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"name\": \"const\", \"p0\": 0.9}}": 1
+          }
+        },
+        "EDSP-native-tuned": {
+          "tasks": 2,
+          "mean": 52.71109814473459,
+          "std": 3.8968649817499452,
+          "ci95": [
+            48.81423316298465,
+            56.60796312648454
+          ],
+          "non_converged": 1,
+          "oscillation": 1,
+          "median_iterations": 556.5,
+          "chosen": {
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"mode\": \"mean\", \"name\": \"native\"}}": 1,
+            "{\"h\": {\"name\": \"learned\"}, \"p\": {\"mode\": \"max\", \"name\": \"native\"}}": 1
+          }
+        },
+        "majority": {
+          "tasks": 2,
+          "mean": 50.0,
+          "std": 0.0,
+          "ci95": [
+            50.0,
+            50.0
+          ]
+        },
+        "train_prior": {
+          "tasks": 2,
+          "mean": 50.0,
+          "std": 0.0,
+          "ci95": [
+            50.0,
+            50.0
+          ]
+        },
+        "harmonic": {
+          "tasks": 2,
+          "mean": 51.994470305455145,
+          "std": 1.359923406331398,
+          "ci95": [
+            50.63454689912375,
+            53.35439371178654
+          ]
+        },
+        "harmonic_cmn": {
+          "tasks": 2,
+          "mean": 51.99447083499265,
+          "std": 1.359922876793901,
+          "ci95": [
+            50.63454795819874,
+            53.35439371178654
+          ]
+        },
+        "lgc": {
+          "tasks": 2,
+          "mean": 55.43841599560444,
+          "std": 1.8676281645455484,
+          "ci95": [
+            53.570787831058894,
+            57.306044160149995
+          ]
+        },
+        "ppr_lp": {
+          "tasks": 2,
+          "mean": 55.33734807197844,
+          "std": 2.0936957967994108,
+          "ci95": [
+            53.24365227517903,
+            57.431043868777856
+          ]
+        },
+        "linbp": {
+          "tasks": 2,
+          "mean": 56.580001941789604,
+          "std": 0.5212150189934095,
+          "ci95": [
+            56.05878692279619,
+            57.101216960783006
+          ]
+        },
+        "harmonic+w": {
+          "tasks": 2,
+          "mean": 51.97500774484875,
+          "std": 1.586981731425191,
+          "ci95": [
+            50.388026013423556,
+            53.56198947627394
+          ]
+        },
+        "harmonic_cmn+w": {
+          "tasks": 2,
+          "mean": 51.97500827438625,
+          "std": 1.5869812018876939,
+          "ci95": [
+            50.38802707249855,
+            53.56198947627394
+          ]
+        },
+        "lgc+w": {
+          "tasks": 2,
+          "mean": 55.53749221010618,
+          "std": 1.8893474235404994,
+          "ci95": [
+            53.64814478656568,
+            57.42683963364668
+          ]
+        },
+        "ppr_lp+w": {
+          "tasks": 2,
+          "mean": 55.468361027718025,
+          "std": 2.1630695289765245,
+          "ci95": [
+            53.305291498741504,
+            57.63143055669455
+          ]
+        },
+        "linbp+w": {
+          "tasks": 2,
+          "mean": 56.42151241865175,
+          "std": 0.83087900496287,
+          "ci95": [
+            55.590633413688884,
+            57.252391423614625
+          ]
+        }
+      },
+      "pairs": {
+        "EDSP-native-default vs EDSP-const-default": {
+          "tasks": 2,
+          "mean_delta": 0.034660749244441735,
+          "p": 1.0,
+          "a_better": 1,
+          "tie": 0,
+          "b_better": 1
+        },
+        "EDSP-native-tuned vs EDSP-const-tuned": {
+          "tasks": 2,
+          "mean_delta": 0.042781146307713236,
+          "p": 1.0,
+          "a_better": 1,
+          "tie": 0,
+          "b_better": 1
+        },
+        "harmonic+w vs harmonic": {
+          "tasks": 2,
+          "mean_delta": -0.01946256060639251,
+          "p": 1.0,
+          "a_better": 1,
+          "tie": 0,
+          "b_better": 1
+        },
+        "harmonic_cmn+w vs harmonic_cmn": {
+          "tasks": 2,
+          "mean_delta": -0.01946256060639251,
+          "p": 1.0,
+          "a_better": 1,
+          "tie": 0,
+          "b_better": 1
+        },
+        "lgc+w vs lgc": {
+          "tasks": 2,
+          "mean_delta": 0.09907621450173099,
+          "p": 0.5,
+          "a_better": 2,
+          "tie": 0,
+          "b_better": 0
+        },
+        "ppr_lp+w vs ppr_lp": {
+          "tasks": 2,
+          "mean_delta": 0.1310129557395845,
+          "p": 0.5,
+          "a_better": 2,
+          "tie": 0,
+          "b_better": 0
+        },
+        "linbp+w vs linbp": {
+          "tasks": 2,
+          "mean_delta": -0.1584895231378447,
+          "p": 1.0,
+          "a_better": 1,
+          "tie": 0,
+          "b_better": 1
+        },
+        "EDSP-native-tuned vs harmonic+w": {
+          "tasks": 2,
+          "mean_delta": 0.7360903998858442,
+          "p": 1.0,
+          "a_better": 1,
+          "tie": 0,
+          "b_better": 1
+        },
+        "EDSP-native-tuned vs harmonic_cmn+w": {
+          "tasks": 2,
+          "mean_delta": 0.736089870348347,
+          "p": 1.0,
+          "a_better": 1,
+          "tie": 0,
+          "b_better": 1
+        },
+        "EDSP-native-tuned vs lgc+w": {
+          "tasks": 2,
+          "mean_delta": -2.826394065371582,
+          "p": 0.5,
+          "a_better": 0,
+          "tie": 0,
+          "b_better": 2
+        },
+        "EDSP-native-tuned vs ppr_lp+w": {
+          "tasks": 2,
+          "mean_delta": -2.757262882983433,
+          "p": 0.5,
+          "a_better": 0,
+          "tie": 0,
+          "b_better": 2
+        },
+        "EDSP-native-tuned vs linbp+w": {
+          "tasks": 2,
+          "mean_delta": -3.7104142739171593,
+          "p": 0.5,
+          "a_better": 0,
+          "tie": 0,
+          "b_better": 2
+        }
+      }
+    }
+  },
+  "not_run": [],
+  "dataset_stats": {
+    "ogbn-proteins": {
+      "num_nodes": 132534,
+      "num_edges": 39561252,
+      "num_tasks": 112,
+      "components": 1,
+      "degree": {
+        "mean": 596.9977817012993,
+        "quantiles_0_10_25_50_75_90_100": [
+          1.0,
+          48.0,
+          166.0,
+          402.0,
+          812.0,
+          1374.0,
+          7750.0
+        ],
+        "fraction_zero": 0.0
+      },
+      "isolated_nodes": 0,
+      "splits": {
+        "species": {
+          "sizes": [
+            86619,
+            21236,
+            24679
+          ],
+          "source": "official OGB species split",
+          "edges_by_part": {
+            "train-train": 20423358,
+            "train-val": 1915544,
+            "train-test": 2851907,
+            "train-none": 0,
+            "val-val": 5972337,
+            "val-test": 1339879,
+            "val-none": 0,
+            "test-test": 7058227,
+            "test-none": 0,
+            "none-none": 0
+          },
+          "test_nodes_with_train_neighbour": 0.96904250577414,
+          "val_nodes_with_train_neighbour": 0.9615746844980222
+        }
+      },
+      "p_native": {
+        "noisy-or": {
+          "mean": 0.35624881104678174,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.15692519410000594,
+            0.17777864702517387,
+            0.21352740021563021,
+            0.28688827940450734,
+            0.5044825258277101,
+            0.5055113292549958,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        },
+        "max": {
+          "mean": 0.31493240596693406,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.07400000095367432,
+            0.15000000596046448,
+            0.1679999977350235,
+            0.22699999809265137,
+            0.5009999871253967,
+            0.5009999871253967,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        },
+        "mean": {
+          "mean": 0.048561671058515624,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.01974999917729292,
+            0.02237500077171717,
+            0.027625000235275365,
+            0.03812500102503691,
+            0.06349999843223486,
+            0.06850000045960769,
+            0.7937499971449142
+          ],
+          "fraction_zero": 0.0
+        }
+      },
+      "p_esc": {
+        "noisy-or": {
+          "mean": 0.9863132458236472,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.15692519410000605,
+            0.9999999986953017,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        },
+        "const-0.5": {
+          "mean": 0.9928249349978454,
+          "quantiles_0_10_25_50_75_90_100": [
+            0.5,
+            0.9999999999999964,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "fraction_zero": 0.0
+        }
+      },
+      "load_seconds": 132.0
+    }
+  }
+}
