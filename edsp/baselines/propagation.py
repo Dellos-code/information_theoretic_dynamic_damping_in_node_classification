@@ -9,7 +9,11 @@ B1  harmonic LP (Zhu, Ghahramani & Lafferty 2003) with and without class mass
     2020 call it MCE), possible-worlds harmonic LP for probabilistic edges.
 
 Graphs are used as undirected simple graphs (GraphData.edges); edge weights
-default to 1 and can be set to edge probabilities with ``weights=...``.
+default to 1 and can be set to edge probabilities with ``weights=...`` (harmonic,
+harmonic_cmn, lgc, ppr_lp, linbp; suite C4 runs each of them also on the noisy-OR edge
+probabilities of ogbn-proteins). ``weights=None`` is exactly the unweighted baseline.
+Inside :func:`edsp.utils.memo.shared_structure` the label-free operators (adjacency,
+its connected components and spectral radius) are built once per (edges, weights).
 """
 
 from __future__ import annotations
@@ -26,6 +30,7 @@ from edsp.data.graph import GraphData
 from edsp.data.vault import LabelVault
 from edsp.regimes.priors import track_b_priors
 from edsp.selection import select_by_val_metric
+from edsp.utils.memo import memo
 
 MAX_ITER = 1000
 TOL = 1e-6
@@ -33,11 +38,16 @@ TOL = 1e-6
 
 # ------------------------------------------------------------------ operators
 def adjacency(graph: GraphData, weights: np.ndarray | None = None) -> sp.csr_matrix:
-    e = graph.edges
-    w = np.ones(len(e)) if weights is None else np.asarray(weights, dtype=np.float64)
-    rows = np.concatenate([e[:, 0], e[:, 1]])
-    cols = np.concatenate([e[:, 1], e[:, 0]])
-    return sp.csr_matrix((np.concatenate([w, w]), (rows, cols)), shape=(graph.num_nodes,) * 2)
+    """Symmetric (weighted) adjacency. Callers must not modify the returned matrix in
+    place: inside ``shared_structure()`` it is shared between calls."""
+    def build() -> sp.csr_matrix:
+        e = graph.edges
+        w = np.ones(len(e)) if weights is None else np.asarray(weights, dtype=np.float64)
+        rows = np.concatenate([e[:, 0], e[:, 1]])
+        cols = np.concatenate([e[:, 1], e[:, 0]])
+        return sp.csr_matrix((np.concatenate([w, w]), (rows, cols)), shape=(graph.num_nodes,) * 2)
+
+    return memo(f"adjacency:{graph.num_nodes}", (graph.edges, weights), build)
 
 
 def _random_walk(W: sp.csr_matrix) -> sp.csr_matrix:
@@ -148,7 +158,7 @@ def harmonic(graph: GraphData, vault: LabelVault, weights: np.ndarray | None = N
     Y, idx, _ = _one_hot_train(graph, vault)
     W = adjacency(graph, weights)
     n, k = graph.num_nodes, graph.num_classes
-    _, comp = connected_components(W, directed=False)
+    _, comp = memo("components", (W,), lambda: connected_components(W, directed=False))
     labelled_comp = np.zeros(comp.max() + 1, dtype=bool)
     labelled_comp[comp[idx]] = True
     covered = labelled_comp[comp]
@@ -264,16 +274,23 @@ def estimate_compatibility(graph: GraphData, vault: LabelVault, smoothing: float
     return C / C.sum(axis=1, keepdims=True)
 
 
-def linbp(graph: GraphData, vault: LabelVault, scale: float = 0.5, H: np.ndarray | None = None) -> tuple[np.ndarray, dict]:
+def _spectral_radius(W: sp.csr_matrix) -> float:
+    return float(abs(eigsh(W.astype(np.float64), k=1, which="LM", return_eigenvectors=False,
+                           v0=np.ones(W.shape[0]))[0])) if W.nnz else 1.0  # fixed v0: deterministic
+
+
+def linbp(graph: GraphData, vault: LabelVault, scale: float = 0.5, H: np.ndarray | None = None,
+          weights: np.ndarray | None = None) -> tuple[np.ndarray, dict]:
     """LinBP* (no echo cancellation): F <- X + eps W F H_hat, H_hat = H - 1/k,
     eps = scale / (rho(W) rho(H_hat)) so the iteration converges for scale < 1.
-    Beliefs are mapped to probabilities by adding 1/k, clipping at 0 and renormalising."""
+    Beliefs are mapped to probabilities by adding 1/k, clipping at 0 and renormalising.
+    ``weights`` (default None = unweighted) weight W; the compatibility estimate stays the
+    myopic count on train-train edges."""
     k = graph.num_classes
     H = estimate_compatibility(graph, vault) if H is None else H
     Hc = H - 1.0 / k
-    W = adjacency(graph)
-    rho_w = float(abs(eigsh(W.astype(np.float64), k=1, which="LM", return_eigenvectors=False,
-                                v0=np.ones(W.shape[0]))[0])) if W.nnz else 1.0  # fixed v0: deterministic
+    W = adjacency(graph, weights)
+    rho_w = memo("spectral_radius", (W,), lambda: _spectral_radius(W))
     rho_h = float(np.max(np.abs(np.linalg.eigvals(Hc)))) or 1.0
     eps = scale / (rho_w * rho_h)
     Y, idx, _ = _one_hot_train(graph, vault)
@@ -321,15 +338,25 @@ BASELINES: dict[str, tuple[str, str, Callable]] = {
 }
 
 
-def select_and_predict(name: str, graph: GraphData, vault: LabelVault, metric: str = "accuracy") -> tuple[np.ndarray, dict]:
+WEIGHTED = ("harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp")  # accept ``weights=``
+
+
+def select_and_predict(name: str, graph: GraphData, vault: LabelVault, metric: str = "accuracy",
+                       weights: np.ndarray | None = None) -> tuple[np.ndarray, dict]:
     """Run baseline ``name`` over its validation grid (GRIDS) and keep the best by
     the validation value of ``metric`` (edsp.selection). Grids are identical in size class to the
-    EDSP tuning space; the zero-tuning setting is the function default."""
+    EDSP tuning space; the zero-tuning setting is the function default. ``weights`` (one per
+    undirected edge) runs the weighted version of a baseline in WEIGHTED; None (default) is
+    the unweighted baseline, called exactly as before."""
     fn = BASELINES[name][2]
     grid = GRIDS.get(name)
+    extra: dict = {}
+    if weights is not None:
+        if name not in WEIGHTED:
+            raise ValueError(f"baseline {name!r} takes no edge weights")
+        extra["weights"] = weights
     if not grid:
-        return fn(graph, vault)
-    extra = {}
+        return fn(graph, vault, **extra)
     if name == "correct_and_smooth":
         extra["base"] = feature_lr(graph, vault)[0]  # fit the base predictor once
     keys = list(grid)

@@ -237,7 +237,7 @@
       "domain": "biology/PPI",
       "license": "CC0 (TO VERIFY)",
       "split": "official species split",
-      "notes": "loader untested on the real archive until its first Actions run; raw layout TO VERIFY",
+      "notes": "Loader exercised on the real archive by dataset-stats Actions run 42602654331 (2026-11-09, commit 0adf704): 132,534 nodes, 39,561,252 undirected edges after canonicalisation, 1 connected component, 112 binary tasks. The 8 edge-feature columns are not named by OGB (paper arXiv:2005.00687 \u00a74.2, ogb.stanford.edu/docs/nodeprop: 'each dimension represents the approximate confidence of a single association type'), so the 'experimental' / 'textmining' channels of Master Prompt \u00a72.2 cannot be selected with evidence; suite C4 uses max / mean channel instead (docs/SPEC_AMBIGUITIES.md). Run per task by scripts/run_c4.py (suite C4).",
       "status": "registered"
     },
     "ogbn-arxiv": {
@@ -395,33 +395,33 @@
       "routes": [],
       "loader": null,
       "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
+      "domain": "co-authorship (computer science)",
+      "license": "processed graph not distributed; code: 'freely use for research purposes, provided that you acknowledge the authors' (project page); hdblp (historical dblp): ODC-BY 1.0 (TO VERIFY)",
       "split": "TO VERIFY",
-      "notes": "Dallachiesa et al.; rebuild from 2012 DBLP XML",
-      "status": "planned (PR-3 acquisition)"
+      "notes": "UNAVAILABLE as data (checked 2026-11-09, PR-27). Project page https://helios2.mi.parisdescartes.fr/~themisp/collectiveclassification/ (read via WebFetch; direct HTTPS from the agent session is blocked by the proxy, 403) distributes only sourcecode.zip (all algorithms, incl. xml2dat.py; research-use-only terms) and describes the graph: DBLP XML downloaded Aug 13, 2012 from http://dblp.uni-trier.de/xml/, 850,128 articles, 677,098 nodes, 4,122,556 edges, 14 labels, 153,022 labelled, 73,588 components. The paper (SSDBM 2014, arXiv:1405.5829) reports 922,673 nodes / 3,389,272 edges, 1980-2010 publications, 16% labelled, p = probability that two authors co-authored in a randomly chosen year. No graph/label files are published. The Aug-2012 dblp.xml is not offered as a release (dblp.org releases and the DROPS dblp artifacts list no 2012 data release, only DTDs); the closest rebuild route is hdblp (Zenodo record 1213051, ODC-BY 1.0), which reconstructs dblp for any day June 1999 - March 2018 'within certain limits' (blog.dblp.org 2018-07-11). Rebuilding = hdblp snapshot -> xml2dat.py -> their label rule; not implemented (substantial, and the result would be a reconstruction, TO VERIFY against the published counts).",
+      "status": "unavailable (no published data; rebuild route via hdblp identified, not implemented)"
     },
     "us-patent-assignee": {
       "cell": "C4",
       "routes": [],
       "loader": null,
       "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
+      "domain": "patent citations between assignees",
+      "license": "NBER data 'freely available', must cite Hall, Jaffe & Trajtenberg (2001) (TO VERIFY terms)",
       "split": "TO VERIFY",
-      "notes": "source TO VERIFY",
-      "status": "planned (PR-3 acquisition)"
+      "notes": "UNAVAILABLE as packaged data (checked 2026-11-09, PR-27). Dallachiesa et al. (SSDBM 2014, arXiv:1405.5829 \u00a76): assignee graph built from the NBER U.S. Patent Citations Data File [Hall, Jaffe, Trajtenberg 2001], patents issued 1970-1990, 108,658 nodes, 1,059,822 edges, 5 NBER categories (Chemical; Computers & Communications; Drugs & Medical; Electrical & Electronic; Mechanical), label = most frequent category of the assignee's patents, 66% labelled, p = 'estimate of the probability that one of the two assignees cites the other' (example 5 of 20 citations = 0.25; exact formula not given). The authors publish no graph. Raw inputs are online: https://www.nber.org/research/data/us-patents-1975-1999 lists pat63_99.zip and Cite75_99.zip at https://data.nber.org/patents/ (not downloaded). Rebuild needs the unspecified probability formula, and Cite75_99 appears to cover citing patents of 1975-1999 only (TO VERIFY), so 1970-74 citations may be missing; not trivial, not implemented.",
+      "status": "unavailable (rebuild from NBER files possible in principle; edge-probability formula unspecified)"
     },
     "string-raw": {
       "cell": "C4",
       "routes": [],
       "loader": null,
       "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
+      "domain": "biology/PPI",
+      "license": "STRING: CC BY 4.0 (badge on string-db.org/cgi/download); Gene Ontology: CC BY 4.0 (TO VERIFY)",
       "split": "TO VERIFY",
-      "notes": "STRING + GO-slim, URLs TO VERIFY",
-      "status": "planned (PR-3 acquisition)"
+      "notes": "Obtainable, not implemented (checked 2026-11-09, PR-27). STRING v12.5 download page (https://string-db.org/cgi/download): protein.links.detailed.v12.5.txt.gz (per-channel subscores; full file 187.2 GB; per-organism files selectable on the page) served from https://stringdb-downloads.org/download/; scores x1000; CC BY 4.0. GO-slim labels need GO annotations (GAF) + a GO slim (e.g. goslim_generic) and a label design (organism, evidence codes, propagation, minimum term size, split) that the Master Prompt does not fix; GO licence pages were not fetchable from the session. A loader is therefore a design task, not trivial.",
+      "status": "planned (sources identified; label construction undefined)"
     },
     "congress-signed": {
       "cell": "C5",

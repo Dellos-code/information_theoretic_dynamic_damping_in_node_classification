@@ -56,6 +56,31 @@ class GraphData:
             strict=strict,
         )
 
+    @property
+    def num_tasks(self) -> int:
+        """Number of binary tasks of a multi-label graph (1 for single-label graphs)."""
+        return int(self._labels.shape[1]) if self.multilabel else 1
+
+    def task_view(self, t: int) -> GraphData:
+        """Binary single-task view of a multi-label graph (C4, Master Prompt §3.1: "EDSP per
+        task with k = 2").
+
+        The view shares nodes, edges, edge information, features and splits with this graph
+        (the arrays are the same objects, not copies); its labels are task column ``t`` and,
+        as for every GraphData, are reachable only through :meth:`vault`."""
+        if not self.multilabel:
+            raise ValueError(f"{self.name}: task_view needs a multi-label graph")
+        if not 0 <= int(t) < self.num_tasks:
+            raise IndexError(f"{self.name}: task {t} out of range [0, {self.num_tasks})")
+        t = int(t)
+        return GraphData(
+            f"{self.name}#t{t:03d}", self.num_nodes, self.edges, 2, self.splits,
+            np.ascontiguousarray(self._labels[:, t]).astype(np.int64),
+            features=self.features, edge_attr=self.edge_attr, edge_sign=self.edge_sign,
+            edge_relation=self.edge_relation, multilabel=False,
+            meta=dict(self.meta) | {"parent": self.name, "task": t},
+        )
+
     def descriptive_vault(self) -> LabelVault:
         """Vault whose only legitimate use is edsp.data.stats (all nodes in 'train')."""
         return LabelVault(

@@ -58,17 +58,44 @@ def p_native(graph: GraphData, mode: str = "noisy-or") -> np.ndarray:
     """P-NATIVE from per-channel confidence scores in [0, 1] (e.g. ogbn-proteins).
 
     modes: ``noisy-or`` (1 - prod(1 - s_c)), ``channel:<j>`` (one channel),
-    ``string-combined`` (prior-corrected noisy-OR, STRING convention, TO VERIFY).
+    ``string-combined`` (prior-corrected noisy-OR, STRING convention, TO VERIFY),
+    ``max`` (max_c s_c) and ``mean`` (mean_c s_c) — the last two are the C4 substitutes
+    for the single named channels while the ogbn-proteins column order is unverified
+    (docs/SPEC_AMBIGUITIES.md, "ogbn-proteins edge-feature columns").
+
+    Channels are processed one column at a time in float64 (C4: 39.5M edges x 8
+    float32 channels would otherwise need several GB of float64 temporaries); the
+    products are taken in channel order, as ``np.prod(..., axis=1)`` does.
     """
     if graph.edge_attr is None:
         raise ValueError(f"{graph.name}: P-NATIVE needs edge confidence scores")
-    S = np.clip(np.asarray(graph.edge_attr, dtype=np.float64).reshape(len(graph.edges), -1), 0.0, 1.0)
+    A = np.asarray(graph.edge_attr).reshape(len(graph.edges), -1)
+    d = A.shape[1]
+
+    def channel(c: int) -> np.ndarray:
+        return np.clip(A[:, c].astype(np.float64), 0.0, 1.0)
+
     if mode == "noisy-or":
-        return 1.0 - np.prod(1.0 - S, axis=1)
+        q = np.ones(len(A))
+        for c in range(d):
+            q *= 1.0 - channel(c)
+        return 1.0 - q
     if mode.startswith("channel:"):
-        return S[:, int(mode.split(":", 1)[1])]
+        return channel(int(mode.split(":", 1)[1]))
+    if mode == "max":
+        out = channel(0)
+        for c in range(1, d):
+            np.maximum(out, channel(c), out=out)
+        return out
+    if mode == "mean":
+        out = channel(0)
+        for c in range(1, d):
+            out += channel(c)
+        return out / d
     if mode == "string-combined":
-        corrected = np.clip((S - STRING_PRIOR) / (1.0 - STRING_PRIOR), 0.0, 1.0)
-        combined = 1.0 - np.prod(1.0 - corrected, axis=1)
+        q = np.ones(len(A))
+        for c in range(d):
+            q *= 1.0 - np.clip((channel(c) - STRING_PRIOR) / (1.0 - STRING_PRIOR), 0.0, 1.0)
+        combined = 1.0 - q
         return combined + STRING_PRIOR * (1.0 - combined)
     raise ValueError(f"unknown P-NATIVE mode {mode!r}")
