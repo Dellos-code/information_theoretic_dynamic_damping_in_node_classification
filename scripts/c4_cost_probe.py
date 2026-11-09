@@ -10,7 +10,11 @@ The numbers are a COST PROBE ONLY: synthetic graphs say nothing about accuracy, 
 iteration counts of the propagation methods on the real graph may differ (they depend on
 its spectrum), which is why the summary also reports per-iteration costs.
 
-    python scripts/c4_cost_probe.py --edges 5000000 --tasks 1 --out results/runs/c4_cost_probe.json
+    python scripts/c4_cost_probe.py --edges 13000000 --tasks 1 --out results/runs/c4_cost_probe_11m.json
+    python scripts/c4_cost_probe.py --iteration-only --edges 39561252 --out results/runs/c4_iteration_probe_full.json
+
+``--iteration-only`` times just the EDSP Jacobi iteration (CSR backend; with ``--reference``
+also edsp.core.edsp) on a uniform random graph with ``--edges`` edges, n = 132,534, k = 2.
 """
 
 from __future__ import annotations
@@ -32,6 +36,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from run_c4 import TRACK_A_BASELINES, WEIGHTED, Runner, git_sha
 
+from edsp.core import edsp
 from edsp.data.graph import GraphData, Split
 from edsp.sparse_backend import DirectedPlan, edsp_csr
 from edsp.utils.memo import shared_structure
@@ -69,13 +74,54 @@ def synthetic_proteins(m: int, tasks: int, seed: int = 0) -> GraphData:
                      Y, edge_attr=attr, multilabel=True)
 
 
+def iteration_probe(m: int, iters: int, reference: bool) -> dict:
+    rng = np.random.default_rng(0)
+    u, v = rng.integers(0, N, m), rng.integers(0, N, m)
+    keep = u != v
+    e = np.stack([np.minimum(u, v), np.maximum(u, v)], 1)[keep].astype(np.int32)
+    del u, v, keep
+    p = rng.uniform(0.1, 0.9, len(e))
+    h = (rng.random(len(e)) < 0.01).astype(np.int8)
+    prior = np.full((N, 2), 0.5)
+    lab = rng.choice(N, SPLIT_SIZES[0], replace=False)
+    prior[lab] = np.eye(2)[rng.integers(0, 2, len(lab))]
+    trust = np.zeros(N)
+    trust[lab] = np.inf
+    out: dict = {"kind": "SYNTHETIC ITERATION PROBE (uniform random graph; scripts/c4_cost_probe.py --iteration-only)",
+                 "git_sha": git_sha(), "runner_type": "agent-session", "nodes": N, "edge_rows_incl_duplicate_pairs": len(e),
+                 "k": 2, "rss_mib_after_generation": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}
+    fns = [("edsp_csr", edsp_csr)] + ([("edsp.core.edsp (reference)", edsp)] if reference else [])
+    for name, fn in fns:
+        kw: dict = {}
+        if fn is edsp_csr:
+            t = time.perf_counter()
+            kw["plan"] = DirectedPlan(N, e)
+            out["directed_plan_seconds"] = round(time.perf_counter() - t, 2)
+        a = time.perf_counter()
+        fn(e, p, h, prior, prior_trust=trust, max_iter=1, epsilon=0.0, **kw)
+        b = time.perf_counter()
+        fn(e, p, h, prior, prior_trust=trust, max_iter=1 + iters, epsilon=0.0, **kw)
+        c = time.perf_counter()
+        out[name] = {"setup_plus_1_iteration_seconds": round(b - a, 3), "seconds_per_iteration": round((c - b) / iters, 4),
+                     "peak_rss_mib_so_far": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)}
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--edges", type=int, default=5_000_000)
+    ap.add_argument("--iteration-only", action="store_true")
+    ap.add_argument("--reference", action="store_true", help="with --iteration-only: also time edsp.core.edsp")
     ap.add_argument("--tasks", type=int, default=1)
     ap.add_argument("--iter-probe", type=int, default=20, help="EDSP iterations timed with epsilon = 0")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
+    if args.iteration_only:
+        text = json.dumps(iteration_probe(args.edges, args.iter_probe, args.reference), indent=2)
+        print(text)
+        if args.out:
+            Path(args.out).write_text(text + "\n")
+        return 0
     t0 = time.perf_counter()
     g = synthetic_proteins(args.edges, args.tasks)
     gen = time.perf_counter() - t0
