@@ -47,15 +47,18 @@
 
 - Results (2026-11-08): E3 / H4 on 13 real graphs (docs/E3_REPORT.md; H4 inconclusive; A9 fraud, A14 GAT fallback on tolokers); A11 attribution of the MIX wins (MIX_REPORT §5); A13 native-mixing graphs (docs/A13_REPORT.md; inconclusive, FB100 wins belong to the learned polarity). E3 on coauthor-cs / -physics (A12) done (2026-11-09).
 
+- PR-29 (B5 / B6, A17; 2026-11-09): signed GNNs SGCN / SNEA / SDGNN / SiGAT (PyGSD 1.2.0, embeddings + LR) on the 12 E2 signed graphs, CARE-GNN / PC-GNN re-implementations on amazon-fraud and yelpchi, yelpchi Track-B set. EDSP-tuned vs signed GNNs on 9 ranked graphs: 7 wins / 24 ties / 5 losses over 36 comparisons, #1 by mean on 1 graph; EDSP-B-tuned vs CARE-GNN 1 / 0 / 1, vs PC-GNN 0 / 1 / 1 (docs/B5B6_REPORT.md, `scripts/b5b6_compare.py`).
+
 ## Remaining
 - H6 (A16, 2026-11-09): not supported (docs/H6_REPORT.md).
-- Not run by design or budget: H5 (ogbn-proteins / uncertain DBLP), signed / fraud GNN SOTA beyond BWGNN (PR-6).
+- H5 (A15, ogbn-proteins): running on PR-27's branch. Uncertain DBLP not acquired.
+- Fraud SOTA not run: GAGA, H²-FDetector; parity of CARE-GNN / PC-GNN with published numbers.
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
 - `scripts/oracle_upper_bound.py` (E10) and H-SOFT (extension) — not implemented yet.
 - Track-B 2-layer MLP / LightGBM base predictors.
-- LinBP-DCE, Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers, incl. fraud SOTA CARE-GNN / PC-GNN / BWGNN / GAGA and signed SOTA SGCN / SDGNN / SiGAT).
+- LinBP-DCE, Mercado GL, uBayes, HAPPY, REV2.
 - Re-run E1 so its records carry the stratified accuracy (§5.7).
 - Remaining acquisitions: Bitcoin OTC/Alpha (+ REV2 labels), Congress signed backbones, C4 (DBLP / patents); E2 on ogbn-proteins (multi-label, per task, P-NATIVE).
 

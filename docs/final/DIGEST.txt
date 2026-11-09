@@ -83,3 +83,21 @@ A11 loc = 0 win: 1
 A11 loc = 0.8 loss: 6
 A11 loc = 0.8 tie: 2
 A11 loc = 0.8 win: 9
+WTL B5 sdgnn: 1/8/0
+WTL B5 sgcn: 1/5/3
+WTL B5 sigat: 3/4/2
+WTL B5 snea: 2/7/0
+B5 congress-house-100: EDSP=88.65 best=sigat 93.26 rank=6/11
+B5 congress-house-107: EDSP=96.97 best=sgcn 98.43 rank=6/11
+B5 congress-house-114: EDSP=97.08 best=sgcn 98.65 rank=5/11
+B5 congress-house-93: EDSP=80.45 best=sgcn 89.21 rank=4/11
+B5 congress-senate-100: EDSP=88.50 best=EDSP-tuned 88.50 rank=1/11
+B5 congress-senate-107: EDSP=96.84 best=signed_vote 97.37 rank=3/11
+B5 congress-senate-114: EDSP=96.00 best=snea 99.00 rank=8/11
+B5 congress-senate-93: EDSP=80.48 best=snea 84.29 rank=5/11
+B5 wiki-editor: EDSP=86.12 best=signed_lgc 86.43 rank=3/11
+WTL B6 care_gnn: 1/0/1
+WTL B6 pc_gnn: 0/1/1
+B6 amazon-fraud: EDSP=96.62 best=mlp 96.97 rank=3/8
+B6 yelpchi: EDSP=76.85 best=pc_gnn 87.39 rank=6/8
+B5 exploratory ranks friedman_p=0.275: sgcn 2.56, sigat 3.56, signed_lgc 3.83, signed_vote 4.17, EDSP-tuned 4.39, sdgnn 4.44, snea 5.06

@@ -23,7 +23,7 @@ on:
         description: "Runner for the experiment jobs: ubuntu-latest (GitHub) or self-hosted (the owner's machine)"
         default: "ubuntu-latest"
       extra_args:
-        description: "Extra runner flags, e.g. --fullh (E5)"
+        description: "Extra runner flags, e.g. --fullh (E5); B5: --gnn-only --signed-gnn sgcn,snea,sdgnn,sigat; B6: --track B --gnn-only --gnn= --fraud-gnn care,pcgnn"
         default: ""
       chunks:
         description: "Datasets run as one job per split range, as name:n_splits:splits_per_job"
@@ -110,6 +110,9 @@ jobs:
           for i in 1 2 3 4 5; do python3 -m pip install --user --break-system-packages -q uv==0.13.7 && break; sleep 15; done
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: uv sync --frozen --group dev
+      - name: Optional B5 dependencies (not in uv.lock; only for --signed-gnn runs)
+        if: contains(needs.plan.outputs.extra, '--signed-gnn')
+        run: uv pip install -r requirements/signed-gnn.txt
       - uses: actions/cache@v4
         with:
           path: .edsp-cache

@@ -9,6 +9,10 @@ For each dataset and split (all official / registered splits):
                     as the tuned baselines).
   * baselines     — majority, train_prior, harmonic, harmonic_cmn, lgc, ppr_lp,
                     linbp (+ signed_vote, signed_lgc on signed graphs), validation-selected.
+  * optional, off by default (PR-29): B5 signed GNNs (--signed-gnn: SGCN, SNEA, SDGNN,
+    SiGAT embeddings + logistic regression; Track A, signed graphs only) and B6 fraud
+    GNNs (--fraud-gnn: CARE-GNN, PC-GNN; Track B, relation-typed graphs only). With
+    --gnn-only they run as isolated jobs (no EDSP / propagation baselines).
 Pre-registered extras (docs/PREREGISTRATION.md):
   * secondary column for non-converged EDSP runs: mean of the last two iterates;
   * H7 descriptive outcome: convergence, oscillation, and on the first
@@ -40,8 +44,10 @@ sys.path.insert(0, str(ROOT))
 
 from edsp.baselines import BASELINES, select_and_predict
 from edsp.baselines import gnn as gnn_module
+from edsp.baselines.fraud_gnn import FRAUD_GNNS, select_and_predict_fraud_gnn
 from edsp.baselines.gnn import select_and_predict_gnn
 from edsp.baselines.propagation import adjacency
+from edsp.baselines.signed_gnn import SIGNED_GNNS, select_and_predict_signed_gnn
 from edsp.core import edsp
 from edsp.data import label_noise as label_noise_mod
 from edsp.data.loaders import load
@@ -116,6 +122,50 @@ def run_gnns(g, vault, metric, si, sid, bins, emit) -> None:
                               "val_scores": info["val_scores"]}}, t0)
 
 
+# record names of the B5 / B6 baselines (flag value -> method)
+B56_METHOD = {"sgcn": "sgcn", "snea": "snea", "sdgnn": "sdgnn", "sigat": "sigat", "care": "care_gnn", "pcgnn": "pc_gnn"}
+
+
+def _flag_list(value: str, allowed: tuple[str, ...], flag: str) -> list[str]:
+    items = [x.strip() for x in value.split(",") if x.strip()]
+    bad = [x for x in items if x not in allowed]
+    if bad:
+        raise SystemExit(f"{flag}: unknown method(s) {bad}; choose from {list(allowed)}")
+    return items
+
+
+def run_b56(g, vault, metric, si, sid, bins, emit) -> None:
+    """B5 signed GNNs (Track A, graphs with edge signs) and B6 fraud GNNs (Track B, graphs with
+    relation types and features). Both flags default to '' (nothing runs, records unchanged).
+    A failing method gives a per-method NOT-RUN record and the other methods still run."""
+    jobs = []
+    if ARGS.track == "A" and g.edge_sign is not None:
+        jobs += [("B5", m) for m in _flag_list(ARGS.signed_gnn, SIGNED_GNNS, "--signed-gnn")]
+    if ARGS.track == "B" and g.edge_relation is not None and g.features is not None:
+        jobs += [("B6", m) for m in _flag_list(ARGS.fraud_gnn, FRAUD_GNNS, "--fraud-gnn")]
+    for group, m in jobs:
+        t0 = time.perf_counter()
+        name = B56_METHOD[m]
+        try:
+            if group == "B5":
+                probs, info = select_and_predict_signed_gnn(m, g, vault, metric, seed=si)
+            else:
+                probs, info = select_and_predict_fraud_gnn(m, g, vault, metric, seed=si)
+        except Exception as exc:  # noqa: BLE001 - reported as NOT-RUN (rule R7)
+            emit({"split": sid, "method": "NOT-RUN", "baseline": name, "group": group,
+                  "reason": f"{name}: {type(exc).__name__}: {exc}"[:500]}, t0)
+            print(f"[not run] {g.name} split {sid} {name}: {exc}", file=sys.stderr, flush=True)
+            continue
+        keep = ("best_epoch", "epochs_run", "val_scores", "best_epochs", "dim_used", "signed_edges",
+                "zero_sign_edges_dropped", "negative_edge_fraction", "thresholds", "threshold_trace", "relations",
+                "batch_size", "weight_decay", "lambda", "embedding")
+        emit({"split": sid, "method": name, "group": group, "track": "A" if group == "B5" else "B",
+              "config": {"baseline": name, "chosen": info["chosen"], "grid": info["grid"],
+                         "implementation": info.get("library") or info.get("source")},
+              "metrics": scored(vault, probs, bins),
+              "diagnostics": {k: info[k] for k in keep if k in info}}, t0)
+
+
 def secondary(vault, res) -> dict:
     """Pre-registered secondary column for a non-converged EDSP run: metrics of the
     mean of the last two iterates (PREREGISTRATION §2; every EDSP method, audit C2)."""
@@ -149,7 +199,14 @@ def main() -> int:
                     help="B = feature priors from the base predictor (suite E3): EDSP-B vs feature_lr, C&S and GNNs")
     ap.add_argument("--gnn", default="mlp,gcn,sage,gat,gprgnn,bwgnn", help="GNN baselines for --track B ('' = none)")
     ap.add_argument("--gnn-only", action="store_true",
-                    help="run only the --gnn baselines (no EDSP / propagation baselines / DATASET-STATS)")
+                    help="run only the --gnn (Track B), --signed-gnn and --fraud-gnn baselines "
+                         "(no EDSP / propagation baselines / DATASET-STATS); add --gnn= to skip the B2/B4 GNNs")
+    ap.add_argument("--signed-gnn", default="",
+                    help="B5 signed GNNs on graphs with edge signs, Track A: comma list of sgcn,snea,sdgnn,sigat "
+                         "('' = none; needs requirements/signed-gnn.txt)")
+    ap.add_argument("--fraud-gnn", default="",
+                    help="B6 fraud GNNs on relation-typed graphs with features, Track B: comma list of care,pcgnn "
+                         "('' = none)")
     ap.add_argument("--gnn-hidden", type=int, default=256,
                     help="hidden width of the GNNs (64 for the fraud graphs = BWGNN's published setting; A9)")
     ap.add_argument("--learned-sign-baselines", action="store_true",
@@ -176,6 +233,8 @@ def main() -> int:
     global ARGS
     ARGS = args
     gnn_module.HIDDEN = args.gnn_hidden
+    _flag_list(args.signed_gnn, SIGNED_GNNS, "--signed-gnn")
+    _flag_list(args.fraud_gnn, FRAUD_GNNS, "--fraud-gnn")
     args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
     names = args.datasets or [d for d in datasets_with_loader() if d != "ogbn-proteins"]
     out = Path(args.out)
@@ -245,8 +304,12 @@ def main() -> int:
         for si, split in enumerate(splits, start=first):
             sid = split.split_id
             if args.gnn_only:  # GNN baselines only (a split's GNNs spread over several CI jobs)
-                run_gnns(g, g.vault(sid), metric, si, sid, bins, emit)
-                print(f"{name} split {sid} GNNs ({args.gnn}) done", flush=True)
+                vault = g.vault(sid)
+                run_gnns(g, vault, metric, si, sid, bins, emit)
+                run_b56(g, vault, metric, si, sid, bins, emit)
+                print(f"{name} split {sid} GNNs ({args.gnn}"
+                      + (f"; B5 {args.signed_gnn}" if args.signed_gnn else "")
+                      + (f"; B6 {args.fraud_gnn}" if args.fraud_gnn else "") + ") done", flush=True)
                 continue
             try:
                 # ---------------- EDSP-default (+ secondary column, H7 diagnostics)
@@ -359,6 +422,7 @@ def main() -> int:
                               "config": {"baseline": b, "polarity": "learned", "chosen": info.get("chosen")},
                               "metrics": scored(vault, probs, bins)}, t0)
                 run_gnns(g, vault, metric, si, sid, bins, emit)
+                run_b56(g, vault, metric, si, sid, bins, emit)
                 print(f"{name} split {sid} done", flush=True)
             except Exception as exc:  # noqa: BLE001
                 failures += 1
