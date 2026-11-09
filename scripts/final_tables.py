@@ -136,6 +136,29 @@ def b5b6_table() -> tuple[str, list[str]]:
     return "\n".join(tex) + "\n", digest
 
 
+def h5_table() -> tuple[str, list[str]]:
+    """A15: H5 on ogbn-proteins (primary and secondary comparisons over the 112 tasks)."""
+    path = AGG / "c4" / "h5_verdict.json"
+    if not path.exists():
+        return "", []
+    a = load(path)
+    comps = [("EDSP-native-tuned vs EDSP-const-tuned", a["primary"])] + [
+        (("EDSP-native-default vs EDSP-const-default" if k == "defaults" else f"EDSP-native-tuned {k}"), c)
+        for k, c in a["secondary"].items()]
+    rows, digest = [], [f"H5 supported={a['supported']} tasks={a['primary']['tasks']} not_run={len(a['not_run'])}"]
+    for name, c in comps:
+        lo, hi = c["ci95_mean_delta"]
+        rows.append(f"{name} & {c['tasks']} & {c['mean_delta']:+.2f} [{lo:+.2f}, {hi:+.2f}] & {c['p']:.2g} & "
+                    f"{c['win']} / {c['loss']} \\\\")
+        digest.append(f"H5 {name}: delta={c['mean_delta']:+.3f} ci=[{lo:+.3f},{hi:+.3f}] p={c['p']:.3g} "
+                      f"win={c['win']} tie={c['tie']} loss={c['loss']}")
+    digest += [f"H5 mean {m}: {v:.2f}" for m, v in sorted(a["mean_roc_auc"].items(), key=lambda x: -x[1])]
+    tex = ["\\begin{tabular}{lrrrr}", "\\toprule",
+           "Comparison & Tasks & Mean $\\Delta$ AUC [95\\% CI] & $p$ & Better / worse \\\\", "\\midrule", *rows,
+           "\\bottomrule", "\\end{tabular}"]
+    return "\n".join(tex) + "\n", digest
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     digest: list[str] = []
@@ -149,6 +172,7 @@ def main() -> int:
         "tab_a13.tex": a13_table(),
         "tab_a11.tex": a11_table(),
         "tab_b5b6.tex": b5b6_table(),
+        "tab_h5.tex": h5_table(),
     }.items():
         if tex:
             (OUT / name).write_text(tex)

@@ -101,3 +101,24 @@ WTL B6 pc_gnn: 0/1/1
 B6 amazon-fraud: EDSP=96.62 best=mlp 96.97 rank=3/8
 B6 yelpchi: EDSP=76.85 best=pc_gnn 87.39 rank=6/8
 B5 exploratory ranks friedman_p=0.275: sgcn 2.56, sigat 3.56, signed_lgc 3.83, signed_vote 4.17, EDSP-tuned 4.39, sdgnn 4.44, snea 5.06
+H5 supported=True tasks=112 not_run=0
+H5 EDSP-native-tuned vs EDSP-const-tuned: delta=+1.011 ci=[+0.846,+1.185] p=1.88e-19 win=108 tie=0 loss=4
+H5 EDSP-native-default vs EDSP-const-default: delta=+0.823 ci=[+0.700,+0.958] p=1.44e-19 win=105 tie=0 loss=7
+H5 EDSP-native-tuned vs best unweighted (ppr_lp): delta=-4.513 ci=[-4.997,-4.052] p=6.47e-20 win=3 tie=0 loss=109
+H5 EDSP-native-tuned vs best weighted (ppr_lp+w): delta=-4.667 ci=[-5.153,-4.198] p=6.3e-20 win=3 tie=0 loss=109
+H5 mean ppr_lp+w: 83.47
+H5 mean lgc+w: 83.34
+H5 mean ppr_lp: 83.32
+H5 mean lgc: 83.20
+H5 mean EDSP-native-tuned: 78.81
+H5 mean harmonic_cmn+w: 78.63
+H5 mean harmonic+w: 78.63
+H5 mean EDSP-native-default: 78.56
+H5 mean EDSP-const-tuned: 77.79
+H5 mean harmonic: 77.78
+H5 mean harmonic_cmn: 77.78
+H5 mean EDSP-const-default: 77.73
+H5 mean linbp+w: 75.15
+H5 mean linbp: 74.73
+H5 mean majority: 50.00
+H5 mean train_prior: 50.00
