@@ -165,7 +165,8 @@ jobs:
           merge-multiple: true
           run-id: ${{ inputs.rescue_run }}
           github-token: ${{ github.token }}
-      - run: uv run python scripts/aggregate_e1.py --suite "$SUITE"
+      - name: Aggregate (a failure here must not lose the records)
+        run: uv run python scripts/aggregate_e1.py --suite "$SUITE" || echo "::warning::aggregate_e1.py failed for suite $SUITE; records are pushed unaggregated"
       - uses: actions/upload-artifact@v4
         with:
           name: aggregate-${{ github.run_id }}
@@ -183,6 +184,7 @@ jobs:
           if [ -n "$RESCUE" ]; then BR="$BR-rescue-${{ github.run_id }}"; fi
           if [ "${{ github.run_attempt }}" != "1" ]; then BR="$BR-a${{ github.run_attempt }}"; fi
           git checkout -b "$BR"
+          mkdir -p "results/aggregates/$S"
           git add -f "results/runs/$S" "results/aggregates/$S"
           git commit -m "$SUITE results from Actions run ${RESCUE:-${{ github.run_id }}} (attempt ${{ github.run_attempt }}; commit ${{ github.sha }})"
           git push origin "$BR"
