@@ -10,9 +10,9 @@ accumulates per directed edge with ``np.add.at``; here it is one CSR product
 
 whose entries are stored in the reference's edge order (directed edges sorted stably by
 target), so each S_j is summed over the same terms in the same order. Measured on random
-graphs with n = 132,534 and k = 2 (docs/SPEC_AMBIGUITIES.md, "C4 per-task protocol"): at
-2M edges 0.051 s per iteration against 0.36 s for the reference; at ogbn-proteins' 39.56M
-edges 0.34 s per iteration, where the reference's per-edge temporaries would need ~10 GB.
+graphs with n = 132,534 and k = 2 (results/runs/c4_iteration_probe_*.json): at 2M edges
+0.048 s per iteration against 0.40 s for the reference; at ogbn-proteins' 39.56M edges
+0.40 s per iteration, where the reference's per-edge temporaries would need ~10 GB.
 
 :class:`DirectedPlan` caches the label-free part (the target ordering of the directed
 edges) so that the many EDSP runs of suite C4 on one edge set sort it once.
