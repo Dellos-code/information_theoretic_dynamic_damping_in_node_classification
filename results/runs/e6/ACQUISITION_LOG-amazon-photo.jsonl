@@ -1,0 +1,1 @@
+{"cell_id": "C1", "dataset": "amazon-photo", "environment": "actions-run-42604046215", "outcome": "PROCESSED", "report": {"duplicates_merged": 24581, "input_rows": 143663, "self_loops_removed": 1, "undirected_edges": 119081}, "sha256_processed": "sha256:b1fb01b522ecda5abb5d9526960411a552d00edfea16271a808cf01ad9ad3f1d", "timestamp_utc": "2026-11-09T11:08:13.731344+00:00"}
