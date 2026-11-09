@@ -10,7 +10,7 @@ name: e1
 # PR-20 "native-mixed" graphs) are left out of the default lists, so the suites already
 # run keep their dataset set; name them in the `datasets` input to run them.
 # C4 (H5, PR-27): the native probabilistic multi-label graphs (default: ogbn-proteins) run
-# scripts/run_c4.py per task view instead of run_e1.py; `chunks` then splits TASKS, e.g.
+# scripts/run_c4.py per task view instead of run_e1.py; `chunks` (name:total:size[:start]) then splits TASKS, e.g.
 # "ogbn-proteins:112:4" = one job per 4 tasks (--tasks 0:4, 4:8, ...), and the run records
 # are aggregated by scripts/aggregate_c4.py into results/aggregates/c4.
 
@@ -79,13 +79,13 @@ jobs:
           import json, sys
           names, chunks = json.loads(sys.argv[1]), {}
           for c in sys.argv[2].split():
-              n, total, size = c.split(":")
-              chunks[n] = (int(total), int(size))
+              n, total, size, *start = c.split(":")
+              chunks[n] = (int(total), int(size), int(start[0]) if start else 0)
           inc = []
           for n in names:
               if n in chunks:
-                  total, size = chunks[n]
-                  inc += [{"dataset": n, "range": f"{a}:{min(a + size, total)}", "tag": f"{n}-{a:02d}"} for a in range(0, total, size)]
+                  total, size, first = chunks[n]
+                  inc += [{"dataset": n, "range": f"{a}:{min(a + size, total)}", "tag": f"{n}-{a:02d}"} for a in range(first, total, size)]
               else:
                   inc.append({"dataset": n, "range": "", "tag": n})
           print(json.dumps(inc))' "$LIST" "$CH")
