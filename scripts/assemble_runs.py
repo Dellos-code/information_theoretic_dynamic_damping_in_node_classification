@@ -9,7 +9,8 @@ them for the aggregators, without changing any record:
 - conflicting duplicates (same key, different value) keep the record from the
   `--prefer` ref if it has one, otherwise the one from the earliest run, and are listed;
 - NOT-RUN records are kept only for (dataset, split) pairs with no scored record of the
-  missing kind; all of them are listed in ASSEMBLY.md;
+  missing kind (a per-method NOT-RUN with a `baseline` field, B5 / B6: no scored record of
+  that method); all of them are listed in ASSEMBLY.md;
 - DATASET-STATS: one per dataset (they are label-free descriptive statistics).
 
 Usage:
@@ -127,7 +128,13 @@ def main() -> int:
     for (d, _s, _m), r in sorted(scored.items()):
         by_ds[d].append(r)
     have = {(d, s) for (d, s, _m) in scored}
-    kept_nr = [(ref, r) for ref, r in not_run if (r.get("dataset"), split_key(r)) not in have]
+
+    def superseded(r: dict) -> bool:
+        if r.get("baseline"):  # per-method NOT-RUN (B5 / B6, PR-29): only a scored record of that method replaces it
+            return (r.get("dataset"), split_key(r), r["baseline"]) in scored
+        return (r.get("dataset"), split_key(r)) in have
+
+    kept_nr = [(ref, r) for ref, r in not_run if not superseded(r)]
     for ref, r in kept_nr:
         by_ds[r["dataset"]].append(r)
     for d, recs in by_ds.items():

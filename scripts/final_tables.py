@@ -109,6 +109,33 @@ def a11_table() -> tuple[str, list[str]]:
     return "\n".join(tex) + "\n", digest
 
 
+def b5b6_table() -> tuple[str, list[str]]:
+    """A17: EDSP-tuned (B5, Track A) / EDSP-B-tuned (B6, Track B) vs the signed and fraud GNNs."""
+    path = AGG / "b5b6" / "b5b6.json"
+    if not path.exists():
+        return "", []
+    a = load(path)
+    names = {"sgcn": "SGCN", "snea": "SNEA", "sdgnn": "SDGNN", "sigat": "SiGAT", "care_gnn": "CARE-GNN",
+             "pc_gnn": "PC-GNN"}
+    rows, digest = [], []
+    for fam, label in (("B5", "B5 signed (9)"), ("B6", "B6 fraud (2)")):
+        for m, v in a[fam]["wtl"].items():
+            w, t, lo = len(v["win"]), len(v["tie"]), len(v["loss"])
+            rows.append(f"{label} & {names[m]} & {w} & {t} & {lo} \\\\")
+            digest.append(f"WTL {fam} {m}: {w}/{t}/{lo}")
+        for d, g in a[fam]["graphs"].items():
+            if g["ranked"]:
+                digest.append(f"{fam} {d}: EDSP={g['methods']['EDSP-tuned']['mean']:.2f} best={g['best']} "
+                              f"{g['methods'][g['best']]['mean']:.2f} rank={g['ref_rank']}/{len(g['methods'])}")
+    er = a["B5"].get("exploratory_ranks")
+    if er:
+        digest.append(f"B5 exploratory ranks friedman_p={er['friedman_p']:.3g}: "
+                      + ", ".join(f"{m} {r:.2f}" for m, r in sorted(er["average_ranks"].items(), key=lambda x: x[1])))
+    tex = ["\\begin{tabular}{llrrr}", "\\toprule", "Family & Method & Win & Tie & Loss \\\\", "\\midrule", *rows,
+           "\\bottomrule", "\\end{tabular}"]
+    return "\n".join(tex) + "\n", digest
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     digest: list[str] = []
@@ -121,8 +148,10 @@ def main() -> int:
         "tab_h4.tex": h4_table(),
         "tab_a13.tex": a13_table(),
         "tab_a11.tex": a11_table(),
+        "tab_b5b6.tex": b5b6_table(),
     }.items():
-        (OUT / name).write_text(tex)
+        if tex:
+            (OUT / name).write_text(tex)
         digest += dg
     for suite in ("e1", "e2", "e2u", "e3", "e5"):
         src = AGG / suite / f"{suite}_headline.tex"

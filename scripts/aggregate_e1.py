@@ -28,6 +28,9 @@ from edsp.eval.stats_tests import bootstrap_ci, friedman_nemenyi, holm, wilcoxon
 METHODS = ["EDSP-default", "EDSP-tuned", "EDSP-fullH-default", "EDSP-fullH-tuned", "majority", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "signed_vote", "signed_lgc"]
 RANKED = ["EDSP-default", "EDSP-tuned", "train_prior", "harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp"]
 BASELINES = ["harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "train_prior", "signed_vote", "signed_lgc"]
+# B5 signed GNNs / B6 fraud GNNs (PR-29): table columns and win/tie/loss rows only when their
+# records exist, so the aggregates of suites without them are unchanged; never in RANKED
+B56 = ["sgcn", "snea", "sdgnn", "sigat", "care_gnn", "pc_gnn"]
 # case studies (tiny or label-leaking by construction, Master Prompt §3.1 C5.3): reported, never ranked
 EXCLUDED_FROM_RANKS = {"sampson", "wiki-rfa", "wiki-elec"}
 
@@ -66,6 +69,10 @@ def main() -> int:
     not_run = [r for r in recs if r.get("method") == "NOT-RUN"]
     dstats = {r["dataset"]: r for r in recs if r.get("method") == "DATASET-STATS"}
     recs = [r for r in recs if r.get("method") not in ("NOT-RUN", "DATASET-STATS")]
+    present = [m for m in B56 if any(r["method"] == m for r in recs)]
+    if present:  # METHODS / BASELINES are declared global above
+        METHODS = [*METHODS, *present]
+        BASELINES = [*BASELINES, *present]
     by = defaultdict(dict)  # (dataset, method) -> {split: record}
     meta = {}
     for r in recs:

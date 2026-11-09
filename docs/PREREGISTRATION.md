@@ -121,6 +121,81 @@ conditions of each base graph; win / loss if adjusted p < 0.05, else tie. Every
 condition is reported, whatever its outcome; the exploratory "wins" of MIX_REPORT
 §1 are confirmed only where the confirmatory test gives a win.
 
+### A17 (2026-11-09, PR-29) — signed-GNN (B5) and fraud-GNN (B6) baselines
+
+Written before any B5 / B6 run on real data. No such record exists, and no yelpchi Track-B
+record exists.
+
+**B5 (signed GNNs; Master Prompt B5).**
+- Methods: SGCN, SNEA, SDGNN and SiGAT from PyTorch Geometric Signed Directed 1.2.0
+  (unchanged library models), used as embeddings + logistic regression on train labels.
+- Grid: 9 points, embedding size {20, 32, 64} × LR l2 {1e-3, 1e-2, 1e-1}, selected on
+  validation. A7 early stopping.
+- Graphs: the E2 signed graphs, with the same splits as E2.
+- Compared with the existing E2 records of EDSP-tuned (Track A).
+- Our graphs are undirected, so the direction-specific parts of SDGNN and SiGAT carry no
+  information. This is recorded, not repaired.
+
+**B6 (fraud GNNs; Master Prompt B6).**
+- Methods: CARE-GNN and PC-GNN, re-implemented after the authors' code. Track B, node
+  features, embedding 64.
+- Grid: 9 points (CARE: lr × λ₁; PC-GNN: lr × ρ). A7 early stopping on validation ROC-AUC.
+- Graphs: amazon-fraud and yelpchi.
+- So that B6 has a comparator on yelpchi, yelpchi now also runs the A9 Track-B set:
+  feature_lr, C&S, EDSP-B-default / -tuned, MLP and BWGNN at hidden 64. This lifts A9's
+  "yelpchi is not run in E3".
+
+**Report.** This is not a hypothesis, only the "ours vs SOTA" comparison.
+- EDSP-tuned (B5) or EDSP-B-tuned (B6) against each new method: win / tie / loss, Wilcoxon
+  over splits, Holm across the graphs of the family.
+- Ranked graphs:
+  - signed: the 8 Congress graphs and wiki-editor; wiki-rfa, wiki-elec and sampson remain
+    case studies, as in E2
+  - fraud: amazon-fraud and yelpchi
+- A job that exceeds the 330-minute limit is NOT-RUN with that reason.
+
+### A16 (2026-11-09, PR-28) — H6 "finite T_L helps under label noise": how it is tested
+
+Written before any H6 run; no record with label noise or finite T_L exists.
+
+**Data.** The 14 real E1 graphs of the E1 Friedman set: amazon-computers, amazon-photo,
+amazon-ratings, chameleon-filtered, citeseer, coauthor-cs, coauthor-physics, cora,
+pubmed, questions, roman-empire, squirrel-filtered, tolokers, wikics. Same 10 splits as
+in E1.
+
+**Noise (Master Prompt §5.5).** Implemented in `edsp/data/label_noise.py`.
+- The train *and* validation labels of each split are corrupted. This is the realistic
+  case: the labels available for model selection are as noisy as the training labels.
+- Test labels are never changed. The vault refuses an observed label array that differs
+  on a test node.
+- Specs:
+  - `uniform:r`: the label is replaced by one of the other classes with probability r.
+  - `pairwise:r`: c → (c+1) mod k with probability r.
+- Rates r ∈ {0.1, 0.2, 0.3, 0.4, 0.5}, noise seed 0, per-split random stream.
+- Clean control: `uniform:0`.
+
+**Methods.** Track A, as in E1.
+- **EDSP-default:** P-CONST(0.5), default H, T_L = ∞.
+- **EDSP-TL:** the same configuration with T_L chosen on the (noisy) validation labels
+  from {0.5, 1, 2, 4, ∞} (§2.4; ties go to ∞).
+- **EDSP-TL=T** for each finite T, reported as a sweep.
+- **Context:** EDSP-tuned (T_L = ∞) and all E1 baselines run on the same noisy labels.
+- `--h7-splits 0`.
+
+**Test.**
+- Per graph and condition: EDSP-TL vs EDSP-default, two-sided Wilcoxon over the 10 splits,
+  Holm across the 14 graphs within each condition.
+- **Primary conditions:** `uniform:0.3` and `pairwise:0.3`.
+- **Supported** if in both primary conditions EDSP-TL has ≥ 5 significant wins and ≤ 1 loss.
+- **Not supported** if it has ≤ 1 win in both.
+- Otherwise **inconclusive**.
+
+**Secondary, descriptive.**
+- the win/tie/loss count at every rate (dose–response)
+- the clean control: a win there means finite T_L helps irrespective of noise, and is
+  reported as such
+- EDSP-TL against LGC and harmonic under the same noise
+
 ### A15 (2026-11-09, PR-27) — H5 "P-NATIVE > P-CONST" on ogbn-proteins: how it is tested
 
 Written before any method has run on ogbn-proteins. The only record so far is the label-free

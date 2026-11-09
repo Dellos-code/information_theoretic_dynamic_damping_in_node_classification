@@ -1,4 +1,4 @@
-# Final report — EDSP evaluation (state of 2026-11-08)
+# Final report — EDSP evaluation (state of 2026-11-09)
 
 The algorithm is **EDSP**: information-theoretic per-node dynamic damping with
 trust-calibrated homophily/heterophily for node classification in stochastic graphs. It is
@@ -18,8 +18,8 @@ What is evaluated:
   classifier trained on train–train edges, used as one polarity regime. Because it turned out
   to carry most of the wins, A10, A11 and A13 test its contribution separately: they give
   simple signed propagation the same learned polarity (`+HL`).
-- **Protocol.** Preregistered hypotheses H1–H7 plus amendments A1–A14 (`docs/PREREGISTRATION.md`),
-  each written before the runs it governs. Wilcoxon over splits, Holm across datasets,
+- **Protocol.** Preregistered hypotheses H1–H7 plus amendments A1–A17 (`docs/PREREGISTRATION.md`;
+  A15, for H5, arrives with the H5 PR), each written before the runs it governs. Wilcoxon over splits, Holm across datasets,
   Friedman/Nemenyi for ranks. Real data first. PERTURBED-REAL results (MIX) are kept apart
   from the real-world tables.
 
@@ -30,6 +30,13 @@ What is evaluated:
      rank: LGC 1.50, EDSP-tuned 4.14.
    - **Graphs with given signs (E2):** EDSP-tuned ties the signed-propagation baselines
      (signed vote 1 win / 8 ties / 0 losses; signed LGC 0 / 9 / 0).
+   - **Against the signed GNNs (B5, A17; 9 graphs):** SGCN 1 / 5 / 3, SNEA 2 / 7 / 0,
+     SDGNN 1 / 8 / 0, SiGAT 3 / 4 / 2. Every EDSP win is on wiki-editor or a Senate graph;
+     on wiki-editor simple signed LGC does as well. EDSP is #1 by mean on 1 of the 9 graphs
+     (congress-senate-100). Exploratory average rank: 5th of 7 (SGCN 1st; Friedman p = 0.28).
+   - **Against the fraud GNNs (B6, A17):** CARE-GNN 1 / 0 / 1 and PC-GNN 0 / 1 / 1. On yelpchi
+     EDSP-B is 6th of 8, 10.5 AUC points below PC-GNN.
+     `docs/B5B6_REPORT.md`.
    - **On top of a feature model (E3):** tuned GNNs beat it almost everywhere (0 wins against
      GCN+, SAGE+, GAT+, GPR-GNN).
 2. **Where EDSP's own mechanism significantly beats a strong comparator of its own kind:**
@@ -41,7 +48,9 @@ What is evaluated:
 
      There C&S, which assumes homophily, drags the base predictor down (roman-empire 64.3 → 51.3),
      while EDSP-B never falls significantly below its base predictor on any of the 13 real
-     graphs (9 / 4 / 0). This last point is exploratory, not preregistered.
+     graphs (9 / 4 / 0). This last point is exploratory, not preregistered. On yelpchi, run
+     later for B6, EDSP-B is 0.16 below its base predictor (raw p = 0.037). That is not
+     significant after Holm, but it is not a gain either.
    - **With a noisy learned polarity on fraud graphs (A10)**, against simple signed propagation
      fed the same polarity: amazon-fraud +1.74 AUC, yelpchi +4.64. Here EDSP is itself only
      tied with (amazon-fraud) or below (yelpchi) plain LGC.
@@ -64,7 +73,7 @@ What is evaluated:
 | H3 | EDSP-fullH > EDSP on structured-compatibility graphs, gap growing with k | **not supported** | C3d: 1 win / 2 ties / 2 losses; gap vs k Spearman ρ = −0.36 (p = 0.89); roman-empire +16.6, wikics −23.5; `docs/E5_REPORT.md` |
 | H4 | Track-B EDSP ≈ C&S < tuned GNNs on feature-rich heterophilous graphs | **inconclusive** (both A14 modes) | EDSP-B ≈ C&S on 2 / 6 C2 graphs, best GNN significantly better on 5 / 6; `docs/E3_REPORT.md` |
 | H5 | P-NATIVE > P-CONST on ogbn-proteins / uncertain DBLP | **NOT-RUN** | ogbn-proteins (multi-label, C4) and the uncertain-DBLP source were not acquired; see §5 |
-| H6 | Finite T_L helps under label noise | **NOT-RUN** | The label-noise suite (E6) was not implemented |
+| H6 | Finite T_L helps under label noise | **not supported** | 14 graphs × 11 noise conditions (A16): EDSP-TL vs EDSP-default 1 win / 13 ties in both primary conditions (uniform and pairwise 30 %); mean effect ≤ 0.05 points; `docs/H6_REPORT.md` |
 | H7 | Convergence / oscillation / fixed-point non-uniqueness (descriptive) | **reported** | EDSP-default did not converge in 3 of 153 E1 real-graph runs (Planetoid public splits); no period-2 oscillation flagged; E1 report §H7 |
 
 Later confirmatory tests, each preregistered:
@@ -80,13 +89,16 @@ Later confirmatory tests, each preregistered:
 
 ## 3. Win / tie / loss of EDSP-tuned against each baseline (real graphs)
 
-Wilcoxon over splits, Holm across datasets per baseline. `docs/final/tab_wtl.tex`.
+Wilcoxon over splits, Holm across datasets per baseline. `docs/final/tab_wtl.tex`; B5 / B6 in
+`docs/final/tab_b5b6.tex`.
 
 | Suite | Baseline: win / tie / loss |
 |---|---|
 | E1 (unsigned, 14) | Harmonic 4/9/1 · Harmonic+CMN 2/10/2 · **LGC 0/4/10** · PPR-LP 1/9/4 · LinBP 10/2/2 · train prior 12/0/2 |
 | E2 (signs or relations given) | Harmonic 9/1/1 · Harmonic+CMN 9/1/1 · LGC 9/1/1 · PPR-LP 10/0/1 · LinBP 11/0/0 · train prior 11/0/0 · **Signed vote 1/8/0 · Signed LGC 0/9/0** |
 | E3 (Track B, 13) | **LogReg base 9/4/0** · **C&S 4/3/6** · MLP 7/3/3 · GCN+ 0/3/9 · SAGE+ 0/1/11 · GAT+ 0/3/9 · GPR-GNN 0/2/10 · BWGNN 1/2/10 |
+| B5 (signed, 9; A17) | SGCN 1/5/3 · SNEA 2/7/0 · SDGNN 1/8/0 · SiGAT 3/4/2 |
+| B6 (fraud, 2; A17; EDSP-B-tuned) | CARE-GNN 1/0/1 · PC-GNN 0/1/1 |
 
 Average ranks (Friedman over the graphs where every ranked method exists; `tab_ranks.tex`):
 - **E1 (14 graphs):** LGC 1.50, Harmonic+CMN 3.32, PPR-LP 3.71, **EDSP-tuned 4.14**,
@@ -110,9 +122,11 @@ Average ranks (Friedman over the graphs where every ranked method exists; `tab_r
 
 ## 5. Not run, and limitations
 - **H5:** ogbn-proteins and uncertain-DBLP were not acquired.
-- **H6:** the label-noise suite was not implemented.
-- **Signed-GNN baselines** (SGCN, SDGNN, SiGAT) and **fraud-GNN baselines** other than BWGNN
-  (CARE-GNN, PC-GNN, GAGA) are not run (PR-6).
+- **Signed GNNs (B5)** run as label-free link-sign embeddings plus logistic regression, on
+  undirected graphs. The direction-specific parts of SDGNN and SiGAT are inert, which favours
+  EDSP.
+- **CARE-GNN and PC-GNN (B6)** are re-implementations; parity with the published numbers is
+  TO VERIFY. GAGA and H²-FDetector are not run.
 - **E3 on coauthor-cs / coauthor-physics (A12)** is reported in `docs/E3_REPORT.md`
   (homophilous, not in H4). EDSP-B-tuned is within 0.35 points of the best GNN, and GPR-GNN
   beats it on both graphs. On physics, SAGE+ (9 / 10 splits) and GAT+ (3 / 10) hit the
@@ -135,8 +149,10 @@ Average ranks (Friedman over the graphs where every ranked method exists; `tab_r
 | `docs/MIX_REPORT.md` | A2, A4, A11 |
 | `docs/A13_REPORT.md` | Native mixing |
 | `docs/E3_REPORT.md` | Track B, H4 |
+| `docs/B5B6_REPORT.md` | Signed GNNs and fraud GNNs (A17) |
+| `docs/H6_REPORT.md` | H6, label noise |
 | `docs/AUDIT_2026-11-07.md` | Independent audit |
 
 LaTeX:
-- `docs/final/tab_*.tex`: win/tie/loss, ranks, H4, A11, A13.
+- `docs/final/tab_*.tex`: win/tie/loss, ranks, H4, A11, A13, B5 / B6.
 - `docs/final/tab_headline_*.tex`: per-suite mean ± std tables.

@@ -49,15 +49,18 @@
 
 - PR-27 (C4 / H5 pipeline, not yet run): `GraphData.task_view` (binary task views of multi-label graphs), `scripts/run_c4.py` (EDSP-const/native default + tuned, 9 configs each; B0/B1 baselines unweighted and weighted by the noisy-OR p), `scripts/aggregate_c4.py` (descriptive, no verdict), suite C4 in `e1.yml`, CSR backend `edsp.sparse_backend` (parity with the reference), P-NATIVE max/mean modes (the ogbn-proteins columns are unnamed, SPEC_AMBIGUITIES), batched H-LEARNED above 5M edges. Cost probes (agent sandbox, synthetic graphs, n = 132,534, k = 2): `results/runs/c4_iteration_probe_39.6m.json` — 0.40 s per EDSP iteration at 39.56M edges, 7.4 s setup per run, 19 s directed-edge plan per job; `results/runs/c4_cost_probe_10.8m.json` — one task with all methods at 10.8M edges took 1,435 s (EDSP grids 1,142 s, with the 6 H-ALL1 configurations at the 1,000-iteration cap; H-TRAINONLY(b1) 223 iterations, H-LEARNED ≲ 95 judging by wall clock; baselines 208 s), tracemalloc peak 1.78 GiB per EDSP block. Extrapolated to ogbn-proteins (39.56M edges): ≈ 7,900 EDSP iterations × 0.40 s + 18 × 7.4 s ≈ 55 min, baselines ≈ 13 min, so ≈ 70 min per task if the real graph converges like the synthetic one, ≈ 2.3 h per task if no EDSP configuration converges (18,000 iterations); peak memory ≈ 8.5–10.5 GB (16 GB runner). Recommended: pilot `chunks = ogbn-proteins:2:1`, then `ogbn-proteins:112:2` (56 jobs; `--time-budget-min 290` records tasks that would not fit as NOT-RUN).
 - C4 items 2–4 (uncertain DBLP, US-Patent assignee graph, raw STRING + GO-slim): availability checked 2026-11-09, none run (evidence in `data/REGISTRY.json`, SPEC_AMBIGUITIES).
+- PR-29 (B5 / B6, A17; 2026-11-09): signed GNNs SGCN / SNEA / SDGNN / SiGAT (PyGSD 1.2.0, embeddings + LR) on the 12 E2 signed graphs, CARE-GNN / PC-GNN re-implementations on amazon-fraud and yelpchi, yelpchi Track-B set. EDSP-tuned vs signed GNNs on 9 ranked graphs: 7 wins / 24 ties / 5 losses over 36 comparisons, #1 by mean on 1 graph; EDSP-B-tuned vs CARE-GNN 1 / 0 / 1, vs PC-GNN 0 / 1 / 1 (docs/B5B6_REPORT.md, `scripts/b5b6_compare.py`).
 
 ## Remaining
-- Not run by design or budget: H5 (ogbn-proteins pipeline ready in PR-27, awaiting the owner's amendment and dispatch; uncertain DBLP unavailable), H6 (label-noise suite), signed / fraud GNN SOTA beyond BWGNN (PR-6).
+- H6 (A16, 2026-11-09): not supported (docs/H6_REPORT.md).
+- H5 (A15, ogbn-proteins): running on PR-27's branch. Uncertain DBLP not acquired.
+- Fraud SOTA not run: GAGA, H²-FDetector; parity of CARE-GNN / PC-GNN with published numbers.
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
 - `scripts/oracle_upper_bound.py` (E10) and H-SOFT (extension) — not implemented yet.
 - Track-B 2-layer MLP / LightGBM base predictors.
-- LinBP-DCE, Mercado GL, uBayes, HAPPY, REV2; PR-6 (B2–B6 wrappers, incl. fraud SOTA CARE-GNN / PC-GNN / BWGNN / GAGA and signed SOTA SGCN / SDGNN / SiGAT).
+- LinBP-DCE, Mercado GL, uBayes, HAPPY, REV2.
 - Re-run E1 so its records carry the stratified accuracy (§5.7).
 - Remaining acquisitions: Bitcoin OTC/Alpha (+ REV2 labels), Congress signed backbones, C4 (DBLP / patents); E2 on ogbn-proteins (multi-label, per task, P-NATIVE).
 

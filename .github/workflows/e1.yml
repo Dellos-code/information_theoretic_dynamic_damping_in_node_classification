@@ -27,7 +27,7 @@ on:
         description: "Runner for the experiment jobs: ubuntu-latest (GitHub) or self-hosted (the owner's machine)"
         default: "ubuntu-latest"
       extra_args:
-        description: "Extra runner flags, e.g. --fullh (E5)"
+        description: "Extra runner flags, e.g. --fullh (E5); B5: --gnn-only --signed-gnn sgcn,snea,sdgnn,sigat; B6: --track B --gnn-only --gnn= --fraud-gnn care,pcgnn"
         default: ""
       chunks:
         description: "Datasets run as one job per split range, as name:n_splits:splits_per_job (C4: name:n_tasks:tasks_per_job)"
@@ -116,6 +116,9 @@ jobs:
           for i in 1 2 3 4 5; do python3 -m pip install --user --break-system-packages -q uv==0.13.7 && break; sleep 15; done
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: uv sync --frozen --group dev
+      - name: Optional B5 dependencies (not in uv.lock; only for --signed-gnn runs)
+        if: contains(needs.plan.outputs.extra, '--signed-gnn')
+        run: uv pip install -r requirements/signed-gnn.txt
       - uses: actions/cache@v4
         with:
           path: .edsp-cache
@@ -177,11 +180,12 @@ jobs:
           merge-multiple: true
           run-id: ${{ inputs.rescue_run }}
           github-token: ${{ github.token }}
-      - run: |
+      - name: Aggregate (a failure here must not lose the records)
+        run: |
           if [ "$SUITE" = C4 ]; then
-            uv run python scripts/aggregate_c4.py --suite "$SUITE"
+            uv run python scripts/aggregate_c4.py --suite "$SUITE" || echo "::warning::aggregate_c4.py failed; records are pushed unaggregated"
           else
-            uv run python scripts/aggregate_e1.py --suite "$SUITE"
+            uv run python scripts/aggregate_e1.py --suite "$SUITE" || echo "::warning::aggregate_e1.py failed for suite $SUITE; records are pushed unaggregated"
           fi
       - uses: actions/upload-artifact@v4
         with:
@@ -200,6 +204,7 @@ jobs:
           if [ -n "$RESCUE" ]; then BR="$BR-rescue-${{ github.run_id }}"; fi
           if [ "${{ github.run_attempt }}" != "1" ]; then BR="$BR-a${{ github.run_attempt }}"; fi
           git checkout -b "$BR"
+          mkdir -p "results/aggregates/$S"
           git add -f "results/runs/$S" "results/aggregates/$S"
           git commit -m "$SUITE results from Actions run ${RESCUE:-${{ github.run_id }}} (attempt ${{ github.run_attempt }}; commit ${{ github.sha }})"
           git push origin "$BR"
