@@ -49,6 +49,7 @@ from edsp.baselines.gnn import select_and_predict_gnn
 from edsp.baselines.propagation import adjacency
 from edsp.baselines.signed_gnn import SIGNED_GNNS, select_and_predict_signed_gnn
 from edsp.core import edsp
+from edsp.data import label_noise as label_noise_mod
 from edsp.data.loaders import load
 from edsp.data.perturb import perturb
 from edsp.data.registry import dataset_entry, datasets_with_loader
@@ -221,6 +222,12 @@ def main() -> int:
     ap.add_argument("--perturb-seeds", type=int, default=3)
     ap.add_argument("--perturb-seed-offset", type=int, default=0,
                     help="first re-wiring seed (confirmatory runs use fresh seeds, PREREGISTRATION A4)")
+    ap.add_argument("--label-noise", default=None,
+                    help="train/val label noise, 'uniform:r' or 'pairwise:r' (Master Prompt §5.5, H6); test labels stay clean")
+    ap.add_argument("--label-noise-seed", type=int, default=0)
+    ap.add_argument("--trust-grid", default=None,
+                    help="H6: comma-separated finite T_L values; adds EDSP-TL=<T> (fixed) and EDSP-TL "
+                         "(T_L chosen on validation among these and infinity) at the default configuration")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     global ARGS
@@ -249,6 +256,12 @@ def main() -> int:
             # same nodes, labels, splits and edge set, polarity information removed
             g = dataclasses.replace(g, name=g.name + "~unsigned", edge_sign=None, edge_relation=None,
                                     meta=dict(g.meta) | {"sign_blind_view": True})
+        if args.label_noise:
+            # noisy train/val labels, clean test labels (PREREGISTRATION A16); the graph is unchanged
+            g = dataclasses.replace(g, name=f"{g.name}~{label_noise_mod.tag(args.label_noise)}",
+                                    label_noise=(args.label_noise, args.label_noise_seed),
+                                    meta=dict(g.meta) | {"label_noise": {"spec": args.label_noise,
+                                                                         "seed": args.label_noise_seed}})
         name = g.name
         entry = dataset_entry(base)
         metric = headline(base)
@@ -310,7 +323,27 @@ def main() -> int:
                        "regime_diagnostics": {k: v for k, v in inp.diagnostics.items() if k != "priors"}}
                 if not res.converged:
                     rec["metrics_mean_last_two"] = evaluate(vault, 0.5 * (res.last_iterates[0] + res.last_iterates[1]))
+                if vault.noise_info is not None:
+                    rec["label_noise"] = vault.noise_info
                 emit(rec, t0)
+                if args.trust_grid:
+                    # H6: the same default configuration with finite label trust T_L (§2.4)
+                    tl_cands = [(math.inf, res, validation_score(vault, res.probabilities, metric))]
+                    for T in (float(x) for x in args.trust_grid.split(",")):
+                        t0 = time.perf_counter()
+                        cfg_t = cfg | {"T_L": T}
+                        r_t = run_core(build_inputs(g, vault, cfg_t))
+                        tl_cands.append((T, r_t, validation_score(vault, r_t.probabilities, metric)))
+                        emit({"split": sid, "method": f"EDSP-TL={T:g}", "track": args.track, "config": cfg_t,
+                              "metrics": scored(vault, r_t.probabilities, bins), "diagnostics": edsp_diagnostics(r_t)}, t0)
+                    # ties go to the first candidate, T_L = infinity (the default)
+                    tb = int(np.argmax([s if np.isfinite(s) else -np.inf for _, _, s in tl_cands]))
+                    T, r_t, _ = tl_cands[tb]
+                    emit({"split": sid, "method": "EDSP-TL", "track": args.track, "config": cfg | {"T_L": T},
+                          "metrics": scored(vault, r_t.probabilities, bins), "diagnostics": edsp_diagnostics(r_t),
+                          "selection": {"metric": metric, "T_L_grid": [c for c, _, _ in tl_cands],
+                                        "val_scores": [v for _, _, v in tl_cands], "chosen_index": tb}},
+                         time.perf_counter())
                 if args.fullh:
                     t0 = time.perf_counter()
                     H, hinfo = estimate_heterophilic_compatibility(inp.edges, inp.heterophily, vault, g.num_classes)

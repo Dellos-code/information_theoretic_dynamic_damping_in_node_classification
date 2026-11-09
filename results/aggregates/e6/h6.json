@@ -1,0 +1,4101 @@
+{
+ "verdict": "NOT SUPPORTED",
+ "primary": {
+  "uniform:0.3": [
+   1,
+   13,
+   0,
+   14
+  ],
+  "pairwise:0.3": [
+   1,
+   13,
+   0,
+   14
+  ]
+ },
+ "edsp_tl_vs_default": {
+  "pairwise:0.1": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": 3.636363636361217e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": 6.540222367557025e-05,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -6.532745386245153e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": -0.0005501306560308228,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -1.4496955639375919e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": 0.00016835016835015093,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": 0.00011396490904480583,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 0.00034824951686518446,
+    "p_holm": 0.015625,
+    "verdict": "win"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": -3.529827038475236e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.004840088934496334,
+    "p_holm": 0.0007960423519090711,
+    "verdict": "win"
+   }
+  ],
+  "pairwise:0.2": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": -0.0001818181818182829,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": -6.540222367545923e-05,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -5.551115123125783e-17,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": -0.0005319148936170359,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": 0.00041259799202320036,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -2.7285129604370795e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -7.248477819654653e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": -0.00033670033670030186,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": 0.0001370207271804702,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 0.0003436317416631862,
+    "p_holm": 0.03515625,
+    "verdict": "win"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": -3.52982703847593e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0040533606977937175,
+    "p_holm": 0.0008832385863081278,
+    "verdict": "win"
+   }
+  ],
+  "pairwise:0.3": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": -0.00025454545454550725,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": -0.00019620667102659972,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -1.6331863465612884e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": -0.00013753266400762243,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -0.00027285129604370795,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -0.00023195129022912653,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": -0.00033670033670030186,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": -0.00039457727157432565,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 0.00013324590345609177,
+    "p_holm": 0.15625,
+    "verdict": "tie"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": -0.0001588422167313891,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0024713528305113086,
+    "p_holm": 0.0021570268998710325,
+    "verdict": "win"
+   }
+  ],
+  "pairwise:0.4": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": -0.00014545454545455971,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": -0.00032701111837796226,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -0.0001143230442593457,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": -0.0002750653280154114,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -0.0004911323328784523,
+    "p_holm": 0.3125,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -0.0012322412293419571,
+    "p_holm": 0.3125,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": 0.00035016835016843384,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": 6.653909113962797e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 8.742602901357088e-05,
+    "p_holm": 0.625,
+    "verdict": "tie"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": -0.0002117896223085003,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": -4.561734570762699e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0021720540448093573,
+    "p_holm": 0.003198365855611323,
+    "verdict": "win"
+   }
+  ],
+  "pairwise:0.5": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": 0.0001818181818181719,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": -0.0002616088947024475,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -0.00016331863465623986,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": 0.0,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": 5.457025920874159e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -0.0001594665120325245,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": 0.00033670033670035737,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": -0.00023055818135714334,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 7.036334964183322e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": 8.824567596188437e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": -2.73161817535561e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0014537369591243743,
+    "p_holm": 0.013454706010270195,
+    "verdict": "win"
+   }
+  ],
+  "uniform:0": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": 3.636363636361217e-05,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -0.00014698677119057146,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": -0.0012195121951219523,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": 0.00041259799202308933,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": 0.00016371077762611375,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": 0.00015946651203246898,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": -0.00016835016835015093,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": 0.00013833490881409727,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 0.0006280866941116292,
+    "p_holm": 0.017578125,
+    "verdict": "win"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": -0.00025503559645770335,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": -5.287002920018047e-06,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.007354198734393691,
+    "p_holm": 0.0008819870204194453,
+    "verdict": "win"
+   }
+  ],
+  "uniform:0.1": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": -0.00010909090909083652,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": -6.540222367557025e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -0.0003429691327780371,
+    "p_holm": 0.125,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": 0.0,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -2.7285129604370795e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": 2.8993911278640816e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": 0.0005915661817260665,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 0.00034824951686518446,
+    "p_holm": 0.017578125,
+    "verdict": "win"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": -7.059654076949085e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": -0.00024038461538464229,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.004942705661022784,
+    "p_holm": 0.0008757494073814437,
+    "verdict": "win"
+   }
+  ],
+  "uniform:0.2": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": 0.00018181818181806086,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": 2.220446049250313e-16,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": 9.799118079373281e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": -0.00013753266400762243,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -0.0001637107776263358,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -8.698173383592245e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": 0.00016835016835026195,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": -0.00020750236322142346,
+    "p_holm": 0.875,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 0.0003436317416631862,
+    "p_holm": 0.03125,
+    "verdict": "win"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": -1.764913519237965e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.0002257336343114702,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0034633145202667692,
+    "p_holm": 0.000794914727677315,
+    "verdict": "win"
+   }
+  ],
+  "uniform:0.3": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": -7.272727272722435e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": -0.00026160889470250304,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -0.0001143230442593457,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0012578616352201255,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": 0.00013753266400762243,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -5.457025920874159e-05,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -7.248477819654653e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": 0.0,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 0.00013324590345609177,
+    "p_holm": 0.125,
+    "verdict": "tie"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": -7.059654076949778e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.00022222222222223476,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0025055584060201253,
+    "p_holm": 0.00262199079458757,
+    "verdict": "win"
+   }
+  ],
+  "uniform:0.4": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": -3.636363636350115e-05,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": -6.540222367579229e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -0.000212314225053023,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": 0.0008251959840462342,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -0.0002728512960435969,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -0.00017396346767173387,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": -0.00033670033670030186,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": -2.3055818135664374e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 8.742602901357088e-05,
+    "p_holm": 0.703125,
+    "verdict": "tie"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": 3.529827038474542e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": -4.561734570762699e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0010176158713869898,
+    "p_holm": 0.014688499662158376,
+    "verdict": "win"
+   }
+  ],
+  "uniform:0.5": [
+   {
+    "graph": "amazon-computers",
+    "pairs": 10,
+    "delta": -0.0001818181818181719,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-photo",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "amazon-ratings",
+    "pairs": 10,
+    "delta": -0.00013065490772490307,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "chameleon-filtered",
+    "pairs": 10,
+    "delta": 0.0,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "citeseer",
+    "pairs": 11,
+    "delta": 0.0,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-cs",
+    "pairs": 10,
+    "delta": -0.00013642564802185397,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "coauthor-physics",
+    "pairs": 10,
+    "delta": -0.00026094520150776734,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "cora",
+    "pairs": 11,
+    "delta": -7.74410774411205e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "pubmed",
+    "pairs": 11,
+    "delta": -0.00020750236322153448,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "questions",
+    "pairs": 10,
+    "delta": 7.036334964183322e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "roman-empire",
+    "pairs": 10,
+    "delta": 1.764913519237965e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "squirrel-filtered",
+    "pairs": 10,
+    "delta": -0.000222222222222207,
+    "p_holm": NaN,
+    "verdict": "tie"
+   },
+   {
+    "graph": "tolokers",
+    "pairs": 10,
+    "delta": -2.73161817535561e-05,
+    "p_holm": 1.0,
+    "verdict": "tie"
+   },
+   {
+    "graph": "wikics",
+    "pairs": 20,
+    "delta": 0.0004788780571233775,
+    "p_holm": 0.1289055415974549,
+    "verdict": "tie"
+   }
+  ]
+ },
+ "context": {
+  "lgc": {
+   "pairwise:0.1": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.008545454545454523,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.0032701111837802888,
+     "p_holm": 0.15234375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0313408459905275,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.057786885341234495,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.02893783523586846,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.015825375170532063,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.008828645984343297,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.04379461279461294,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.08346164664653122,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.035514962746098666,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.052559124602894476,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.13129760091912138,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.024486482895867856,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.24282538053702762,
+     "p_holm": 0.0012382881029696661,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.2": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.007018181818181812,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.009221713538260401,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.031487832761718126,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.06148950263475533,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.05172630999862449,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.04758526603001356,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.0274862278921425,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.07261616161616169,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.08843063657113881,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.029268440508047666,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.04698199788210376,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.10121441853655871,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.036504281116723325,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.1985633658286301,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.3": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.013236363636363713,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.03113145846958787,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.02580434427568179,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.04362174740021629,
+     "p_holm": 0.02734375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.06859152798789703,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0977899045020465,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.06111916497535541,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.10505723905723907,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.1370417310308254,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.013034190007596314,
+     "p_holm": 0.02734375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.04225202965054713,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0794321678614196,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.048992080340754196,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.1687874123482127,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.4": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.04763636363636348,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.08875081752779601,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0124285480973379,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.024944946064678564,
+     "p_holm": 0.1953125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.07491569247696328,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.14458390177353342,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.11033632937083215,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.0907542087542087,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.14786588430590453,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.006896843519760498,
+     "p_holm": 0.1953125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.03543946346629015,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.03636467279182354,
+     "p_holm": 0.05859375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.06432337207757532,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.13348725842312292,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.5": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.013309090909090937,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": 0.012688031393067456,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0005226196308998343,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 0.0036848716367123835,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.0038579287580799426,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0004911323328785078,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.0037692084662221403,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.002898989898989901,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.004657966937956892,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.0012254651831294927,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.030868337451464875,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.02805172085967189,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": 0.0004001854517947656,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.07957072002736443,
+     "p_holm": 5.340576171875e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.013272727272727103,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.0060170045781556825,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.028744079699493663,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.06578093650991812,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.012611057626186195,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0004638472032743035,
+     "p_holm": 0.3125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.0024354885474049404,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.009286195286195453,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.05170912779839998,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.05581718458863716,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.053529827038475114,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.14251832776340503,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.015797327487806045,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.30026509321019335,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.1": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.00912727272727254,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.003793328973185184,
+     "p_holm": 0.0546875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.03328433774293643,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.07270185414853791,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.0315952413698255,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.013260572987721653,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.007074514351985917,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.0385858585858585,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.07998667373711754,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.03551493965722263,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.057518531591951985,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.14139455705073634,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.024486482895867856,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.26226269881990766,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.2": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.0064363636363636845,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.006409417920209215,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.04138494202188475,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.07174798997441867,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.05438371613258142,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0338062755798092,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.02042621049579596,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.07493602693602697,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.0840815714845643,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.02926846359692359,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.05686551358983409,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.13858532602855744,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.03650424722567891,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.231623054557893,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.3": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.006618181818181856,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.01033355134074565,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.051967989547607396,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.060412706799519045,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.07468257461147021,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.062210095497953755,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.03956219193969268,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.11998989898989898,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.1251446983146195,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.01303416691872017,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.05575361807271444,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.13060312171134553,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.048992080340754196,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.2196254489481786,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.4": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.015527272727272723,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.02289077828646191,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.06745059611301651,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.05105598030250608,
+     "p_holm": 0.0546875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.10531508733324157,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.09980900409276927,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.07497825456654106,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.16636700336700316,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.16322288059391776,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.006896831975322537,
+     "p_holm": 0.16015625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.05453582774444052,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.1227170956672658,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.06432337207757532,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.19089276552077988,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.5": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.025563636363636233,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.03865271419228267,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0888453372529805,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.07443402866938031,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.13580539128042912,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.15211459754433843,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.13227022325311688,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.22146801346801348,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.20514778779425002,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.0012254767275674538,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.05026473702788564,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.084046109263887,
+     "p_holm": 0.021484375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": 0.0004001854517947656,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.16238241833418848,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ]
+  },
+  "harmonic": {
+   "pairwise:0.1": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.0017090909090909934,
+     "p_holm": 0.0390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -6.540222367579229e-05,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0029560672872774307,
+     "p_holm": 0.087890625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 0.0004441585224261857,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.0015571448218952844,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0004365620736699327,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.0017396346767178938,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.004390572390572389,
+     "p_holm": 0.35546875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.003479399626495794,
+     "p_holm": 0.35546875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.003343280790747749,
+     "p_holm": 0.025390625,
+     "verdict": "win"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0018002117896223219,
+     "p_holm": 0.28125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0007320577113248405,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.001044284749843416,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.018975543013511287,
+     "p_holm": 0.001231283108587021,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.2": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.00287272727272736,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": 0.0001308044473511405,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.002433447656377652,
+     "p_holm": 0.03515625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 0.001911457275739048,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.0010070141658643506,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0014733969986358009,
+     "p_holm": 0.234375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.003769208466222196,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.0019158249158249818,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.005501740714269232,
+     "p_holm": 0.2802734375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.0025590555726157094,
+     "p_holm": 0.025390625,
+     "verdict": "win"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0015354747617366826,
+     "p_holm": 0.75,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": 0.00036874313590903873,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.0018235754238413726,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.013887463656576227,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.3": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.004145454545454785,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.002550686723348461,
+     "p_holm": 0.25,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.002433447656377541,
+     "p_holm": 0.123046875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -2.4934073672711055e-05,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.004629487003163235,
+     "p_holm": 0.0390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0024829467939972982,
+     "p_holm": 0.2734375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.006813569150478593,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.002707070707070658,
+     "p_holm": 0.78125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.00647856961704274,
+     "p_holm": 0.322265625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.0018555028872638824,
+     "p_holm": 0.322265625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": 0.00042357924461701446,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0035850396346261137,
+     "p_holm": 0.78125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.0026014087829320243,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.009269710962886979,
+     "p_holm": 0.0012365340208313788,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.4": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.007527272727272716,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.003858731196860754,
+     "p_holm": 0.0390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.001551527029234001,
+     "p_holm": 0.451171875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 0.0020278271553048066,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": 0.0001818181818182274,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.003410641200545683,
+     "p_holm": 0.390625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.008335749492606626,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.002848484848484878,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.007028681437760809,
+     "p_holm": 0.3779296875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.00044107834286521985,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": 0.0014295799505824325,
+     "p_holm": 0.9609375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0004384562614514198,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.0027779472329996224,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.0072088250384811925,
+     "p_holm": 0.0012382881029696661,
+     "verdict": "loss"
+    }
+   ],
+   "pairwise:0.5": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": 0.0008727272727272473,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.00019620667102671074,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0011758941695247382,
+     "p_holm": 0.35546875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.004029257133885966,
+     "p_holm": 0.9375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": 0.0023846788612296166,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": 0.001446111869031319,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": 0.0011742534067845645,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": 0.00030976430976425995,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.00024824199386719314,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.00023736518982508947,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": 0.0007942110836569038,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0011052038055378022,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.00033097993921293867,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.00388233282024969,
+     "p_holm": 0.0035107667486121426,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.0013454545454544276,
+     "p_holm": 0.0390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.0005886200130805763,
+     "p_holm": 0.8125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.002564102564102444,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.004352516009216156,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.0017855865768119372,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.0001637107776263358,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.0007248477819655763,
+     "p_holm": 0.0703125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.0007777777777777661,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": 0.003253613999492755,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.005889048715219447,
+     "p_holm": 0.025390625,
+     "verdict": "win"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0009177550300035336,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0006933322036527245,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.0005633708303848239,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.027082264409098666,
+     "p_holm": 0.0012365340208313788,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.1": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.0016727272727272702,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.0008502289077828573,
+     "p_holm": 0.25,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0033153682835210807,
+     "p_holm": 0.03515625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 0.001208417608603185,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.00128441754916786,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.00027285129604381897,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.0015946651203246898,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.0032255892255892427,
+     "p_holm": 0.884765625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": 0.00011610910013137854,
+     "p_holm": 0.369140625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.003343280790747749,
+     "p_holm": 0.025390625,
+     "verdict": "win"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0007765619484645242,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0017509501568298003,
+     "p_holm": 0.884765625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.001044284749843416,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.019659654523687398,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.2": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.001854545454545442,
+     "p_holm": 0.02734375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.0019620667102682177,
+     "p_holm": 0.0703125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.002057814796668278,
+     "p_holm": 0.09765625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": -0.0011659825639116495,
+     "p_holm": 0.9375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.005363773896300161,
+     "p_holm": 0.34375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.004747612551159741,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.003406784575239352,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.008380471380471377,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.00777375325663443,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.0025590671170536705,
+     "p_holm": 0.025390625,
+     "verdict": "win"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0007765619484645311,
+     "p_holm": 0.9375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0018029572590155807,
+     "p_holm": 0.9375,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.0018235754238413726,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.014084145715751673,
+     "p_holm": 0.0012365340208313788,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.3": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.00287272727272736,
+     "p_holm": 0.041015625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.002550686723348683,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.002580434427568168,
+     "p_holm": 0.046875,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 4.823239817519642e-05,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.003760005501306618,
+     "p_holm": 0.3828125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.00693042291950885,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.005987242679037386,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.010606060606060619,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.011484425794849318,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.0018555028872638824,
+     "p_holm": 0.322265625,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0010942463819272885,
+     "p_holm": 0.4921875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0004932020042154317,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.0026014426739763286,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.009509149991448751,
+     "p_holm": 2.6702880859375e-05,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.4": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.005127272727272647,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.004316546762590079,
+     "p_holm": 0.03125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0033153682835211917,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 0.004747257321292941,
+     "p_holm": 0.46875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.004035070829321918,
+     "p_holm": 0.8125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.009386084583901666,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.009654972455784283,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.015670033670033612,
+     "p_holm": 0.0341796875,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.011173471975652882,
+     "p_holm": 0.0341796875,
+     "verdict": "loss"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": 0.00044110143174125316,
+     "p_holm": 0.8125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0001411930815390025,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": 0.00020662190349091114,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.0027779472329996224,
+     "p_holm": 0.025390625,
+     "verdict": "loss"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.004840088934496389,
+     "p_holm": 0.0016813100029798229,
+     "verdict": "loss"
+    }
+   ],
+   "uniform:0.5": [
+    {
+     "graph": "amazon-computers",
+     "pairs": 10,
+     "delta": -0.005309090909090819,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-photo",
+     "pairs": 10,
+     "delta": -0.004970568999346114,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "amazon-ratings",
+     "pairs": 10,
+     "delta": -0.0022537971582556326,
+     "p_holm": 0.03125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "chameleon-filtered",
+     "pairs": 10,
+     "delta": 0.002721768466383001,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "citeseer",
+     "pairs": 11,
+     "delta": -0.008617934259386562,
+     "p_holm": 0.095703125,
+     "verdict": "tie"
+    },
+    {
+     "graph": "coauthor-cs",
+     "pairs": 10,
+     "delta": -0.012251023192360155,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "coauthor-physics",
+     "pairs": 10,
+     "delta": -0.013032763119744994,
+     "p_holm": 0.0234375,
+     "verdict": "loss"
+    },
+    {
+     "graph": "cora",
+     "pairs": 11,
+     "delta": -0.017703703703703666,
+     "p_holm": 0.0126953125,
+     "verdict": "loss"
+    },
+    {
+     "graph": "pubmed",
+     "pairs": 11,
+     "delta": -0.0037018421598691287,
+     "p_holm": 0.310546875,
+     "verdict": "tie"
+    },
+    {
+     "graph": "questions",
+     "pairs": 10,
+     "delta": -0.00023742291201511723,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "roman-empire",
+     "pairs": 10,
+     "delta": -0.0003176844334627643,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "squirrel-filtered",
+     "pairs": 10,
+     "delta": -0.0004522015793439471,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "tolokers",
+     "pairs": 10,
+     "delta": -0.00033097993921293867,
+     "p_holm": 1.0,
+     "verdict": "tie"
+    },
+    {
+     "graph": "wikics",
+     "pairs": 20,
+     "delta": -0.0031041559774243055,
+     "p_holm": 0.005070691150502806,
+     "verdict": "loss"
+    }
+   ]
+  }
+ },
+ "chosen_T_L": {
+  "amazon-computers~uniform:0.3": {
+   "inf": 5,
+   "0.5": 4,
+   "2.0": 1
+  },
+  "amazon-photo~uniform:0.3": {
+   "inf": 6,
+   "1.0": 2,
+   "0.5": 1,
+   "4.0": 1
+  },
+  "amazon-ratings~uniform:0.3": {
+   "0.5": 5,
+   "inf": 4,
+   "4.0": 1
+  },
+  "chameleon-filtered~uniform:0.3": {
+   "0.5": 3,
+   "inf": 7
+  },
+  "citeseer~uniform:0.3": {
+   "inf": 5,
+   "1.0": 2,
+   "4.0": 2,
+   "0.5": 2
+  },
+  "coauthor-cs~uniform:0.3": {
+   "inf": 9,
+   "1.0": 1
+  },
+  "coauthor-physics~uniform:0.3": {
+   "1.0": 2,
+   "inf": 7,
+   "2.0": 1
+  },
+  "cora~uniform:0.3": {
+   "inf": 10,
+   "2.0": 1
+  },
+  "pubmed~uniform:0.3": {
+   "inf": 8,
+   "1.0": 2,
+   "0.5": 1
+  },
+  "questions~uniform:0.3": {
+   "0.5": 4,
+   "inf": 3,
+   "2.0": 2,
+   "4.0": 1
+  },
+  "roman-empire~uniform:0.3": {
+   "2.0": 1,
+   "inf": 4,
+   "1.0": 2,
+   "0.5": 2,
+   "4.0": 1
+  },
+  "squirrel-filtered~uniform:0.3": {
+   "0.5": 2,
+   "inf": 8
+  },
+  "tolokers~uniform:0.3": {
+   "inf": 10
+  },
+  "wikics~uniform:0.3": {
+   "0.5": 17,
+   "inf": 3
+  },
+  "amazon-computers~pairwise:0.3": {
+   "0.5": 3,
+   "inf": 6,
+   "2.0": 1
+  },
+  "amazon-photo~pairwise:0.3": {
+   "inf": 7,
+   "0.5": 2,
+   "1.0": 1
+  },
+  "amazon-ratings~pairwise:0.3": {
+   "4.0": 2,
+   "inf": 6,
+   "1.0": 1,
+   "0.5": 1
+  },
+  "chameleon-filtered~pairwise:0.3": {
+   "0.5": 1,
+   "inf": 9
+  },
+  "citeseer~pairwise:0.3": {
+   "inf": 7,
+   "1.0": 3,
+   "0.5": 1
+  },
+  "coauthor-cs~pairwise:0.3": {
+   "1.0": 3,
+   "inf": 6,
+   "0.5": 1
+  },
+  "coauthor-physics~pairwise:0.3": {
+   "inf": 7,
+   "1.0": 2,
+   "2.0": 1
+  },
+  "cora~pairwise:0.3": {
+   "inf": 6,
+   "0.5": 3,
+   "1.0": 1,
+   "4.0": 1
+  },
+  "pubmed~pairwise:0.3": {
+   "0.5": 7,
+   "inf": 2,
+   "2.0": 2
+  },
+  "questions~pairwise:0.3": {
+   "0.5": 4,
+   "inf": 3,
+   "2.0": 2,
+   "4.0": 1
+  },
+  "roman-empire~pairwise:0.3": {
+   "0.5": 5,
+   "1.0": 1,
+   "inf": 3,
+   "2.0": 1
+  },
+  "squirrel-filtered~pairwise:0.3": {
+   "inf": 9,
+   "0.5": 1
+  },
+  "tolokers~pairwise:0.3": {
+   "inf": 10
+  },
+  "wikics~pairwise:0.3": {
+   "0.5": 18,
+   "inf": 2
+  },
+  "amazon-computers~uniform:0": {
+   "inf": 7,
+   "0.5": 3
+  },
+  "amazon-photo~uniform:0": {
+   "0.5": 3,
+   "inf": 7
+  },
+  "amazon-ratings~uniform:0": {
+   "0.5": 3,
+   "2.0": 1,
+   "4.0": 1,
+   "1.0": 2,
+   "inf": 3
+  },
+  "chameleon-filtered~uniform:0": {
+   "inf": 9,
+   "0.5": 1
+  },
+  "citeseer~uniform:0": {
+   "inf": 8,
+   "0.5": 2,
+   "1.0": 1
+  },
+  "coauthor-cs~uniform:0": {
+   "1.0": 2,
+   "inf": 4,
+   "0.5": 4
+  },
+  "coauthor-physics~uniform:0": {
+   "0.5": 4,
+   "inf": 6
+  },
+  "cora~uniform:0": {
+   "inf": 8,
+   "1.0": 2,
+   "0.5": 1
+  },
+  "pubmed~uniform:0": {
+   "inf": 4,
+   "0.5": 6,
+   "1.0": 1
+  },
+  "questions~uniform:0": {
+   "0.5": 10
+  },
+  "roman-empire~uniform:0": {
+   "0.5": 2,
+   "inf": 6,
+   "4.0": 1,
+   "2.0": 1
+  },
+  "squirrel-filtered~uniform:0": {
+   "inf": 8,
+   "0.5": 2
+  },
+  "tolokers~uniform:0": {
+   "inf": 7,
+   "4.0": 3
+  },
+  "wikics~uniform:0": {
+   "0.5": 20
+  },
+  "amazon-computers~uniform:0.1": {
+   "inf": 6,
+   "2.0": 1,
+   "0.5": 3
+  },
+  "amazon-photo~uniform:0.1": {
+   "inf": 7,
+   "0.5": 3
+  },
+  "amazon-ratings~uniform:0.1": {
+   "0.5": 4,
+   "2.0": 1,
+   "inf": 3,
+   "1.0": 2
+  },
+  "chameleon-filtered~uniform:0.1": {
+   "inf": 10
+  },
+  "citeseer~uniform:0.1": {
+   "inf": 7,
+   "0.5": 1,
+   "1.0": 1,
+   "4.0": 1,
+   "2.0": 1
+  },
+  "coauthor-cs~uniform:0.1": {
+   "inf": 5,
+   "2.0": 1,
+   "0.5": 3,
+   "1.0": 1
+  },
+  "coauthor-physics~uniform:0.1": {
+   "inf": 5,
+   "0.5": 4,
+   "1.0": 1
+  },
+  "cora~uniform:0.1": {
+   "inf": 10,
+   "1.0": 1
+  },
+  "pubmed~uniform:0.1": {
+   "0.5": 2,
+   "inf": 8,
+   "2.0": 1
+  },
+  "questions~uniform:0.1": {
+   "0.5": 8,
+   "1.0": 1,
+   "4.0": 1
+  },
+  "roman-empire~uniform:0.1": {
+   "1.0": 3,
+   "inf": 3,
+   "0.5": 2,
+   "4.0": 1,
+   "2.0": 1
+  },
+  "squirrel-filtered~uniform:0.1": {
+   "inf": 8,
+   "0.5": 2
+  },
+  "tolokers~uniform:0.1": {
+   "inf": 10
+  },
+  "wikics~uniform:0.1": {
+   "0.5": 20
+  },
+  "amazon-computers~uniform:0.2": {
+   "0.5": 4,
+   "inf": 6
+  },
+  "amazon-photo~uniform:0.2": {
+   "0.5": 1,
+   "inf": 8,
+   "4.0": 1
+  },
+  "amazon-ratings~uniform:0.2": {
+   "0.5": 4,
+   "inf": 4,
+   "2.0": 1,
+   "1.0": 1
+  },
+  "chameleon-filtered~uniform:0.2": {
+   "inf": 8,
+   "0.5": 2
+  },
+  "citeseer~uniform:0.2": {
+   "inf": 6,
+   "1.0": 1,
+   "0.5": 2,
+   "4.0": 2
+  },
+  "coauthor-cs~uniform:0.2": {
+   "inf": 6,
+   "1.0": 1,
+   "2.0": 2,
+   "0.5": 1
+  },
+  "coauthor-physics~uniform:0.2": {
+   "0.5": 3,
+   "inf": 3,
+   "4.0": 2,
+   "1.0": 1,
+   "2.0": 1
+  },
+  "cora~uniform:0.2": {
+   "inf": 9,
+   "0.5": 2
+  },
+  "pubmed~uniform:0.2": {
+   "inf": 6,
+   "1.0": 3,
+   "4.0": 1,
+   "0.5": 1
+  },
+  "questions~uniform:0.2": {
+   "0.5": 7,
+   "inf": 1,
+   "1.0": 1,
+   "2.0": 1
+  },
+  "roman-empire~uniform:0.2": {
+   "inf": 6,
+   "1.0": 2,
+   "2.0": 1,
+   "0.5": 1
+  },
+  "squirrel-filtered~uniform:0.2": {
+   "inf": 7,
+   "0.5": 3
+  },
+  "tolokers~uniform:0.2": {
+   "inf": 10
+  },
+  "wikics~uniform:0.2": {
+   "0.5": 19,
+   "1.0": 1
+  },
+  "amazon-computers~uniform:0.4": {
+   "inf": 7,
+   "4.0": 1,
+   "0.5": 1,
+   "2.0": 1
+  },
+  "amazon-photo~uniform:0.4": {
+   "inf": 7,
+   "0.5": 2,
+   "4.0": 1
+  },
+  "amazon-ratings~uniform:0.4": {
+   "inf": 4,
+   "1.0": 2,
+   "0.5": 4
+  },
+  "chameleon-filtered~uniform:0.4": {
+   "inf": 10
+  },
+  "citeseer~uniform:0.4": {
+   "inf": 6,
+   "1.0": 3,
+   "0.5": 2
+  },
+  "coauthor-cs~uniform:0.4": {
+   "inf": 6,
+   "2.0": 1,
+   "1.0": 1,
+   "0.5": 2
+  },
+  "coauthor-physics~uniform:0.4": {
+   "2.0": 3,
+   "0.5": 1,
+   "inf": 6
+  },
+  "cora~uniform:0.4": {
+   "inf": 7,
+   "0.5": 2,
+   "2.0": 1,
+   "1.0": 1
+  },
+  "pubmed~uniform:0.4": {
+   "inf": 6,
+   "0.5": 1,
+   "1.0": 1,
+   "2.0": 2,
+   "4.0": 1
+  },
+  "questions~uniform:0.4": {
+   "2.0": 3,
+   "inf": 3,
+   "0.5": 4
+  },
+  "roman-empire~uniform:0.4": {
+   "0.5": 2,
+   "1.0": 2,
+   "inf": 5,
+   "4.0": 1
+  },
+  "squirrel-filtered~uniform:0.4": {
+   "inf": 9,
+   "0.5": 1
+  },
+  "tolokers~uniform:0.4": {
+   "inf": 8,
+   "4.0": 1,
+   "0.5": 1
+  },
+  "wikics~uniform:0.4": {
+   "0.5": 13,
+   "inf": 7
+  },
+  "amazon-computers~uniform:0.5": {
+   "inf": 8,
+   "2.0": 1,
+   "0.5": 1
+  },
+  "amazon-photo~uniform:0.5": {
+   "inf": 8,
+   "2.0": 1,
+   "4.0": 1
+  },
+  "amazon-ratings~uniform:0.5": {
+   "inf": 7,
+   "2.0": 2,
+   "1.0": 1
+  },
+  "chameleon-filtered~uniform:0.5": {
+   "inf": 10
+  },
+  "citeseer~uniform:0.5": {
+   "inf": 5,
+   "0.5": 2,
+   "4.0": 2,
+   "1.0": 2
+  },
+  "coauthor-cs~uniform:0.5": {
+   "4.0": 1,
+   "inf": 7,
+   "1.0": 1,
+   "2.0": 1
+  },
+  "coauthor-physics~uniform:0.5": {
+   "inf": 7,
+   "0.5": 1,
+   "4.0": 1,
+   "2.0": 1
+  },
+  "cora~uniform:0.5": {
+   "0.5": 3,
+   "inf": 6,
+   "1.0": 1,
+   "2.0": 1
+  },
+  "pubmed~uniform:0.5": {
+   "inf": 5,
+   "0.5": 4,
+   "2.0": 1,
+   "1.0": 1
+  },
+  "questions~uniform:0.5": {
+   "1.0": 1,
+   "0.5": 5,
+   "inf": 1,
+   "2.0": 2,
+   "4.0": 1
+  },
+  "roman-empire~uniform:0.5": {
+   "0.5": 3,
+   "4.0": 1,
+   "inf": 6
+  },
+  "squirrel-filtered~uniform:0.5": {
+   "1.0": 3,
+   "inf": 6,
+   "0.5": 1
+  },
+  "tolokers~uniform:0.5": {
+   "inf": 5,
+   "0.5": 3,
+   "2.0": 1,
+   "1.0": 1
+  },
+  "wikics~uniform:0.5": {
+   "0.5": 8,
+   "inf": 11,
+   "1.0": 1
+  },
+  "amazon-computers~pairwise:0.1": {
+   "inf": 4,
+   "0.5": 2,
+   "1.0": 3,
+   "2.0": 1
+  },
+  "amazon-photo~pairwise:0.1": {
+   "inf": 7,
+   "0.5": 3
+  },
+  "amazon-ratings~pairwise:0.1": {
+   "1.0": 4,
+   "0.5": 3,
+   "inf": 1,
+   "4.0": 1,
+   "2.0": 1
+  },
+  "chameleon-filtered~pairwise:0.1": {
+   "inf": 10
+  },
+  "citeseer~pairwise:0.1": {
+   "inf": 4,
+   "0.5": 3,
+   "1.0": 3,
+   "2.0": 1
+  },
+  "coauthor-cs~pairwise:0.1": {
+   "0.5": 3,
+   "2.0": 1,
+   "inf": 5,
+   "1.0": 1
+  },
+  "coauthor-physics~pairwise:0.1": {
+   "0.5": 6,
+   "inf": 3,
+   "2.0": 1
+  },
+  "cora~pairwise:0.1": {
+   "inf": 8,
+   "0.5": 2,
+   "2.0": 1
+  },
+  "pubmed~pairwise:0.1": {
+   "0.5": 6,
+   "inf": 3,
+   "1.0": 1,
+   "2.0": 1
+  },
+  "questions~pairwise:0.1": {
+   "0.5": 8,
+   "1.0": 1,
+   "4.0": 1
+  },
+  "roman-empire~pairwise:0.1": {
+   "0.5": 3,
+   "inf": 7
+  },
+  "squirrel-filtered~pairwise:0.1": {
+   "inf": 8,
+   "0.5": 2
+  },
+  "tolokers~pairwise:0.1": {
+   "inf": 10
+  },
+  "wikics~pairwise:0.1": {
+   "0.5": 20
+  },
+  "amazon-computers~pairwise:0.2": {
+   "inf": 5,
+   "1.0": 1,
+   "0.5": 3,
+   "4.0": 1
+  },
+  "amazon-photo~pairwise:0.2": {
+   "inf": 8,
+   "0.5": 1,
+   "2.0": 1
+  },
+  "amazon-ratings~pairwise:0.2": {
+   "inf": 3,
+   "4.0": 1,
+   "2.0": 4,
+   "0.5": 2
+  },
+  "chameleon-filtered~pairwise:0.2": {
+   "inf": 8,
+   "0.5": 2
+  },
+  "citeseer~pairwise:0.2": {
+   "inf": 8,
+   "2.0": 1,
+   "1.0": 2
+  },
+  "coauthor-cs~pairwise:0.2": {
+   "inf": 5,
+   "0.5": 1,
+   "2.0": 2,
+   "1.0": 1,
+   "4.0": 1
+  },
+  "coauthor-physics~pairwise:0.2": {
+   "1.0": 2,
+   "inf": 6,
+   "2.0": 1,
+   "0.5": 1
+  },
+  "cora~pairwise:0.2": {
+   "inf": 5,
+   "1.0": 1,
+   "0.5": 4,
+   "4.0": 1
+  },
+  "pubmed~pairwise:0.2": {
+   "2.0": 2,
+   "inf": 4,
+   "0.5": 3,
+   "1.0": 2
+  },
+  "questions~pairwise:0.2": {
+   "0.5": 7,
+   "inf": 1,
+   "1.0": 1,
+   "2.0": 1
+  },
+  "roman-empire~pairwise:0.2": {
+   "0.5": 3,
+   "inf": 5,
+   "1.0": 1,
+   "2.0": 1
+  },
+  "squirrel-filtered~pairwise:0.2": {
+   "0.5": 2,
+   "inf": 8
+  },
+  "tolokers~pairwise:0.2": {
+   "inf": 10
+  },
+  "wikics~pairwise:0.2": {
+   "0.5": 20
+  },
+  "amazon-computers~pairwise:0.4": {
+   "2.0": 2,
+   "4.0": 2,
+   "inf": 6
+  },
+  "amazon-photo~pairwise:0.4": {
+   "inf": 9,
+   "0.5": 1
+  },
+  "amazon-ratings~pairwise:0.4": {
+   "2.0": 2,
+   "inf": 5,
+   "1.0": 1,
+   "0.5": 1,
+   "4.0": 1
+  },
+  "chameleon-filtered~pairwise:0.4": {
+   "inf": 10
+  },
+  "citeseer~pairwise:0.4": {
+   "inf": 5,
+   "1.0": 2,
+   "0.5": 3,
+   "2.0": 1
+  },
+  "coauthor-cs~pairwise:0.4": {
+   "inf": 3,
+   "0.5": 1,
+   "1.0": 4,
+   "2.0": 1,
+   "4.0": 1
+  },
+  "coauthor-physics~pairwise:0.4": {
+   "0.5": 5,
+   "1.0": 1,
+   "inf": 4
+  },
+  "cora~pairwise:0.4": {
+   "0.5": 3,
+   "inf": 7,
+   "4.0": 1
+  },
+  "pubmed~pairwise:0.4": {
+   "0.5": 4,
+   "inf": 6,
+   "1.0": 1
+  },
+  "questions~pairwise:0.4": {
+   "2.0": 3,
+   "inf": 3,
+   "0.5": 4
+  },
+  "roman-empire~pairwise:0.4": {
+   "0.5": 3,
+   "inf": 3,
+   "1.0": 4
+  },
+  "squirrel-filtered~pairwise:0.4": {
+   "inf": 9,
+   "0.5": 1
+  },
+  "tolokers~pairwise:0.4": {
+   "inf": 8,
+   "4.0": 1,
+   "0.5": 1
+  },
+  "wikics~pairwise:0.4": {
+   "0.5": 16,
+   "inf": 2,
+   "1.0": 2
+  },
+  "amazon-computers~pairwise:0.5": {
+   "inf": 4,
+   "0.5": 3,
+   "1.0": 2,
+   "4.0": 1
+  },
+  "amazon-photo~pairwise:0.5": {
+   "0.5": 6,
+   "inf": 2,
+   "2.0": 1,
+   "1.0": 1
+  },
+  "amazon-ratings~pairwise:0.5": {
+   "4.0": 1,
+   "inf": 6,
+   "1.0": 2,
+   "0.5": 1
+  },
+  "chameleon-filtered~pairwise:0.5": {
+   "inf": 8,
+   "0.5": 1,
+   "1.0": 1
+  },
+  "citeseer~pairwise:0.5": {
+   "inf": 7,
+   "1.0": 1,
+   "0.5": 3
+  },
+  "coauthor-cs~pairwise:0.5": {
+   "inf": 4,
+   "0.5": 5,
+   "4.0": 1
+  },
+  "coauthor-physics~pairwise:0.5": {
+   "inf": 7,
+   "1.0": 2,
+   "0.5": 1
+  },
+  "cora~pairwise:0.5": {
+   "inf": 5,
+   "0.5": 5,
+   "2.0": 1
+  },
+  "pubmed~pairwise:0.5": {
+   "4.0": 1,
+   "0.5": 5,
+   "2.0": 1,
+   "inf": 4
+  },
+  "questions~pairwise:0.5": {
+   "1.0": 1,
+   "0.5": 5,
+   "inf": 1,
+   "2.0": 2,
+   "4.0": 1
+  },
+  "roman-empire~pairwise:0.5": {
+   "0.5": 4,
+   "inf": 3,
+   "2.0": 1,
+   "1.0": 2
+  },
+  "squirrel-filtered~pairwise:0.5": {
+   "inf": 10
+  },
+  "tolokers~pairwise:0.5": {
+   "inf": 5,
+   "0.5": 3,
+   "2.0": 1,
+   "1.0": 1
+  },
+  "wikics~pairwise:0.5": {
+   "inf": 2,
+   "1.0": 2,
+   "0.5": 15,
+   "4.0": 1
+  }
+ }
+}
