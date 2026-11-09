@@ -27,7 +27,7 @@ on:
         description: "Runner for the experiment jobs: ubuntu-latest (GitHub) or self-hosted (the owner's machine)"
         default: "ubuntu-latest"
       extra_args:
-        description: "Extra runner flags, e.g. --fullh (E5); B5: --gnn-only --signed-gnn sgcn,snea,sdgnn,sigat; B6: --track B --gnn-only --gnn= --fraud-gnn care,pcgnn"
+        description: "Extra runner flags, e.g. --fullh (E5); B5: --gnn-only --signed-gnn sgcn,snea,sdgnn,sigat; B6: --track B --gnn-only --gnn= --fraud-gnn care,pcgnn; E3 post-hoc: --track B --gnn-only --gnn= --posthoc cs2hop,clp,linbp_b"
         default: ""
       chunks:
         description: "Datasets run as one job per split range, as name:n_splits:splits_per_job (C4: name:n_tasks:tasks_per_job)"

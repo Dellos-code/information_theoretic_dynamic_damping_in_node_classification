@@ -241,23 +241,35 @@ def signed_lgc(graph: GraphData, vault: LabelVault, alpha: float = 0.9) -> tuple
 
 def correct_and_smooth(
     graph: GraphData, vault: LabelVault, alpha_correct: float = 0.8, alpha_smooth: float = 0.8, base: np.ndarray | None = None,
+    hops: int = 1,
 ) -> tuple[np.ndarray, dict]:
-    """Huang et al. (2021) with autoscale, on the Track-B base predictor."""
+    """Huang et al. (2021) with autoscale, on the Track-B base predictor.
+
+    ``hops=2`` is the two-hop variant of Lim et al. (NeurIPS 2021; `edsp.baselines.posthoc.cs_2hop`):
+    every propagation step applies S twice, S (S X), as ``num_hops=2`` in their
+    `correct_smooth.general_outcome_correlation`; S^2 is never formed. ``hops=1`` (default) is
+    the unchanged 1-hop C&S."""
     Z = feature_lr(graph, vault)[0] if base is None else base
     Y, idx, _ = _one_hot_train(graph, vault)
     S = _sym_norm(adjacency(graph))
+
+    def prop(X: np.ndarray) -> np.ndarray:
+        for _ in range(hops):
+            X = S @ X
+        return X
+
     E0 = np.zeros_like(Z)
     E0[idx] = Y[idx] - Z[idx]
-    E, i1 = _iterate(lambda E: alpha_correct * (S @ E) + (1 - alpha_correct) * E0, E0.copy())
+    E, i1 = _iterate(lambda E: alpha_correct * prop(E) + (1 - alpha_correct) * E0, E0.copy())
     sigma = float(np.abs(E0[idx]).sum(axis=1).mean()) if len(idx) else 0.0
     norm = np.abs(E).sum(axis=1, keepdims=True)
     scale = np.divide(sigma, norm, out=np.zeros_like(norm), where=norm > 0)
     Zc = np.clip(Z + scale * E, 0.0, None)
     G0 = Zc.copy()
     G0[idx] = Y[idx]
-    G, i2 = _iterate(lambda G: alpha_smooth * (S @ G) + (1 - alpha_smooth) * G0, G0.copy())
+    G, i2 = _iterate(lambda G: alpha_smooth * prop(G) + (1 - alpha_smooth) * G0, G0.copy())
     return _to_probs(G), {"alpha_correct": alpha_correct, "alpha_smooth": alpha_smooth, "sigma": sigma,
-                          "correct": i1, "smooth": i2}
+                          "correct": i1, "smooth": i2} | ({"hops": hops} if hops != 1 else {})
 
 
 def estimate_compatibility(graph: GraphData, vault: LabelVault, smoothing: float = 1.0) -> np.ndarray:
@@ -280,12 +292,14 @@ def _spectral_radius(W: sp.csr_matrix) -> float:
 
 
 def linbp(graph: GraphData, vault: LabelVault, scale: float = 0.5, H: np.ndarray | None = None,
-          weights: np.ndarray | None = None) -> tuple[np.ndarray, dict]:
+          weights: np.ndarray | None = None, priors: np.ndarray | None = None) -> tuple[np.ndarray, dict]:
     """LinBP* (no echo cancellation): F <- X + eps W F H_hat, H_hat = H - 1/k,
     eps = scale / (rho(W) rho(H_hat)) so the iteration converges for scale < 1.
     Beliefs are mapped to probabilities by adding 1/k, clipping at 0 and renormalising.
     ``weights`` (default None = unweighted) weight W; the compatibility estimate stays the
-    myopic count on train-train edges."""
+    myopic count on train-train edges. Explicit beliefs X: centred one-hot labels on train
+    nodes, 0 elsewhere; ``priors`` (n, k) (LinBP-B, `edsp.baselines.posthoc.linbp_b`) sets the
+    explicit beliefs of every non-train node to its centred prior, priors - 1/k."""
     k = graph.num_classes
     H = estimate_compatibility(graph, vault) if H is None else H
     Hc = H - 1.0 / k
@@ -294,7 +308,7 @@ def linbp(graph: GraphData, vault: LabelVault, scale: float = 0.5, H: np.ndarray
     rho_h = float(np.max(np.abs(np.linalg.eigvals(Hc)))) or 1.0
     eps = scale / (rho_w * rho_h)
     Y, idx, _ = _one_hot_train(graph, vault)
-    X = np.zeros_like(Y)
+    X = np.zeros_like(Y) if priors is None else np.asarray(priors, dtype=np.float64) - 1.0 / k
     X[idx] = Y[idx] - 1.0 / k
     F, info = _iterate(lambda F: X + eps * (W @ F) @ Hc, X.copy())
     return _to_probs(F + 1.0 / k), info | {"scale": scale, "eps": eps, "rho_W": rho_w, "rho_H": rho_h, "H": H.round(4).tolist()}

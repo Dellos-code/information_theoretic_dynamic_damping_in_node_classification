@@ -51,6 +51,8 @@
 - C4 items 2–4 (uncertain DBLP, US-Patent assignee graph, raw STRING + GO-slim): availability checked 2026-11-09, none run (evidence in `data/REGISTRY.json`, SPEC_AMBIGUITIES).
 - PR-29 (B5 / B6, A17; 2026-11-09): signed GNNs SGCN / SNEA / SDGNN / SiGAT (PyGSD 1.2.0, embeddings + LR) on the 12 E2 signed graphs, CARE-GNN / PC-GNN re-implementations on amazon-fraud and yelpchi, yelpchi Track-B set. EDSP-tuned vs signed GNNs on 9 ranked graphs: 7 wins / 24 ties / 5 losses over 36 comparisons, #1 by mean on 1 graph; EDSP-B-tuned vs CARE-GNN 1 / 0 / 1, vs PC-GNN 0 / 1 / 1 (docs/B5B6_REPORT.md, `scripts/b5b6_compare.py`).
 
+- PR-39 (Track-B post-hoc comparators, 2026-11-09): `edsp/baselines/posthoc.py` — C&S 2-hop (Lim et al. 2021; the normalised adjacency applied twice per step, as their code), CLP (Zhong et al. 2022; port of the official code, selected on validation — the official notebook selects on test accuracy) and LinBP-B (LinBP seeded with the base predictions), all on `feature_lr`, 9-point grids; `run_e1.py --posthoc cs2hop,clp,linbp_b` (default off; with `--track B --gnn-only --gnn=` only these run), aggregate columns when present. Not run yet (SPEC_AMBIGUITIES PR-39 rows).
+
 ## Remaining
 - H6 (A16, 2026-11-09): not supported (docs/H6_REPORT.md).
 - H5 (A15, 2026-11-09): supported on ogbn-proteins, 112 tasks (docs/H5_REPORT.md). The effect equals generic edge weighting. Uncertain DBLP, US-Patent and raw STRING could not be obtained as specified.

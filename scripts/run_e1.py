@@ -13,6 +13,10 @@ For each dataset and split (all official / registered splits):
     SiGAT embeddings + logistic regression; Track A, signed graphs only) and B6 fraud
     GNNs (--fraud-gnn: CARE-GNN, PC-GNN; Track B, relation-typed graphs only). With
     --gnn-only they run as isolated jobs (no EDSP / propagation baselines).
+  * optional, off by default (PR-39): Track-B post-hoc comparators on the same base predictor
+    as EDSP-B and C&S (--posthoc: cs2hop, clp, linbp_b -> records cs_2hop, clp, linbp_b;
+    edsp/baselines/posthoc.py). With --track B --gnn-only --gnn= only they run (plus their base
+    predictor), so they can be added to existing E3 splits without re-running EDSP-B / C&S.
 Pre-registered extras (docs/PREREGISTRATION.md):
   * secondary column for non-converged EDSP runs: mean of the last two iterates;
   * H7 descriptive outcome: convergence, oscillation, and on the first
@@ -46,7 +50,8 @@ from edsp.baselines import BASELINES, select_and_predict
 from edsp.baselines import gnn as gnn_module
 from edsp.baselines.fraud_gnn import FRAUD_GNNS, select_and_predict_fraud_gnn
 from edsp.baselines.gnn import select_and_predict_gnn
-from edsp.baselines.propagation import adjacency
+from edsp.baselines.posthoc import POSTHOC_METHOD, select_and_predict_posthoc
+from edsp.baselines.propagation import adjacency, feature_lr
 from edsp.baselines.signed_gnn import SIGNED_GNNS, select_and_predict_signed_gnn
 from edsp.core import edsp
 from edsp.data import label_noise as label_noise_mod
@@ -166,6 +171,46 @@ def run_b56(g, vault, metric, si, sid, bins, emit) -> None:
               "diagnostics": {k: info[k] for k in keep if k in info}}, t0)
 
 
+def run_posthoc(g, vault, metric, sid, bins, emit) -> None:
+    """Track-B post-hoc comparators (--posthoc, PR-39): C&S 2-hop, CLP and LinBP-B, each refining the
+    soft outputs of the SAME base predictor as EDSP-B and C&S (feature_lr, fitted here once per split
+    and shared by the three; it is deterministic, so records of a --gnn-only job pair with the EDSP-B /
+    C&S records of the same split). Default '' (nothing runs, records unchanged); Track A never runs
+    them. A failing method (or base predictor) gives a per-method NOT-RUN record; the others still run."""
+    names = [POSTHOC_METHOD[m] for m in _flag_list(ARGS.posthoc, tuple(POSTHOC_METHOD), "--posthoc")]
+    if ARGS.track != "B" or not names:
+        return
+    t0 = time.perf_counter()
+    try:
+        base, binfo = feature_lr(g, vault)
+    except Exception as exc:  # noqa: BLE001 - reported as NOT-RUN (rule R7)
+        for name in names:
+            emit({"split": sid, "method": "NOT-RUN", "baseline": name, "group": "B1",
+                  "reason": f"{name}: base predictor feature_lr: {type(exc).__name__}: {exc}"[:500]}, t0)
+        print(f"[not run] {g.name} split {sid} post-hoc {names}: {exc}", file=sys.stderr, flush=True)
+        return
+    base_cfg = {"name": "feature_lr", "model": binfo.get("base_model"), "chosen": binfo.get("chosen"),
+                "temperature": binfo.get("temperature")}
+    base_diag = {"base_sha256": hashlib.sha256(np.ascontiguousarray(np.round(base, 10)).tobytes()).hexdigest(),
+                 "base_wall_clock_seconds": round(time.perf_counter() - t0, 3)}
+    keep = ("val_scores", "correct", "smooth", "iterations", "converged", "eps", "rho_W", "rho_H", "H", "H_counts",
+            "sinkhorn", "last_layer_change_l1", "zero_rows", "layers")
+    for name in names:
+        t0 = time.perf_counter()
+        try:
+            probs, info = select_and_predict_posthoc(name, g, vault, metric, base=base)
+        except Exception as exc:  # noqa: BLE001 - reported as NOT-RUN (rule R7)
+            emit({"split": sid, "method": "NOT-RUN", "baseline": name, "group": "B1",
+                  "reason": f"{name}: {type(exc).__name__}: {exc}"[:500]}, t0)
+            print(f"[not run] {g.name} split {sid} {name}: {exc}", file=sys.stderr, flush=True)
+            continue
+        emit({"split": sid, "method": name, "group": "B1", "track": "B",
+              "config": {"baseline": name, "chosen": info["chosen"], "grid": info["grid"],
+                         "implementation": info["implementation"], "base_predictor": base_cfg},
+              "metrics": scored(vault, probs, bins),
+              "diagnostics": {k: info[k] for k in keep if k in info} | base_diag}, t0)
+
+
 def secondary(vault, res) -> dict:
     """Pre-registered secondary column for a non-converged EDSP run: metrics of the
     mean of the last two iterates (PREREGISTRATION §2; every EDSP method, audit C2)."""
@@ -199,7 +244,7 @@ def main() -> int:
                     help="B = feature priors from the base predictor (suite E3): EDSP-B vs feature_lr, C&S and GNNs")
     ap.add_argument("--gnn", default="mlp,gcn,sage,gat,gprgnn,bwgnn", help="GNN baselines for --track B ('' = none)")
     ap.add_argument("--gnn-only", action="store_true",
-                    help="run only the --gnn (Track B), --signed-gnn and --fraud-gnn baselines "
+                    help="run only the --gnn (Track B), --signed-gnn, --fraud-gnn and --posthoc methods "
                          "(no EDSP / propagation baselines / DATASET-STATS); add --gnn= to skip the B2/B4 GNNs")
     ap.add_argument("--signed-gnn", default="",
                     help="B5 signed GNNs on graphs with edge signs, Track A: comma list of sgcn,snea,sdgnn,sigat "
@@ -207,6 +252,9 @@ def main() -> int:
     ap.add_argument("--fraud-gnn", default="",
                     help="B6 fraud GNNs on relation-typed graphs with features, Track B: comma list of care,pcgnn "
                          "('' = none)")
+    ap.add_argument("--posthoc", default="",
+                    help="Track-B post-hoc comparators on the base predictor of EDSP-B / C&S: comma list of "
+                         "cs2hop,clp,linbp_b ('' = none; PR-39)")
     ap.add_argument("--gnn-hidden", type=int, default=256,
                     help="hidden width of the GNNs (64 for the fraud graphs = BWGNN's published setting; A9)")
     ap.add_argument("--learned-sign-baselines", action="store_true",
@@ -235,6 +283,7 @@ def main() -> int:
     gnn_module.HIDDEN = args.gnn_hidden
     _flag_list(args.signed_gnn, SIGNED_GNNS, "--signed-gnn")
     _flag_list(args.fraud_gnn, FRAUD_GNNS, "--fraud-gnn")
+    _flag_list(args.posthoc, tuple(POSTHOC_METHOD), "--posthoc")
     args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
     names = args.datasets or [d for d in datasets_with_loader() if d != "ogbn-proteins"]
     out = Path(args.out)
@@ -307,9 +356,11 @@ def main() -> int:
                 vault = g.vault(sid)
                 run_gnns(g, vault, metric, si, sid, bins, emit)
                 run_b56(g, vault, metric, si, sid, bins, emit)
+                run_posthoc(g, vault, metric, sid, bins, emit)
                 print(f"{name} split {sid} GNNs ({args.gnn}"
                       + (f"; B5 {args.signed_gnn}" if args.signed_gnn else "")
-                      + (f"; B6 {args.fraud_gnn}" if args.fraud_gnn else "") + ") done", flush=True)
+                      + (f"; B6 {args.fraud_gnn}" if args.fraud_gnn else "")
+                      + (f"; post-hoc {args.posthoc}" if args.posthoc else "") + ") done", flush=True)
                 continue
             try:
                 # ---------------- EDSP-default (+ secondary column, H7 diagnostics)
@@ -423,6 +474,7 @@ def main() -> int:
                               "metrics": scored(vault, probs, bins)}, t0)
                 run_gnns(g, vault, metric, si, sid, bins, emit)
                 run_b56(g, vault, metric, si, sid, bins, emit)
+                run_posthoc(g, vault, metric, sid, bins, emit)
                 print(f"{name} split {sid} done", flush=True)
             except Exception as exc:  # noqa: BLE001
                 failures += 1
