@@ -1,0 +1,1 @@
+{"cell_id": "C1", "dataset": "amazon-computers", "environment": "actions-run-42369205852", "outcome": "PROCESSED", "report": {"duplicates_merged": 41348, "input_rows": 287209, "self_loops_removed": 0, "undirected_edges": 245861}, "sha256_processed": "sha256:15c50b93a183c6a5ed43af14693acf34e6dad01d4e42f1638408226864e73dc1", "timestamp_utc": "2026-11-07T12:27:15.603715+00:00"}

@@ -113,8 +113,10 @@ Average ranks (Friedman over the graphs where every ranked method exists; `tab_r
 - **H6:** the label-noise suite was not implemented.
 - **Signed-GNN baselines** (SGCN, SDGNN, SiGAT) and **fraud-GNN baselines** other than BWGNN
   (CARE-GNN, PC-GNN, GAGA) are not run (PR-6).
-- **E3 on coauthor-cs / coauthor-physics (A12)** is still running; it will be added to
-  `docs/E3_REPORT.md` in a separate PR. These graphs are homophilous and do not enter H4.
+- **E3 on coauthor-cs / coauthor-physics (A12)** is reported in `docs/E3_REPORT.md`
+  (homophilous, not in H4). EDSP-B-tuned is within 0.35 points of the best GNN, and GPR-GNN
+  beats it on both graphs. On physics, SAGE+ (9 / 10 splits) and GAT+ (3 / 10) hit the
+  330-minute CI limit and are NOT-RUN.
 - **E3 on fraud (A9)** runs only MLP and BWGNN, at hidden 64. On tolokers, GAT+ is at hidden 64
   (A14), which favours EDSP, and the verdict is unchanged with GAT+ left out.
 - **GNNs** are re-implementations with 9-point grids, trained on CPU runners with early
