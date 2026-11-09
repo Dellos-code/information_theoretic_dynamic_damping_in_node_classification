@@ -1,0 +1,1 @@
+{"cell_id": "C1", "dataset": "coauthor-physics", "environment": "actions-run-42603954501", "outcome": "PROCESSED", "report": {"duplicates_merged": 247962, "input_rows": 495924, "self_loops_removed": 0, "undirected_edges": 247962}, "sha256_processed": "sha256:634b40c646584c0e089b6d0dec512c0e7b18de9c694802e86ae875c35db484ce", "timestamp_utc": "2026-11-09T10:49:21.263679+00:00"}
