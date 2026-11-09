@@ -35,3 +35,10 @@ def cell_of(name: str) -> str:
 
 def datasets_with_loader() -> list[str]:
     return sorted(k for k, v in registry()["datasets"].items() if v.get("loader"))
+
+
+def default_datasets() -> list[str]:
+    """Datasets with a loader that default lists may use: entries marked ``"opt_in": true``
+    (e.g. the A18 extension, whose protocol must be preregistered before any run) are
+    processed only when named explicitly."""
+    return [k for k in datasets_with_loader() if not registry()["datasets"][k].get("opt_in")]

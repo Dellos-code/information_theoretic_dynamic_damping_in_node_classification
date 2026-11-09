@@ -63,8 +63,14 @@ def fetch(
     candidate_rank: int,
     method: str = "urllib",
     timeout: int = 120,
+    expected_md5: str | None = None,
 ) -> Path:
-    """Return a cached local copy of ``url``; log every network attempt."""
+    """Return a cached local copy of ``url``; log every network attempt.
+
+    The SHA-256 (and MD5) of every downloaded file is recorded in the log. If
+    ``expected_md5`` is given (e.g. the checksum a Zenodo record publishes), a
+    mismatch deletes the download, is logged as ``failure_reason: checksum`` and
+    raises; a cached file is not re-checked."""
     target = data_dir() / relpath
     if target.exists() and target.stat().st_size > 0:
         return target
@@ -78,13 +84,15 @@ def fetch(
         "environment": environment_label(),
     }
     tmp = target.with_suffix(target.suffix + ".part")
+    sha, md5 = hashlib.sha256(), hashlib.md5()
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "edsp-dataset-fetch"})
         with urllib.request.urlopen(req, timeout=timeout) as resp, open(tmp, "wb") as out:
             status = getattr(resp, "status", 200)
             while chunk := resp.read(1 << 20):
                 out.write(chunk)
-        tmp.replace(target)
+                sha.update(chunk)
+                md5.update(chunk)
     except urllib.error.HTTPError as exc:
         tmp.unlink(missing_ok=True)
         reason = "404" if exc.code == 404 else ("firewall" if exc.code in (403, 407) else "other")
@@ -97,8 +105,27 @@ def fetch(
                     "failure_reason": "firewall" if "403" in str(exc) else "other",
                     "detail": str(exc)[:300], "next_action": "retry in Actions / next route"})
         raise AcquisitionError(f"{url}: {exc}") from exc
-    append_log({**base, "http_status": status, "bytes": target.stat().st_size,
-                "sha256_raw": sha256_file(target), "outcome": "OK"})
+    digest = {"sha256_raw": "sha256:" + sha.hexdigest(), "md5_raw": md5.hexdigest()}
+    with open(tmp, "rb") as fh:
+        head = fh.read(512).lstrip().lower()
+    if head.startswith((b"<!doctype html", b"<html")):
+        # e.g. a Google Drive quota / virus-scan page served with HTTP 200 instead of the file
+        size = tmp.stat().st_size
+        tmp.unlink(missing_ok=True)
+        append_log({**base, "http_status": status, "bytes": size, **digest, "outcome": "FAILED",
+                    "failure_reason": "format", "detail": "HTML page instead of a data file",
+                    "next_action": "try next route/candidate"})
+        raise AcquisitionError(f"{url}: received an HTML page ({size} bytes), not a data file")
+    if expected_md5 is not None:
+        digest["md5_expected"] = expected_md5.lower()
+        if md5.hexdigest() != expected_md5.lower():
+            size = tmp.stat().st_size
+            tmp.unlink(missing_ok=True)
+            append_log({**base, "http_status": status, "bytes": size, **digest, "outcome": "FAILED",
+                        "failure_reason": "checksum", "next_action": "try next route/candidate"})
+            raise AcquisitionError(f"{url}: md5 {md5.hexdigest()} != expected {expected_md5}")
+    tmp.replace(target)
+    append_log({**base, "http_status": status, "bytes": target.stat().st_size, **digest, "outcome": "OK"})
     return target
 
 

@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from edsp.data.loaders import load
-from edsp.data.registry import datasets_with_loader
+from edsp.data.registry import default_datasets
 from edsp.eval.evaluate import edge_polarity_auc
 from edsp.regimes.polarity import h_learned, h_trainonly
 from edsp.selection import select_threshold_by_val_edge_accuracy
@@ -44,7 +44,7 @@ def main() -> int:
     ap.add_argument("--split", type=int, default=0)
     ap.add_argument("--out", default=str(ROOT / "results" / "edge_classifier"))
     args = ap.parse_args()
-    names = args.datasets or [d for d in datasets_with_loader() if d != "ogbn-proteins"]
+    names = args.datasets or [d for d in default_datasets() if d != "ogbn-proteins"]
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     run_id = os.environ.get("GITHUB_RUN_ID")

@@ -25,21 +25,38 @@ import scipy.sparse as sp
 
 from . import acquisition
 from .graph import GraphData, Split, canonicalize_edges, random_splits
-from .registry import candidate_urls, cell_of
+from .registry import candidate_urls, cell_of, dataset_entry
 
 RAW = "https://raw.githubusercontent.com"
 
 
-def _fetch(dataset: str, filename: str, relpath: str) -> Path:
+def _fetch(dataset: str, filename: str, relpath: str, *, expected_md5: str | None = None) -> Path:
     """Try each registered route for ``dataset``/``filename`` in rank order."""
     errors = []
     for rank, base in enumerate(candidate_urls(dataset), start=1):
         url = base.format(file=filename)
         try:
-            return acquisition.fetch(url, relpath, dataset=dataset, cell_id=cell_of(dataset), candidate_rank=rank)
+            return acquisition.fetch(url, relpath, dataset=dataset, cell_id=cell_of(dataset), candidate_rank=rank,
+                                     expected_md5=expected_md5)
         except acquisition.AcquisitionError as exc:
             errors.append(str(exc))
     raise acquisition.AcquisitionError(f"all routes failed for {dataset}/{filename}: {errors}")
+
+
+def _fetch_aux(dataset: str, key: str, filename: str, relpath: str) -> Path:
+    """Like :func:`_fetch`, for a second source of ``dataset`` (registry ``aux_routes[key]``),
+    e.g. fixed splits hosted elsewhere than the graph."""
+    routes = dataset_entry(dataset).get("aux_routes", {}).get(key, [])
+    if not routes:
+        raise KeyError(f"{dataset}: no aux_routes[{key!r}] in data/REGISTRY.json")
+    errors = []
+    for rank, base in enumerate(routes, start=1):
+        url = base.format(file=filename)
+        try:
+            return acquisition.fetch(url, relpath, dataset=dataset, cell_id=cell_of(dataset), candidate_rank=rank)
+        except acquisition.AcquisitionError as exc:
+            errors.append(str(exc))
+    raise acquisition.AcquisitionError(f"all {key} routes failed for {dataset}/{filename}: {errors}")
 
 
 def _finish(g: GraphData, report: dict) -> GraphData:
@@ -911,4 +928,677 @@ LOADERS.update({
     "genius": genius,
     "deezer-europe": deezer_europe,
     "actor": actor,
+})
+
+
+# ------------------------------------------- A18 extension (REGISTRY "extension": "a18")
+# Real graphs this project had never used, registered as the confirmatory family of
+# PREREGISTRATION A18: GraphLand (hm-categories, artnet-exp, city-reviews, web-fraud,
+# web-topics), OGB ogbn-arxiv / ogbn-products, LINKX arxiv-year, twitch-gamers,
+# snap-patents, pokec. They carry "extension": "a18" and "opt_in": true, so no default
+# dataset list (dataset_stats.py, run_e1.py, edge_classifier_report.py, e1.yml) picks
+# them up: they are processed only when named. Every download is exercised first by
+# dataset-stats.yml in Actions; the formats below come from the authors' loader code.
+GRAPHLAND_RECORD = "16895532"  # Zenodo record of GraphLand v1 (Apache-2.0)
+GRAPHLAND = {  # name -> (task, headline metric of the GraphLand code: accuracy / AP)
+    "hm-categories": ("multiclass_classification", "accuracy"),
+    "artnet-exp": ("binary_classification", "average_precision"),
+    "city-reviews": ("binary_classification", "average_precision"),
+    "web-fraud": ("binary_classification", "average_precision"),
+    "web-topics": ("multiclass_classification", "accuracy"),
+}
+GRAPHLAND_SPLITS = ("RH", "RL", "TH")  # provided split files; TH is absent for city-reviews
+_GL_SPLIT_SOURCE = {
+    "RH": "GraphLand RH (random high, 50/25/25)",
+    "RL": "GraphLand RL (random low, 10/10/80, stratified)",
+    "TH": "GraphLand TH (temporal high, 50/25/25)",
+}
+_SKLEARN_BOUNDS_THRESHOLD = 1e-7  # sklearn.preprocessing._data.BOUNDS_THRESHOLD
+
+
+def _parse_simple_yaml(text: str) -> dict:
+    """GraphLand ``info.yaml`` without a YAML dependency (PyYAML is used when installed).
+
+    Supports what PyYAML's ``safe_dump`` writes for a flat mapping: ``key: scalar``,
+    ``key: [a, b]`` and ``key:`` followed by ``- item`` lines; quoted scalars are
+    unquoted. Nested mappings are not supported (GraphLand's info.yaml has none:
+    every key the loaders read is a scalar or a list of strings)."""
+    try:
+        import yaml  # type: ignore[import-untyped]
+
+        return dict(yaml.safe_load(text))
+    except ImportError:
+        pass
+
+    def scalar(v: str):
+        v = v.strip()
+        if len(v) >= 2 and v[0] == v[-1] == "'":
+            return v[1:-1].replace("''", "'")
+        if len(v) >= 2 and v[0] == v[-1] == '"':
+            return json.loads(v)
+        low = v.lower()
+        if low in ("true", "false"):
+            return low == "true"
+        if low in ("null", "~", ""):
+            return None
+        for conv in (int, float):
+            try:
+                return conv(v)
+            except ValueError:
+                pass
+        return v
+
+    out: dict = {}
+    key = None
+    for raw in text.splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        stripped = raw.strip()
+        if stripped == "-" or stripped.startswith("- "):
+            if key is None or not isinstance(out.get(key), list):
+                raise ValueError(f"info.yaml: list item outside a list: {raw!r}")
+            out[key].append(scalar(stripped[1:]))
+        elif not raw[0].isspace() and ":" in raw:
+            k, _, v = raw.partition(":")
+            key, v = k.strip(), v.strip()
+            if v == "":
+                out[key] = []
+            elif v.startswith("[") and v.endswith("]"):
+                inner = v[1:-1].strip()
+                out[key] = [scalar(x) for x in next(csv.reader([inner], skipinitialspace=True, quotechar="'"))] if inner else []
+            else:
+                out[key] = scalar(v)
+        elif key is not None and isinstance(out.get(key), str):  # folded continuation of a long scalar
+            out[key] = out[key] + " " + stripped
+        else:
+            raise ValueError(f"info.yaml: unsupported line {raw!r}")
+    return out
+
+
+def _numeric_lines(lines: list[str], dtype=np.float64) -> np.ndarray:
+    """Parse comma-separated numeric lines (pandas ``to_csv`` output): empty fields are
+    NaN, ``True``/``False`` are 1/0. Returns a 2-D array."""
+    text = "".join(lines)
+    if "\r" in text:
+        text = text.replace("\r", "")
+    text = text.replace(",,", ",nan,").replace(",,", ",nan,").replace(",\n", ",nan\n").replace("\n,", "\nnan,")
+    if text.endswith(","):
+        text += "nan"
+    if text.startswith(","):
+        text = "nan" + text
+    if "True" in text or "False" in text:
+        text = text.replace("True", "1").replace("False", "0")
+    return np.loadtxt(io.StringIO(text), delimiter=",", dtype=dtype, ndmin=2)
+
+
+def _csv_header(fh) -> list[str]:
+    return next(csv.reader([fh.readline()]))
+
+
+def _numeric_csv(fh, *, hint: int = 1 << 26, on_block: Callable[[np.ndarray], None] | None = None):
+    """Header and float64 body of a numeric CSV; with ``on_block`` the body is streamed
+    block by block to the callback instead of being returned."""
+    header = _csv_header(fh)
+    blocks = []
+    while lines := fh.readlines(hint):
+        lines = [x for x in lines if x.strip()]
+        if not lines:
+            continue
+        block = _numeric_lines(lines)
+        if on_block is None:
+            blocks.append(block)
+        else:
+            on_block(block)
+    if on_block is not None:
+        return header, None
+    body = np.concatenate(blocks) if blocks else np.empty((0, len(header)))
+    return header, body
+
+
+def _most_frequent(col: np.ndarray) -> float:
+    """sklearn SimpleImputer(strategy='most_frequent'): the mode of the non-NaN values,
+    the smallest one on ties."""
+    vals, counts = np.unique(col[~np.isnan(col)], return_counts=True)
+    return float(vals[np.argmax(counts)])
+
+
+def _quantile_normal(col: np.ndarray, fit_col: np.ndarray, n_quantiles: int = 1000) -> np.ndarray:
+    """numpy port of sklearn ``QuantileTransformer(output_distribution='normal',
+    n_quantiles=1000, subsample=None)``: fit on ``fit_col`` (NaN ignored), transform
+    ``col`` (both float32, as PyG passes them). Parity with sklearn is checked by
+    tests/unit/test_data.py when scikit-learn is installed."""
+    from scipy.special import ndtri
+
+    nq = min(n_quantiles, fit_col.shape[0])
+    refs = np.linspace(0, 1, nq, endpoint=True)
+    q = np.nanpercentile(fit_col, refs * 100)
+    q = np.maximum.accumulate(q)
+    x = np.array(col, copy=True)  # sklearn keeps the input dtype (float32) for the uniform scores
+    with np.errstate(invalid="ignore"):
+        lower = x - _SKLEARN_BOUNDS_THRESHOLD < q[0]
+        upper = x + _SKLEARN_BOUNDS_THRESHOLD > q[-1]
+    fin = ~np.isnan(x)
+    xf = x[fin]
+    x[fin] = 0.5 * (np.interp(xf, q, refs) - np.interp(-xf, -q[::-1], -refs[::-1]))
+    x[upper] = 1
+    x[lower] = 0
+    with np.errstate(invalid="ignore", divide="ignore"):
+        x = ndtri(x.astype(np.float64))  # scipy.stats.norm.ppf (sklearn) works in float64
+        clip_min = ndtri(_SKLEARN_BOUNDS_THRESHOLD - np.spacing(1))
+        clip_max = ndtri(1 - (_SKLEARN_BOUNDS_THRESHOLD - np.spacing(1)))
+        return np.clip(x, clip_min, clip_max)
+
+
+def _zip_member(zf: zipfile.ZipFile, fname: str, required: bool = True) -> str | None:
+    hits = sorted((m for m in zf.namelist() if m.rsplit("/", 1)[-1] == fname and "__MACOSX" not in m), key=len)
+    if not hits:
+        if required:
+            raise FileNotFoundError(f"{fname} not in {zf.filename}: {zf.namelist()[:20]}")
+        return None
+    return hits[0]
+
+
+def _text(zf: zipfile.ZipFile, member: str):
+    return io.TextIOWrapper(zf.open(member), encoding="utf-8", newline="")
+
+
+def _check_index(idx: np.ndarray, n: int, what: str) -> None:
+    if len(idx) != n or not np.array_equal(idx, np.arange(n)):
+        raise ValueError(f"{what}: index column is not 0..{n - 1}")
+
+
+def _int_labels(values: np.ndarray, report: dict) -> tuple[np.ndarray, int]:
+    """Class labels from float targets: NaN -> -1 (unlabelled); classes are kept as
+    given when they are 0..k-1, else remapped to 0..k-1 (mapping recorded)."""
+    lab = ~np.isnan(values)
+    vals = values[lab]
+    if not np.all(vals == np.round(vals)):
+        raise ValueError("classification targets are not integers")
+    classes = np.unique(vals).astype(np.int64)
+    labels = np.full(len(values), -1, dtype=np.int64)
+    if np.array_equal(classes, np.arange(len(classes))):
+        labels[lab] = vals.astype(np.int64)
+    else:
+        labels[lab] = np.searchsorted(classes, vals.astype(np.int64))
+        report["class_values_remapped"] = classes.tolist()
+    report["unlabelled_nodes"] = int((~lab).sum())
+    report["label_counts"] = np.bincount(labels[lab], minlength=len(classes)).tolist()
+    return labels, len(classes)
+
+
+def _graphland_features(zf: zipfile.ZipFile, info: dict, n: int, report: dict) -> np.ndarray | None:
+    """GraphLand node features as PyG's ``GraphLandDataset`` builds them by default:
+    [numerical (non-fraction) columns: most-frequent imputation, then
+    QuantileTransformer(normal) fitted on all nodes (label-free, transductive);
+    fraction columns: most-frequent imputation, no transform; categorical columns:
+    one-hot with ``drop='if_binary'`` (NaN, if any, is one more category)]. Returns
+    None above MAX_DENSE_FEATURE_BYTES (shape and reason in ``report``)."""
+    member = _zip_member(zf, "features.csv")
+    frac = list(info.get("fraction_features_names") or [])
+    num = [c for c in (info.get("numerical_features_names") or []) if c not in set(frac)]
+    cat = list(info.get("categorical_features_names") or [])
+    with _text(zf, member) as fh:
+        header = _csv_header(fh)
+    cols = {c: i for i, c in enumerate(header)}
+    missing = [c for c in num + frac + cat if c not in cols]
+    if missing:
+        raise ValueError(f"features.csv lacks info.yaml columns {missing[:10]} (header: {header[:10]})")
+    pos_num = np.array([cols[c] for c in num], dtype=np.int64)
+    pos_frac = np.array([cols[c] for c in frac], dtype=np.int64)
+    pos_cat = np.array([cols[c] for c in cat], dtype=np.int64)
+    nan_count = np.zeros(len(header), dtype=np.int64)
+    cat_values: list[np.ndarray] = [np.empty(0) for _ in cat]
+    keep = int(n) * (len(num) + len(frac) + len(cat)) * 4 <= MAX_DENSE_FEATURE_BYTES
+    kept: list[np.ndarray] = []
+    rows = [0]
+
+    def on_block(b: np.ndarray) -> None:
+        if b.shape[1] != len(header):
+            raise ValueError(f"features.csv: {b.shape[1]} columns, header has {len(header)}")
+        nan_count[:] += np.isnan(b).sum(axis=0)
+        for j, p in enumerate(pos_cat):
+            v = b[:, p]
+            cat_values[j] = np.union1d(cat_values[j], np.unique(np.where(np.isnan(v), -(2.0**31), v)))
+        rows[0] += len(b)
+        if keep:
+            kept.append(b.astype(np.float32))
+
+    with _text(zf, member) as fh:
+        _numeric_csv(fh, on_block=on_block)
+    if rows[0] != n:
+        raise ValueError(f"features.csv has {rows[0]} rows, targets.csv {n}")
+    empty = [header[p] for p in np.concatenate([pos_num, pos_frac]) if nan_count[p] == n]
+    widths = [1 if len(v) <= 2 else len(v) for v in cat_values]
+    d = len(num) + len(frac) - len(empty) + sum(widths)
+    report["features"] = {
+        "numerical": len(num), "fraction": len(frac), "categorical": len(cat), "categorical_onehot_width": int(sum(widths)),
+        "dimension": int(d), "all_nan_columns_dropped": empty,
+        "nan_counts": {header[p]: int(nan_count[p]) for p in range(len(header)) if nan_count[p]},
+        "preprocessing": "PyG GraphLandDataset defaults: numerical most_frequent imputation + QuantileTransformer"
+                         "(normal, 1000 quantiles, fitted on all nodes); fraction most_frequent imputation; "
+                         "categorical one-hot drop='if_binary'; order [numerical, fraction, categorical]",
+    }
+    need = int(n) * int(d) * 4
+    if not keep or need > MAX_DENSE_FEATURE_BYTES:
+        report["features_omitted"] = {"shape": [int(n), int(d)], "dense_float32_bytes": need,
+                                      "limit_bytes": MAX_DENSE_FEATURE_BYTES,
+                                      "reason": "dense matrix too large; Track B is NOT-RUN on this graph"}
+        return None
+    B = np.concatenate(kept)
+    kept.clear()
+    X = np.empty((n, d), dtype=np.float32)
+    j = 0
+    for p in pos_num:
+        if nan_count[p] == n:
+            continue
+        col = B[:, p]
+        fitted = col.copy()
+        if nan_count[p]:
+            col = np.where(np.isnan(col), np.float32(_most_frequent(col)), col)
+        X[:, j] = _quantile_normal(col, fitted)
+        j += 1
+    for p in pos_frac:
+        if nan_count[p] == n:
+            continue
+        col = B[:, p]
+        X[:, j] = np.where(np.isnan(col), np.float32(_most_frequent(col)), col) if nan_count[p] else col
+        j += 1
+    for p, vals in zip(pos_cat, cat_values, strict=True):
+        col = np.where(np.isnan(B[:, p]), np.float32(-(2.0**31)), B[:, p]).astype(np.float64)
+        if len(vals) == 2:
+            X[:, j] = col == vals[1]
+            j += 1
+        else:
+            X[:, j:j + len(vals)] = col[:, None] == vals[None, :]
+            j += len(vals)
+    assert j == d
+    return X
+
+
+def graphland(name: str) -> GraphData:
+    """GraphLand datasets (Bazhenov, Platonov & Prokhorenkova, NeurIPS 2025 D&B;
+    Zenodo record 16895532, Apache-2.0): hm-categories, artnet-exp, city-reviews,
+    web-fraud, web-topics.
+
+    Source: ``<name>.zip`` of the Zenodo record (md5 from the record page, checked on
+    download). Layout as read by PyG's ``GraphLandDataset`` and the authors'
+    ``dataset.py`` (yandex-research/graphland@7246fe3): ``info.yaml`` (feature-name
+    lists, ``target_name``, ``task``), ``features.csv`` and ``targets.csv`` (first
+    column = node index), ``edgelist.csv`` (header; the first two columns are the
+    endpoints), ``split_masks_{RL,RH,TH}.csv`` (columns train / val / test). Edges are
+    symmetrised, self-loops and duplicates removed (web-fraud / web-topics are directed:
+    §2.6). Targets that are NaN are unlabelled (-1) and excluded from every split, as in
+    PyG (``mask & labeled_mask``). Features: :func:`_graphland_features`.
+    Splits, in this order: the provided RH, RL and (where it exists) TH splits by name,
+    then 10 stratified random 60/20/20 splits ``rand0``-``rand9`` (seeds 0-9, labelled
+    nodes). Headline metric: the GraphLand code's (accuracy for multiclass, average
+    precision for binary).
+    """
+    task, _metric = GRAPHLAND[name]
+    fname = f"{name}.zip"
+    path = _fetch(name, fname, f"graphland/{fname}", expected_md5=dataset_entry(name).get("md5", {}).get(fname))
+    report: dict = {"source": f"Zenodo {GRAPHLAND_RECORD} {fname}"}
+    with zipfile.ZipFile(path) as zf:
+        info = _parse_simple_yaml(zf.read(_zip_member(zf, "info.yaml")).decode("utf-8"))
+        if info.get("task") not in (None, task):
+            raise ValueError(f"{name}: info.yaml task {info.get('task')!r}, expected {task!r}")
+        with _text(zf, _zip_member(zf, "targets.csv")) as fh:
+            t_header, T = _numeric_csv(fh)
+        n = len(T)
+        _check_index(T[:, 0], n, "targets.csv")
+        tname = info.get("target_name")
+        tcol = t_header.index(tname) if tname in t_header else (1 if len(t_header) == 2 else None)
+        if tcol is None:
+            raise ValueError(f"{name}: target column {tname!r} not in {t_header}")
+        labels, k = _int_labels(T[:, tcol], report)
+        del T
+        with _text(zf, _zip_member(zf, "edgelist.csv")) as fh:
+            e_header = _csv_header(fh)
+            try:
+                raw = np.loadtxt(fh, delimiter=",", usecols=(0, 1), dtype=np.int64, ndmin=2)
+            except ValueError:
+                raise ValueError(f"{name}: non-integer endpoints in edgelist.csv (header {e_header})") from None
+        edges, _, _, rep = canonicalize_edges(raw, n)
+        report |= rep | {"edgelist_header": e_header}
+        del raw
+        splits: list[Split] = []
+        sizes = {}
+        for sid in GRAPHLAND_SPLITS:
+            member = _zip_member(zf, f"split_masks_{sid}.csv", required=False)
+            if member is None:
+                continue
+            with _text(zf, member) as fh:
+                m_header, M = _numeric_csv(fh)
+            _check_index(M[:, 0], n, member)
+            idx = {c: m_header.index(c) for c in ("train", "val", "test")}
+            lab = labels >= 0
+            tr, va, te = (np.flatnonzero((M[:, idx[c]] == 1) & lab) for c in ("train", "val", "test"))
+            sizes[sid] = {"train": len(tr), "val": len(va), "test": len(te),
+                          "unlabelled_in_masks": int(((M[:, 1:] == 1).any(axis=1) & ~lab).sum())}
+            splits.append(Split(sid, tr, va, te, f"{_GL_SPLIT_SOURCE[sid]}, official, Zenodo {GRAPHLAND_RECORD}"))
+        report["provided_splits"] = sizes
+        feats = _graphland_features(zf, info, n, report)
+    report["info_yaml"] = {k_: v for k_, v in info.items() if not k_.endswith("_names")}
+    splits += random_splits(labels, 10, (0.6, 0.2, 0.2), seed=0)
+    g = GraphData(name, n, edges, k, splits, labels, features=feats,
+                  meta={"source": f"GraphLand (Bazhenov et al. 2025), Zenodo {GRAPHLAND_RECORD}", "extension": "a18",
+                        "task": task, "split_ids": [s.split_id for s in splits],
+                        "symmetrised_from_directed": bool(info.get("graph_is_directed", name.startswith("web-")))})
+    return _finish(g, report)
+
+
+# --------------------------------------------------------------------------- OGB
+def _loadtxt_gz(zf: zipfile.ZipFile, member: str, dtype) -> np.ndarray:
+    with zf.open(member) as raw, gzip.open(raw, "rt") as fh:
+        return np.loadtxt(fh, delimiter=",", dtype=dtype, ndmin=2)
+
+
+def _ogb_zip(name: str, zipname: str) -> tuple[zipfile.ZipFile, Callable[[str], str]]:
+    path = _fetch(name, zipname, f"ogb/{zipname}")
+    zf = zipfile.ZipFile(path)
+
+    def member(suffix: str) -> str:
+        hits = sorted((m for m in zf.namelist() if m.endswith(suffix)), key=len)
+        if not hits:
+            raise FileNotFoundError(f"{suffix} not in {zipname}")
+        return hits[0]
+
+    return zf, member
+
+
+def _ogb_graph(zf: zipfile.ZipFile, member: Callable[[str], str], report: dict) -> tuple[int, np.ndarray, np.ndarray]:
+    raw = _loadtxt_gz(zf, member("raw/edge.csv.gz"), np.int64)
+    feats = _loadtxt_gz(zf, member("raw/node-feat.csv.gz"), np.float32)
+    n = int(_loadtxt_gz(zf, member("raw/num-node-list.csv.gz"), np.int64).ravel()[0])
+    if feats.shape[0] != n:
+        raise ValueError(f"node-feat has {feats.shape[0]} rows, num-node-list says {n}")
+    edges, _, _, rep = canonicalize_edges(raw, n)
+    report |= rep | {"raw_edge_rows": len(raw)}
+    return n, edges, feats
+
+
+def _ogb_split(zf: zipfile.ZipFile, member: Callable[[str], str], split_dir: str, source: str) -> Split:
+    idx = [_loadtxt_gz(zf, member(f"split/{split_dir}/{s}.csv.gz"), np.int64).ravel() for s in ("train", "valid", "test")]
+    return Split(split_dir, *(np.sort(i) for i in idx), source)
+
+
+def ogbn_multiclass(name: str) -> GraphData:
+    """ogbn-arxiv / ogbn-products (Hu et al., NeurIPS 2020) from the raw OGB archives
+    (no ``ogb`` dependency; layout of ogb/nodeproppred/master.csv: ``<d>/raw/{edge,
+    node-feat, node-label, num-node-list}.csv.gz``, ``<d>/split/<split>/{train, valid,
+    test}.csv.gz``). arxiv: directed citations (``add_inverse_edge`` False), symmetrised
+    here (§2.6, as the Master Prompt's registry note says); products: undirected
+    co-purchases stored once per pair. Splits: the official one first (split_id
+    ``time`` / ``sales_ranking``), then 10 stratified random 60/20/20 ``rand0``-``rand9``.
+    Headline metric: accuracy (OGB). Licence: ODC-BY (arxiv: MAG) / Amazon terms
+    (products) per the OGB documentation, TO VERIFY."""
+    zipname, split_dir = {"ogbn-arxiv": ("arxiv.zip", "time"), "ogbn-products": ("products.zip", "sales_ranking")}[name]
+    zf, member = _ogb_zip(name, zipname)
+    report: dict = {"source": f"OGB {zipname}"}
+    with zf:
+        n, edges, feats = _ogb_graph(zf, member, report)
+        labels = _loadtxt_gz(zf, member("raw/node-label.csv.gz"), np.float64).ravel()
+        official = _ogb_split(zf, member, split_dir, f"official OGB {split_dir} split")
+    labels, k = _int_labels(labels, report)
+    report["official_split_sizes"] = [len(official.train_idx), len(official.val_idx), len(official.test_idx)]
+    splits = [official] + random_splits(labels, 10, (0.6, 0.2, 0.2), seed=0)
+    g = GraphData(name, n, edges, k, splits, labels, features=_dense_features(feats, report),
+                  meta={"source": f"OGB {name}", "extension": "a18", "split_ids": [s.split_id for s in splits],
+                        "symmetrised_from_directed": name == "ogbn-arxiv"})
+    return _finish(g, report)
+
+
+# ------------------------------------------------------------------------- LINKX
+def even_quantile_labels(vals: np.ndarray, nclasses: int) -> np.ndarray:
+    """Exact port of LINKX's ``data_utils.even_quantile_labels`` (CUAI@82f8f05): class c
+    holds the values in [q_c, q_{c+1}) of the c/nclasses quantiles (np.nanquantile,
+    linear); the last class is closed above; NaN stays -1."""
+    label = -1 * np.ones(vals.shape[0], dtype=np.int64)
+    lower = -np.inf
+    for c in range(nclasses - 1):
+        upper = np.nanquantile(vals, (c + 1) / nclasses)
+        inds = (vals >= lower) * (vals < upper)
+        label[inds] = c
+        lower = upper
+    label[vals >= lower] = nclasses - 1
+    return label
+
+
+class _SplitUnpickler(pickle.Unpickler):
+    """Unpickler for LINKX ``*-splits.npy`` object arrays: numpy (and torch, for tensors)
+    only; any other global is refused."""
+
+    def find_class(self, module: str, name: str):
+        root = module.split(".")[0]
+        if root in ("numpy", "torch") or (module == "collections" and name == "OrderedDict") or (
+                module == "builtins" and name in ("dict", "list", "tuple", "int", "float", "bool", "slice", "range")) or (
+                module == "_codecs" and name == "encode"):
+            return super().find_class(module, name)
+        raise pickle.UnpicklingError(f"refused global {module}.{name} in a splits file")
+
+
+def _linkx_fixed_splits(path: Path, labels: np.ndarray, tag: str) -> tuple[list[Split], dict]:
+    """The fixed LINKX splits (a list of {'train', 'valid', 'test'} index arrays, saved
+    with np.save(allow_pickle=True)); indices of unlabelled nodes are dropped (LINKX's
+    ``rand_train_test_idx`` never draws them)."""
+    with open(path, "rb") as f:
+        version = np.lib.format.read_magic(f)
+        reader = np.lib.format.read_array_header_1_0 if version == (1, 0) else np.lib.format.read_array_header_2_0
+        _shape, _fortran, dtype = reader(f)
+        if dtype.hasobject:
+            obj = _SplitUnpickler(f, encoding="latin1").load()
+        else:
+            obj = None
+    if obj is None:
+        raise ValueError(f"{path.name}: expected an object array of split dicts, got dtype {dtype}")
+    n = len(labels)
+    splits, rep = [], {"dropped_unlabelled": 0}
+    for i, d in enumerate(np.asarray(obj, dtype=object).ravel()):
+        parts = []
+        for key in ("train", "valid" if "valid" in d else "val", "test"):
+            a = np.asarray(d[key])
+            a = np.flatnonzero(a) if a.dtype == bool else a.astype(np.int64).ravel()
+            if a.size and (a.min() < 0 or a.max() >= n):
+                raise ValueError(f"{path.name}: split {i} {key} index out of range")
+            keep = labels[a] >= 0
+            rep["dropped_unlabelled"] += int((~keep).sum())
+            parts.append(np.sort(a[keep]))
+        splits.append(Split(f"linkx{i}", *parts, f"LINKX fixed split {i} ({tag}), 50/25/25"))
+    rep["sizes"] = [[len(s.train_idx), len(s.val_idx), len(s.test_idx)] for s in splits]
+    return splits, rep
+
+
+def arxiv_year(name: str = "arxiv-year") -> GraphData:
+    """arxiv-year (Lim et al., NeurIPS 2021): ogbn-arxiv's graph and features (same raw
+    archive and symmetrisation as :func:`ogbn_multiclass`), label = publication year in
+    5 classes by LINKX's :func:`even_quantile_labels` of ``raw/node_year.csv.gz``.
+    Splits: LINKX's 5 fixed 50/25/25 splits (``data/splits/arxiv-year-splits.npy`` of
+    CUAI/Non-Homophily-Large-Scale at LINKX_COMMIT, ``linkx0``-``linkx4``), then 10
+    stratified random 60/20/20 ``rand0``-``rand9``. Headline metric: accuracy (LINKX)."""
+    zf, member = _ogb_zip(name, "arxiv.zip")
+    report: dict = {"source": "OGB arxiv.zip (node_year) + LINKX even_quantile_labels"}
+    with zf:
+        n, edges, feats = _ogb_graph(zf, member, report)
+        years = _loadtxt_gz(zf, member("raw/node_year.csv.gz"), np.int64).ravel()
+    labels = even_quantile_labels(years, 5)
+    report["year_range_per_class"] = [[int(years[labels == c].min()), int(years[labels == c].max())] for c in range(5)]
+    report["label_counts"] = np.bincount(labels[labels >= 0], minlength=5).tolist()
+    fixed, rep = _linkx_fixed_splits(_fetch_aux(name, "splits", "arxiv-year-splits.npy", "linkx/splits/arxiv-year-splits.npy"),
+                                     labels, f"CUAI@{LINKX_COMMIT[:7]} data/splits/arxiv-year-splits.npy")
+    report["linkx_splits"] = rep
+    splits = fixed + random_splits(labels, 10, (0.6, 0.2, 0.2), seed=0)
+    g = GraphData(name, n, edges, 5, splits, labels, features=_dense_features(feats, report),
+                  meta={"source": "LINKX arxiv-year (ogbn-arxiv graph, year labels)", "extension": "a18",
+                        "split_ids": [s.split_id for s in splits], "symmetrised_from_directed": True})
+    return _finish(g, report)
+
+
+def twitch_gamers(name: str = "twitch-gamers") -> GraphData:
+    """Twitch Gamers (Rozemberczki & Sarkar 2021, arXiv:2101.03091), the LINKX
+    "twitch-gamers" task.
+
+    Source: SNAP ``twitch_gamers.zip`` (``*features.csv`` and ``*edges.csv`` inside,
+    TO VERIFY on the first run), or LINKX's Google Drive copies of the two CSVs
+    (``aux_routes``). Parsed as LINKX's ``load_twitch_gamer_dataset(task='mature')``:
+    drop ``numeric_id``; ``created_at`` / ``updated_at`` as the integer YYYYMMDD;
+    ``language`` as an integer code by order of first appearance; label = ``mature``;
+    features = the remaining 7 columns in file order, standardised over all nodes
+    (mean, unbiased std; label-free). Node i = the row with ``numeric_id`` i (LINKX
+    uses the row order; whether they coincide is recorded). Splits: LINKX's 5 fixed
+    50/25/25 splits (``data/splits/twitch-gamer-splits.npy`` at LINKX_COMMIT), then 10
+    stratified random 60/20/20. Headline metric: accuracy (LINKX)."""
+    try:
+        path = _fetch(name, "twitch_gamers.zip", "snap/twitch_gamers.zip")
+        with zipfile.ZipFile(path) as zf:
+            fm = sorted((m for m in zf.namelist() if m.endswith("features.csv") and "__MACOSX" not in m), key=len)
+            em = sorted((m for m in zf.namelist() if m.endswith("edges.csv") and "__MACOSX" not in m), key=len)
+            if not fm or not em:
+                raise FileNotFoundError(f"twitch_gamers.zip members: {zf.namelist()}")
+            feat_text = zf.read(fm[0]).decode("utf-8")
+            with _text(zf, em[0]) as fh:
+                fh.readline()
+                raw = np.loadtxt(fh, delimiter=",", dtype=np.int64, ndmin=2)
+        source = f"SNAP twitch_gamers.zip ({fm[0]}, {em[0]})"
+    except acquisition.AcquisitionError as exc:
+        fpath = _fetch_aux(name, "linkx_feat", "twitch-gamer_feat.csv", "linkx/twitch-gamer_feat.csv")
+        epath = _fetch_aux(name, "linkx_edges", "twitch-gamer_edges.csv", "linkx/twitch-gamer_edges.csv")
+        feat_text = fpath.read_text(encoding="utf-8")
+        with open(epath, encoding="utf-8") as fh:
+            fh.readline()
+            raw = np.loadtxt(fh, delimiter=",", dtype=np.int64, ndmin=2)
+        source = f"LINKX Google Drive twitch-gamer_{{feat,edges}}.csv (SNAP failed: {str(exc)[:200]})"
+    rows = [r for r in csv.reader(io.StringIO(feat_text)) if r]
+    header = [h.strip() for h in rows[0]]
+    body = rows[1:]
+    n = len(body)
+    col = {h: i for i, h in enumerate(header)}
+    for need in ("numeric_id", "mature", "language", "created_at", "updated_at"):
+        if need not in col:
+            raise ValueError(f"{name}: column {need!r} missing; header {header}")
+    ids = np.array([int(r[col["numeric_id"]]) for r in body], dtype=np.int64)
+    if sorted(ids.tolist()) != list(range(n)):
+        raise ValueError(f"{name}: numeric_id is not a permutation of 0..{n - 1}")
+    lang_code: dict[str, int] = {}
+    feat_cols = [h for h in header if h not in ("numeric_id", "mature")]
+    F = np.empty((n, len(feat_cols)), dtype=np.float64)
+    y = np.empty(n, dtype=np.int64)
+    for r, nid in zip(body, ids, strict=True):
+        y[nid] = int(float(r[col["mature"]]))
+        for j, h in enumerate(feat_cols):
+            v = r[col[h]].strip()
+            if h in ("created_at", "updated_at"):
+                F[nid, j] = int(v.replace("-", ""))
+            elif h == "language":
+                F[nid, j] = lang_code.setdefault(v, len(lang_code))
+            else:
+                F[nid, j] = float(v)
+    F = (F - F.mean(axis=0)) / F.std(axis=0, ddof=1)
+    edges, _, _, report = canonicalize_edges(raw, n)
+    del raw
+    report |= {"source": source, "feature_columns": feat_cols, "languages": len(lang_code),
+               "rows_sorted_by_numeric_id": bool(np.array_equal(ids, np.arange(n))),
+               "label_counts": np.bincount(y, minlength=2).tolist(),
+               "feature_preprocessing": "LINKX load_twitch_gamer + standardisation (mean, unbiased std) over all nodes"}
+    fixed, rep = _linkx_fixed_splits(_fetch_aux(name, "splits", "twitch-gamer-splits.npy", "linkx/splits/twitch-gamer-splits.npy"),
+                                     y, f"CUAI@{LINKX_COMMIT[:7]} data/splits/twitch-gamer-splits.npy")
+    report["linkx_splits"] = rep
+    splits = fixed + random_splits(y, 10, (0.6, 0.2, 0.2), seed=0)
+    g = GraphData(name, n, edges, 2, splits, y, features=F.astype(np.float32),
+                  meta={"source": "Twitch Gamers (Rozemberczki & Sarkar 2021), LINKX task 'mature'",
+                        "extension": "a18", "split_ids": [s.split_id for s in splits]})
+    return _finish(g, report)
+
+
+def _linkx_mat(name: str, fname: str) -> dict:
+    from scipy.io import loadmat
+
+    return loadmat(_fetch(name, fname, f"linkx/{fname}"))
+
+
+def snap_patents(name: str = "snap-patents") -> GraphData:
+    """snap-patents (Lim et al. 2021): utility patents 1963-1999 with citation edges
+    (subset of SNAP cit-Patents / NBER), label = grant year in 5 classes by
+    :func:`even_quantile_labels` of ``years``; LINKX's ``snap_patents.mat`` (keys
+    ``edge_index``, ``node_feat`` sparse, ``num_nodes``, ``years``) from the authors'
+    Google Drive (TO VERIFY). Directed citations are symmetrised (§2.6). Features are
+    kept only within MAX_DENSE_FEATURE_BYTES (expected: 269 columns x 2.9M nodes ~ 3.1 GB
+    -> omitted, Track B NOT-RUN). Splits: LINKX's 5 fixed splits when the registry lists
+    an ``aux_routes['splits']`` source, then 10 stratified random 60/20/20.
+    Headline metric: accuracy (LINKX)."""
+    d = _linkx_mat(name, "snap_patents.mat")
+    n = int(np.asarray(d["num_nodes"]).ravel()[0])
+    ei = np.asarray(d["edge_index"])
+    ei = ei if ei.shape[0] == 2 else ei.T
+    years = np.asarray(d["years"], dtype=np.float64).ravel()
+    X = d["node_feat"]
+    del d
+    labels = even_quantile_labels(years, 5)
+    edges, _, _, report = canonicalize_edges(ei.T, n)
+    del ei
+    report |= {"source": "LINKX snap_patents.mat", "label_counts": np.bincount(labels[labels >= 0], minlength=5).tolist(),
+               "unlabelled_nodes": int(np.sum(labels < 0)),
+               "year_range_per_class": [[float(np.nanmin(years[labels == c])), float(np.nanmax(years[labels == c]))]
+                                        for c in range(5)]}
+    feats = _dense_features(X, report)
+    del X
+    splits = _optional_linkx_splits(name, labels, "snap-patents-splits.npy", report)
+    splits += random_splits(labels, 10, (0.6, 0.2, 0.2), seed=0)
+    g = GraphData(name, n, edges, 5, splits, labels, features=feats,
+                  meta={"source": "LINKX snap-patents (SNAP cit-Patents / NBER)", "extension": "a18",
+                        "split_ids": [s.split_id for s in splits], "symmetrised_from_directed": True})
+    return _finish(g, report)
+
+
+def pokec(name: str = "pokec") -> GraphData:
+    """pokec (Leskovec & Krevl, SNAP soc-Pokec; LINKX version, Lim et al. 2021): Slovak
+    social network, label = gender, 65 profile features as built by LINKX;
+    ``pokec.mat`` (keys ``edge_index``, ``node_feat``, ``num_nodes``, ``label``) from the
+    authors' Google Drive (TO VERIFY). Raw SNAP soc-Pokec is registered as an
+    alternative source but not used: LINKX's feature construction is not published, so
+    it cannot be rebuilt identically. Directed friendships are symmetrised (§2.6);
+    label -1 (missing gender, if any) is unlabelled. Splits: LINKX's 5 fixed splits when
+    the registry lists ``aux_routes['splits']``, then 10 stratified random 60/20/20.
+    Headline metric: accuracy (LINKX)."""
+    d = _linkx_mat(name, "pokec.mat")
+    n = int(np.asarray(d["num_nodes"]).ravel()[0])
+    ei = np.asarray(d["edge_index"])
+    ei = ei if ei.shape[0] == 2 else ei.T
+    labels = np.asarray(d["label"]).ravel().astype(np.int64)
+    X = d["node_feat"]
+    del d
+    if len(labels) != n:
+        raise ValueError(f"pokec: {len(labels)} labels, num_nodes {n}")
+    edges, _, _, report = canonicalize_edges(ei.T, n)
+    del ei
+    report |= {"source": "LINKX pokec.mat",
+               "label_counts": {int(v): int(c) for v, c in zip(*np.unique(labels, return_counts=True), strict=True)}}
+    feats = _dense_features(X, report)
+    del X
+    splits = _optional_linkx_splits(name, labels, "pokec-splits.npy", report)
+    splits += random_splits(labels, 10, (0.6, 0.2, 0.2), seed=0)
+    g = GraphData(name, n, edges, int(labels.max() + 1), splits, labels, features=feats,
+                  meta={"source": "LINKX pokec (SNAP soc-Pokec)", "extension": "a18",
+                        "split_ids": [s.split_id for s in splits], "symmetrised_from_directed": True})
+    return _finish(g, report)
+
+
+def _optional_linkx_splits(name: str, labels: np.ndarray, fname: str, report: dict) -> list[Split]:
+    """LINKX fixed splits if the registry names a source for them (a static choice, so a
+    graph's split set never depends on the network at load time)."""
+    if not dataset_entry(name).get("aux_routes", {}).get("splits"):
+        report["linkx_splits"] = "not registered (no stable source); random splits only"
+        return []
+    fixed, rep = _linkx_fixed_splits(_fetch_aux(name, "splits", fname, f"linkx/splits/{fname}"), labels, fname)
+    report["linkx_splits"] = rep
+    return fixed
+
+
+LOADERS.update({
+    **dict.fromkeys(GRAPHLAND, graphland),
+    "ogbn-arxiv": ogbn_multiclass,
+    "ogbn-products": ogbn_multiclass,
+    "arxiv-year": arxiv_year,
+    "twitch-gamers": twitch_gamers,
+    "snap-patents": snap_patents,
+    "pokec": pokec,
 })

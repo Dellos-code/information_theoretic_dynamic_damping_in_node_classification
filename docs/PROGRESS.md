@@ -51,6 +51,8 @@
 - C4 items 2–4 (uncertain DBLP, US-Patent assignee graph, raw STRING + GO-slim): availability checked 2026-11-09, none run (evidence in `data/REGISTRY.json`, SPEC_AMBIGUITIES).
 - PR-29 (B5 / B6, A17; 2026-11-09): signed GNNs SGCN / SNEA / SDGNN / SiGAT (PyGSD 1.2.0, embeddings + LR) on the 12 E2 signed graphs, CARE-GNN / PC-GNN re-implementations on amazon-fraud and yelpchi, yelpchi Track-B set. EDSP-tuned vs signed GNNs on 9 ranked graphs: 7 wins / 24 ties / 5 losses over 36 comparisons, #1 by mean on 1 graph; EDSP-B-tuned vs CARE-GNN 1 / 0 / 1, vs PC-GNN 0 / 1 / 1 (docs/B5B6_REPORT.md, `scripts/b5b6_compare.py`).
 
+- PR-40 (A18 graphs, 2026-11-10, stopped early on the coordinator's request): loaders for GraphLand hm-categories / artnet-exp / city-reviews / web-fraud / web-topics, ogbn-arxiv, ogbn-products, arxiv-year, twitch-gamers, snap-patents, pokec, registered as opt-in extension "a18" (no default list picks them up), md5 check and HTML-page rejection in `acquisition.fetch`, fixture tests `tests/unit/test_a18_loaders.py`. Not exercised on the real files: no dataset-stats run was dispatched, so every download and every count is TO VERIFY; no method has been run on these graphs.
+
 ## Remaining
 - H6 (A16, 2026-11-09): not supported (docs/H6_REPORT.md).
 - H5 (A15, 2026-11-09): supported on ogbn-proteins, 112 tasks (docs/H5_REPORT.md). The effect equals generic edge weighting. Uncertain DBLP, US-Patent and raw STRING could not be obtained as specified.

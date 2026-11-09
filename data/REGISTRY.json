@@ -242,58 +242,139 @@
     },
     "ogbn-arxiv": {
       "cell": "C1",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "symmetrised",
-      "status": "planned (PR-3 acquisition)"
+      "routes": [
+        "http://snap.stanford.edu/ogb/data/nodeproppred/{file}"
+      ],
+      "loader": "ogbn_multiclass",
+      "metric": "accuracy",
+      "domain": "citation (arXiv CS papers)",
+      "license": "ODC-BY per OGB docs (TO VERIFY)",
+      "citation": "Hu et al., Open Graph Benchmark, NeurIPS 2020 (arXiv:2005.00687)",
+      "split": "official OGB time split (split_id 'time'), then rand0-rand9 (stratified 60/20/20, seeds 0-9)",
+      "expected_reported": {
+        "nodes": 169343,
+        "edges": "1,166,243 directed",
+        "classes": 40,
+        "features": 128,
+        "source": "OGB paper / LINKX Table 2 (arxiv-year row, same graph)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. Layout from ogb/nodeproppred/master.csv (download_name arxiv, split time, add_inverse_edge False). Directed citations symmetrised (2.6).",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": false
     },
     "ogbn-products": {
       "cell": "C1/C7",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "",
-      "status": "planned (PR-3 acquisition)"
+      "routes": [
+        "http://snap.stanford.edu/ogb/data/nodeproppred/{file}"
+      ],
+      "loader": "ogbn_multiclass",
+      "metric": "accuracy",
+      "domain": "co-purchase (Amazon products)",
+      "license": "TO VERIFY (OGB docs: Amazon product co-purchasing network)",
+      "citation": "Hu et al., Open Graph Benchmark, NeurIPS 2020 (arXiv:2005.00687)",
+      "split": "official OGB sales_ranking split (split_id 'sales_ranking'), then rand0-rand9 (stratified 60/20/20, seeds 0-9)",
+      "expected_reported": {
+        "nodes": 2449029,
+        "edges": "61,859,140",
+        "classes": 47,
+        "features": 100,
+        "source": "OGB paper (TO VERIFY)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. Archive ~1.4 GB; features 2.45M x 100 float32 = 0.98 GB, just under MAX_DENSE_FEATURE_BYTES.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": true
     },
     "arxiv-year": {
       "cell": "C2",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "LINKX; Google Drive routes TO VERIFY",
-      "status": "planned (PR-3 acquisition)"
+      "routes": [
+        "http://snap.stanford.edu/ogb/data/nodeproppred/{file}"
+      ],
+      "aux_routes": {
+        "splits": [
+          "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/splits/{file}"
+        ]
+      },
+      "loader": "arxiv_year",
+      "metric": "accuracy",
+      "domain": "citation (arXiv CS papers; label = year)",
+      "license": "ODC-BY per OGB docs (TO VERIFY); LINKX repo has no data licence",
+      "citation": "Lim et al., Large Scale Learning on Non-Homophilous Graphs, NeurIPS 2021 (arXiv:2110.14446)",
+      "split": "LINKX fixed splits linkx0-linkx4 (50/25/25, data/splits/arxiv-year-splits.npy at the pinned commit), then rand0-rand9 (stratified 60/20/20)",
+      "expected_reported": {
+        "nodes": 169343,
+        "edges": "1,166,243",
+        "classes": 5,
+        "features": 128,
+        "edge_homophily": 0.222,
+        "source": "LINKX Table 2 (automated read of arXiv:2110.14446, 2026-11-09)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. Graph/features from OGB arxiv.zip; labels = LINKX even_quantile_labels(node_year, 5). The splits file exists in the LINKX tree at the pinned commit (git ls-tree, 3,579,056 bytes); its pickle content is unverified.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": false
     },
     "snap-patents": {
       "cell": "C2/C7",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "LINKX",
-      "status": "planned (PR-3 acquisition)"
+      "routes": [
+        "https://drive.usercontent.google.com/download?id=1ldh23TSY1PwXia6dU0MYcpyEgX-w3Hia&confirm=t&file={file}",
+        "https://drive.google.com/uc?export=download&confirm=t&id=1ldh23TSY1PwXia6dU0MYcpyEgX-w3Hia&file={file}"
+      ],
+      "loader": "snap_patents",
+      "metric": "accuracy",
+      "domain": "citation (US patents; label = year)",
+      "license": "TO VERIFY (NBER / SNAP cit-Patents; no licence in the LINKX repo)",
+      "citation": "Lim et al. 2021 (arXiv:2110.14446); Leskovec, Kleinberg & Faloutsos 2005 (SNAP cit-Patents)",
+      "split": "rand0-rand9 (stratified 60/20/20); LINKX's 5 fixed splits are on Google Drive (id 12xbBRqd8mtG_XkNLH8dRRNZJvVM4Pw-N) and NOT registered as a split source until that route is verified",
+      "expected_reported": {
+        "nodes": 2923922,
+        "edges": "13,975,788",
+        "classes": 5,
+        "features": 269,
+        "edge_homophily": 0.073,
+        "source": "LINKX Table 2"
+      },
+      "unused_routes": {
+        "https://snap.stanford.edu/data/cit-Patents.html": "citation graph only, no years/features: LINKX's .mat cannot be rebuilt identically"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. Google Drive routes TO VERIFY (the '&file=' suffix only carries the cache file name). Features 269 x 2.92M ~ 3.1 GB dense > MAX_DENSE_FEATURE_BYTES -> omitted, Track B NOT-RUN unless the budget is raised.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": true
     },
     "pokec": {
       "cell": "C2/C7",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "LINKX",
-      "status": "planned (PR-3 acquisition)"
+      "routes": [
+        "https://drive.usercontent.google.com/download?id=1dNs5E7BrWJbgcHeQ_zuy5Ozp2tRCWG0y&confirm=t&file={file}",
+        "https://drive.google.com/uc?export=download&confirm=t&id=1dNs5E7BrWJbgcHeQ_zuy5Ozp2tRCWG0y&file={file}"
+      ],
+      "loader": "pokec",
+      "metric": "accuracy",
+      "domain": "social (Slovak social network; label = gender)",
+      "license": "TO VERIFY (SNAP soc-Pokec; no licence in the LINKX repo)",
+      "citation": "Lim et al. 2021 (arXiv:2110.14446); Takac & Zabovsky 2012 (SNAP soc-Pokec)",
+      "split": "rand0-rand9 (stratified 60/20/20); LINKX's 5 fixed splits are on Google Drive (id 1ZhpAiyTNc0cE_hhgyiqxnkKREHK7MK-_) and NOT registered as a split source until that route is verified",
+      "expected_reported": {
+        "nodes": 1632803,
+        "edges": "30,622,564",
+        "classes": 2,
+        "features": 65,
+        "edge_homophily": 0.445,
+        "source": "LINKX Table 2"
+      },
+      "unused_routes": {
+        "https://snap.stanford.edu/data/soc-Pokec.html": "raw profiles/relationships: LINKX's 65-feature construction is not published, so not rebuilt"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. Google Drive routes TO VERIFY. Features 1.63M x 65 float32 = 0.42 GB (kept).",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": true
     },
     "genius": {
       "cell": "C2",
@@ -311,14 +392,41 @@
     },
     "twitch-gamers": {
       "cell": "C2/C7",
-      "routes": [],
-      "loader": null,
-      "metric": "TO VERIFY",
-      "domain": "TO VERIFY",
-      "license": "TO VERIFY",
-      "split": "TO VERIFY",
-      "notes": "LINKX",
-      "status": "planned (PR-3 acquisition)"
+      "routes": [
+        "https://snap.stanford.edu/data/{file}"
+      ],
+      "aux_routes": {
+        "splits": [
+          "https://raw.githubusercontent.com/CUAI/Non-Homophily-Large-Scale/82f8f05c5c3ec16bd5b505cc7ad62ab5e09051e6/data/splits/{file}"
+        ],
+        "linkx_feat": [
+          "https://drive.usercontent.google.com/download?id=1fA9VIIEI8N0L27MSQfcBzJgRQLvSbrvR&confirm=t",
+          "https://drive.google.com/uc?export=download&confirm=t&id=1fA9VIIEI8N0L27MSQfcBzJgRQLvSbrvR"
+        ],
+        "linkx_edges": [
+          "https://drive.usercontent.google.com/download?id=1XLETC6dG3lVl7kDmytEJ52hvDMVdxnZ0&confirm=t",
+          "https://drive.google.com/uc?export=download&confirm=t&id=1XLETC6dG3lVl7kDmytEJ52hvDMVdxnZ0"
+        ]
+      },
+      "loader": "twitch_gamers",
+      "metric": "accuracy",
+      "domain": "social (Twitch mutual follows)",
+      "license": "TO VERIFY (no licence on the SNAP page)",
+      "citation": "Rozemberczki & Sarkar, Twitch Gamers, arXiv:2101.03091 (2021); LINKX task as Lim et al. 2021",
+      "split": "LINKX fixed splits linkx0-linkx4 (data/splits/twitch-gamer-splits.npy at the pinned commit), then rand0-rand9 (stratified 60/20/20)",
+      "expected_reported": {
+        "nodes": 168114,
+        "edges": "6,797,557",
+        "classes": 2,
+        "features": 7,
+        "edge_homophily": 0.545,
+        "source": "SNAP twitch_gamers page (nodes/edges); LINKX Table 2"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. Route 1: SNAP twitch_gamers.zip (zip member names TO VERIFY); fallback: LINKX Google Drive CSVs (IDs from CUAI data_utils.py; Google Drive routes TO VERIFY, may serve a quota page - rejected as HTML by acquisition.fetch).",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": true
     },
     "penn94": {
       "cell": "C2",
@@ -791,9 +899,150 @@
       "notes": "Geom-GCN new_data/film (Pei et al. 2020; PyG Actor reads the same files); k = 5; download TO VERIFY (first Actions run / dataset-stats.yml): URL resolves at the pinned commit (HTTP 200 on HEAD, Content-Length = git blob size, not a Git LFS pointer, checked 2026-11-08); format taken from the authors' loader code, tested on offline fixtures only",
       "status": "registered",
       "extension": "native-mixed"
+    },
+    "hm-categories": {
+      "cell": "C1/C2",
+      "routes": [
+        "https://zenodo.org/records/16895532/files/{file}",
+        "https://zenodo.org/api/records/16895532/files/{file}/content"
+      ],
+      "loader": "graphland",
+      "metric": "accuracy",
+      "domain": "co-purchase (H&M products)",
+      "license": "Apache-2.0 (Zenodo record 16895532 page, read 2026-11-09)",
+      "citation": "Bazhenov, Platonov & Prokhorenkova, GraphLand: Evaluating Graph Machine Learning Models on Diverse Industrial Data, NeurIPS 2025 D&B (arXiv:2409.14500); Zenodo doi:10.5281/zenodo.16895532",
+      "md5": {
+        "hm-categories.zip": "40eda36ca0e55e6799b9f4ffdf8645ca"
+      },
+      "split": "provided GraphLand splits by name: RH (50/25/25), RL (10/10/80 stratified), TH (temporal 50/25/25); then rand0-rand9 (stratified 60/20/20, seeds 0-9, labelled nodes)",
+      "expected_reported": {
+        "nodes": 46563,
+        "edges": "21,461,990 (PyG, both directions) / 10.7M (paper)",
+        "classes": 21,
+        "features": 35,
+        "source": "PyG GraphLandDataset docstring; paper Table 1 (automated read 2026-11-09, TO VERIFY)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. multiclass task; cell guess from the paper's unbiased homophily: C1/C2 (unbiased homophily 0.38 reported) (to be fixed from dataset-stats). md5 from the Zenodo record page (two automated reads agreed); checked on download. Kaggle mirror (bazhenovgleb/graphland) needs an account: not used.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": true
+    },
+    "artnet-exp": {
+      "cell": "C2",
+      "routes": [
+        "https://zenodo.org/records/16895532/files/{file}",
+        "https://zenodo.org/api/records/16895532/files/{file}/content"
+      ],
+      "loader": "graphland",
+      "metric": "average_precision",
+      "domain": "social (art-creator friendships)",
+      "license": "Apache-2.0 (Zenodo record 16895532 page, read 2026-11-09)",
+      "citation": "Bazhenov, Platonov & Prokhorenkova, GraphLand: Evaluating Graph Machine Learning Models on Diverse Industrial Data, NeurIPS 2025 D&B (arXiv:2409.14500); Zenodo doi:10.5281/zenodo.16895532",
+      "md5": {
+        "artnet-exp.zip": "7f257b0721b5ad16df2c29106c13d011"
+      },
+      "split": "provided GraphLand splits by name: RH (50/25/25), RL (10/10/80 stratified), TH (temporal 50/25/25); then rand0-rand9 (stratified 60/20/20, seeds 0-9, labelled nodes)",
+      "expected_reported": {
+        "nodes": 50405,
+        "edges": "560,696 (PyG, both directions) / 280.3K (paper)",
+        "classes": 2,
+        "features": 75,
+        "source": "PyG GraphLandDataset docstring; paper Table 1 (automated read 2026-11-09, TO VERIFY)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. binary task; cell guess from the paper's unbiased homophily: C2 (unbiased homophily 0.28 reported) (to be fixed from dataset-stats). md5 from the Zenodo record page (two automated reads agreed); checked on download. Kaggle mirror (bazhenovgleb/graphland) needs an account: not used.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": false
+    },
+    "city-reviews": {
+      "cell": "C1/C2",
+      "routes": [
+        "https://zenodo.org/records/16895532/files/{file}",
+        "https://zenodo.org/api/records/16895532/files/{file}/content"
+      ],
+      "loader": "graphland",
+      "metric": "average_precision",
+      "domain": "reviews / fraud (co-reviewing users)",
+      "license": "Apache-2.0 (Zenodo record 16895532 page, read 2026-11-09)",
+      "citation": "Bazhenov, Platonov & Prokhorenkova, GraphLand: Evaluating Graph Machine Learning Models on Diverse Industrial Data, NeurIPS 2025 D&B (arXiv:2409.14500); Zenodo doi:10.5281/zenodo.16895532",
+      "md5": {
+        "city-reviews.zip": "2e2ff894398bef6384db0a395c3bcf31"
+      },
+      "split": "provided GraphLand splits by name: RH (50/25/25), RL (10/10/80 stratified); then rand0-rand9 (stratified 60/20/20, seeds 0-9, labelled nodes)",
+      "expected_reported": {
+        "nodes": 148801,
+        "edges": "2,330,830 (PyG, both directions) / 1.2M (paper)",
+        "classes": 2,
+        "features": 37,
+        "source": "PyG GraphLandDataset docstring; paper Table 1 (automated read 2026-11-09, TO VERIFY)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. binary task; cell guess from the paper's unbiased homophily: C1 (unbiased homophily 0.69 reported) (to be fixed from dataset-stats). md5 from the Zenodo record page (two automated reads agreed); checked on download. Kaggle mirror (bazhenovgleb/graphland) needs an account: not used.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": false
+    },
+    "web-fraud": {
+      "cell": "C2/C7",
+      "routes": [
+        "https://zenodo.org/records/16895532/files/{file}",
+        "https://zenodo.org/api/records/16895532/files/{file}/content"
+      ],
+      "loader": "graphland",
+      "metric": "average_precision",
+      "domain": "web graph / fraud",
+      "license": "Apache-2.0 (Zenodo record 16895532 page, read 2026-11-09)",
+      "citation": "Bazhenov, Platonov & Prokhorenkova, GraphLand: Evaluating Graph Machine Learning Models on Diverse Industrial Data, NeurIPS 2025 D&B (arXiv:2409.14500); Zenodo doi:10.5281/zenodo.16895532",
+      "md5": {
+        "web-fraud.zip": "d267da29c2706e30c74729f8dfc2843b"
+      },
+      "split": "provided GraphLand splits by name: RH (50/25/25), RL (10/10/80 stratified), TH (temporal 50/25/25); then rand0-rand9 (stratified 60/20/20, seeds 0-9, labelled nodes)",
+      "expected_reported": {
+        "nodes": 2890331,
+        "edges": "12,895,369 directed (PyG) / 12.4M (paper)",
+        "classes": 2,
+        "features": 266,
+        "source": "PyG GraphLandDataset docstring; paper Table 1 (automated read 2026-11-09, TO VERIFY)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. binary task; cell guess from the paper's unbiased homophily: C2/C7 (unbiased homophily 0.32 reported) (to be fixed from dataset-stats). md5 from the Zenodo record page (two automated reads agreed); checked on download. Kaggle mirror (bazhenovgleb/graphland) needs an account: not used. Directed web graph, symmetrised (2.6); features 266/263-dim x 2.89M nodes exceed MAX_DENSE_FEATURE_BYTES -> features omitted, Track B NOT-RUN unless the budget is raised.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": true
+    },
+    "web-topics": {
+      "cell": "C2/C7",
+      "routes": [
+        "https://zenodo.org/records/16895532/files/{file}",
+        "https://zenodo.org/api/records/16895532/files/{file}/content"
+      ],
+      "loader": "graphland",
+      "metric": "accuracy",
+      "domain": "web graph / topics",
+      "license": "Apache-2.0 (Zenodo record 16895532 page, read 2026-11-09)",
+      "citation": "Bazhenov, Platonov & Prokhorenkova, GraphLand: Evaluating Graph Machine Learning Models on Diverse Industrial Data, NeurIPS 2025 D&B (arXiv:2409.14500); Zenodo doi:10.5281/zenodo.16895532",
+      "md5": {
+        "web-topics.zip": "ac5c57ed03e980b06abdabe5d289b268"
+      },
+      "split": "provided GraphLand splits by name: RH (50/25/25), RL (10/10/80 stratified), TH (temporal 50/25/25); then rand0-rand9 (stratified 60/20/20, seeds 0-9, labelled nodes)",
+      "expected_reported": {
+        "nodes": 2890331,
+        "edges": "12,895,369 directed (PyG) / 12.4M (paper)",
+        "classes": 28,
+        "features": 263,
+        "source": "PyG GraphLandDataset docstring; paper Table 1 (automated read 2026-11-09, TO VERIFY)"
+      },
+      "notes": "A18 extension (opt-in: excluded from every default dataset list). Loader written from the authors' / PyG loader code and tested on synthetic fixtures only; NOT yet exercised on the real files (no dataset-stats run: work stopped by the coordinator on 2026-11-10). Download TO VERIFY. multiclass task; cell guess from the paper's unbiased homophily: C1/C7 (unbiased homophily 0.55 reported) (to be fixed from dataset-stats). md5 from the Zenodo record page (two automated reads agreed); checked on download. Kaggle mirror (bazhenovgleb/graphland) needs an account: not used. Directed web graph, symmetrised (2.6); features 266/263-dim x 2.89M nodes exceed MAX_DENSE_FEATURE_BYTES -> features omitted, Track B NOT-RUN unless the budget is raised.",
+      "status": "registered (loader untested on real data)",
+      "extension": "a18",
+      "opt_in": true,
+      "large": true
     }
   },
   "extensions": {
-    "native-mixed": "PR-20: candidate real graphs whose labels mix natively and close to randomly across edges (k = 2, edge homophily expected near 0.5, to be measured by dataset-stats.yml; actor: k = 5, low homophily). Excluded from the default E1/E2 lists of .github/workflows/e1.yml; run them by naming them in its `datasets` input. Cell choice: docs/SPEC_AMBIGUITIES.md."
+    "native-mixed": "PR-20: candidate real graphs whose labels mix natively and close to randomly across edges (k = 2, edge homophily expected near 0.5, to be measured by dataset-stats.yml; actor: k = 5, low homophily). Excluded from the default E1/E2 lists of .github/workflows/e1.yml; run them by naming them in its `datasets` input. Cell choice: docs/SPEC_AMBIGUITIES.md.",
+    "a18": "A18 (2026-11-10, PR-40): candidate confirmatory family of real graphs never used before in this project (GraphLand hm-categories / artnet-exp / city-reviews / web-fraud / web-topics, ogbn-arxiv, ogbn-products, arxiv-year, twitch-gamers, snap-patents, pokec). 'opt_in': true keeps them out of every default dataset list (dataset_stats.py, run_e1.py, edge_classifier_report.py, e1.yml): they are processed only when named. No method has been run on them."
   }
 }

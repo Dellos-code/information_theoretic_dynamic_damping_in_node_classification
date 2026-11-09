@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from edsp.data.loaders import load
-from edsp.data.registry import datasets_with_loader
+from edsp.data.registry import default_datasets
 from edsp.data.stats import dataset_stats
 
 DEFAULT_EXCLUDE = {"ogbn-proteins"}  # large; opt in with --include-large
@@ -65,7 +65,7 @@ def main() -> int:
     ap.add_argument("--out", default=str(ROOT / "results" / "dataset_stats"))
     args = ap.parse_args()
 
-    names = args.datasets or [d for d in datasets_with_loader() if args.include_large or d not in DEFAULT_EXCLUDE]
+    names = args.datasets or [d for d in default_datasets() if args.include_large or d not in DEFAULT_EXCLUDE]
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     published = json.loads((ROOT / "data" / "PUBLISHED_STATS.json").read_text())

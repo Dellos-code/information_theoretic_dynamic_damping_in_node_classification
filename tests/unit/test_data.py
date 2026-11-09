@@ -638,7 +638,7 @@ def test_native_mixed_registry_entries():
     from edsp.data.loaders import LOADERS
 
     ds = registry()["datasets"]
-    ext = {k for k, v in ds.items() if v.get("extension")}
+    ext = {k for k, v in ds.items() if v.get("extension") == "native-mixed"}
     assert ext == NATIVE_MIXED and ext <= set(LOADERS)
     assert "native-mixed" in registry()["extensions"]
     for k in ext:

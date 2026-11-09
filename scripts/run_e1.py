@@ -52,7 +52,7 @@ from edsp.core import edsp
 from edsp.data import label_noise as label_noise_mod
 from edsp.data.loaders import load
 from edsp.data.perturb import perturb
-from edsp.data.registry import dataset_entry, datasets_with_loader
+from edsp.data.registry import dataset_entry, default_datasets
 from edsp.data.stats import DEGREE_BINS, degree_bins, label_stats, local_homophily_bins
 from edsp.eval.evaluate import evaluate, stratified_accuracy
 from edsp.regimes import build_inputs
@@ -236,7 +236,7 @@ def main() -> int:
     _flag_list(args.signed_gnn, SIGNED_GNNS, "--signed-gnn")
     _flag_list(args.fraud_gnn, FRAUD_GNNS, "--fraud-gnn")
     args.out = args.out or str(ROOT / "results" / "runs" / args.suite.lower())
-    names = args.datasets or [d for d in datasets_with_loader() if d != "ogbn-proteins"]
+    names = args.datasets or [d for d in default_datasets() if d != "ogbn-proteins"]
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     run_id = os.environ.get("GITHUB_RUN_ID")
