@@ -64,7 +64,7 @@ What is evaluated:
 | H3 | EDSP-fullH > EDSP on structured-compatibility graphs, gap growing with k | **not supported** | C3d: 1 win / 2 ties / 2 losses; gap vs k Spearman ρ = −0.36 (p = 0.89); roman-empire +16.6, wikics −23.5; `docs/E5_REPORT.md` |
 | H4 | Track-B EDSP ≈ C&S < tuned GNNs on feature-rich heterophilous graphs | **inconclusive** (both A14 modes) | EDSP-B ≈ C&S on 2 / 6 C2 graphs, best GNN significantly better on 5 / 6; `docs/E3_REPORT.md` |
 | H5 | P-NATIVE > P-CONST on ogbn-proteins / uncertain DBLP | **NOT-RUN** | ogbn-proteins (multi-label, C4) and the uncertain-DBLP source were not acquired; see §5 |
-| H6 | Finite T_L helps under label noise | **NOT-RUN** | The label-noise suite (E6) was not implemented |
+| H6 | Finite T_L helps under label noise | **not supported** | 14 graphs × 11 noise conditions (A16): EDSP-TL vs EDSP-default 1 win / 13 ties in both primary conditions (uniform and pairwise 30 %); mean effect ≤ 0.05 points; `docs/H6_REPORT.md` |
 | H7 | Convergence / oscillation / fixed-point non-uniqueness (descriptive) | **reported** | EDSP-default did not converge in 3 of 153 E1 real-graph runs (Planetoid public splits); no period-2 oscillation flagged; E1 report §H7 |
 
 Later confirmatory tests, each preregistered:
@@ -110,7 +110,6 @@ Average ranks (Friedman over the graphs where every ranked method exists; `tab_r
 
 ## 5. Not run, and limitations
 - **H5:** ogbn-proteins and uncertain-DBLP were not acquired.
-- **H6:** the label-noise suite was not implemented.
 - **Signed-GNN baselines** (SGCN, SDGNN, SiGAT) and **fraud-GNN baselines** other than BWGNN
   (CARE-GNN, PC-GNN, GAGA) are not run (PR-6).
 - **E3 on coauthor-cs / coauthor-physics (A12)** is reported in `docs/E3_REPORT.md`

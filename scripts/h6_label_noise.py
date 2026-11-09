@@ -122,6 +122,16 @@ def main() -> int:
             hit = [x for x in tl.get(f"{m}:{r:g}", []) if x["graph"] == g]
             cells.append(f"{100 * hit[0]['delta']:+.2f} (p={hit[0]['p_holm']:.3g}, {hit[0]['verdict']})" if hit else "NOT-RUN")
         md.append(f"| {g} | " + " | ".join(cells) + " |")
+    md += ["", "## Fixed-trust sweep: mean Δ ×100 of EDSP-TL=T vs EDSP-default (over graphs and splits)", "",
+           "| condition | T=0.5 | T=1 | T=2 | T=4 |", "|---|---|---|---|---|"]
+    for cond in tl:
+        mo, ra = cond.split(":")
+        cells = []
+        for T in ("0.5", "1", "2", "4"):
+            ds = [compare(vals[(g, mo, float(ra))][f"EDSP-TL={T}"], vals[(g, mo, float(ra))]["EDSP-default"])[1]
+                  for g in GRAPHS if f"EDSP-TL={T}" in vals.get((g, mo, float(ra)), {})]
+            cells.append(f"{100 * np.mean(ds):+.3f}" if ds else "—")
+        md.append(f"| {cond} | " + " | ".join(cells) + " |")
     md += ["", "## T_L chosen by validation (EDSP-TL), counts over splits", ""]
     agg: dict = defaultdict(Counter)
     for (_, mo, ra), c in chosen.items():
