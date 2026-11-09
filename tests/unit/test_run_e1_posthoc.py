@@ -12,8 +12,8 @@ import pytest
 from test_regimes import toy_graph
 
 ROOT = Path(__file__).resolve().parents[2]
-POSTHOC = ["cs_2hop", "clp", "linbp_b"]
-FLAG = "cs2hop,clp,linbp_b"
+POSTHOC = ["cs_2hop", "clp", "linbp_b", "cs_ref", "cs_2hop_ref", "clp_es"]
+FLAG = "cs2hop,clp,linbp_b,csref,cs2hopref,clpes"
 
 
 def _module(name: str = "run_e1"):
@@ -92,7 +92,7 @@ def test_failing_method_gives_its_own_not_run_record(monkeypatch, tmp_path):
 
     monkeypatch.setattr(mod, "select_and_predict_posthoc", flaky)
     recs = _run(monkeypatch, tmp_path, toy_graph(), "--track", "B", "--gnn=", "--gnn-only", "--posthoc", FLAG, mod=mod)
-    assert [r["method"] for r in recs] == ["cs_2hop", "NOT-RUN", "linbp_b"]
+    assert [r["method"] for r in recs] == ["cs_2hop", "NOT-RUN", *POSTHOC[2:]]
     assert recs[1]["baseline"] == "clp" and "MemoryError" in recs[1]["reason"]
 
 

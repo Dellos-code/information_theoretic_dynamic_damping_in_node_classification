@@ -14,9 +14,10 @@ For each dataset and split (all official / registered splits):
     GNNs (--fraud-gnn: CARE-GNN, PC-GNN; Track B, relation-typed graphs only). With
     --gnn-only they run as isolated jobs (no EDSP / propagation baselines).
   * optional, off by default (PR-39): Track-B post-hoc comparators on the same base predictor
-    as EDSP-B and C&S (--posthoc: cs2hop, clp, linbp_b -> records cs_2hop, clp, linbp_b;
-    edsp/baselines/posthoc.py). With --track B --gnn-only --gnn= only they run (plus their base
-    predictor), so they can be added to existing E3 splits without re-running EDSP-B / C&S.
+    as EDSP-B and C&S (--posthoc: cs2hop, clp, linbp_b, csref, cs2hopref, clpes -> records
+    cs_2hop, clp, linbp_b, cs_ref, cs_2hop_ref, clp_es; edsp/baselines/posthoc.py). With
+    --track B --gnn-only --gnn= only they run (plus their base predictor), so they can be added
+    to existing E3 splits without re-running EDSP-B / C&S.
 Pre-registered extras (docs/PREREGISTRATION.md):
   * secondary column for non-converged EDSP runs: mean of the last two iterates;
   * H7 descriptive outcome: convergence, oscillation, and on the first
@@ -172,7 +173,8 @@ def run_b56(g, vault, metric, si, sid, bins, emit) -> None:
 
 
 def run_posthoc(g, vault, metric, sid, bins, emit) -> None:
-    """Track-B post-hoc comparators (--posthoc, PR-39): C&S 2-hop, CLP and LinBP-B, each refining the
+    """Track-B post-hoc comparators (--posthoc, PR-39): C&S 2-hop, CLP, LinBP-B and the named variants
+    C&S-ref, C&S-2hop-ref (reference C&S semantics) and CLP-ES (layer chosen on validation), each refining the
     soft outputs of the SAME base predictor as EDSP-B and C&S (feature_lr, fitted here once per split
     and shared by the three; it is deterministic, so records of a --gnn-only job pair with the EDSP-B /
     C&S records of the same split). Default '' (nothing runs, records unchanged); Track A never runs
@@ -194,7 +196,8 @@ def run_posthoc(g, vault, metric, sid, bins, emit) -> None:
     base_diag = {"base_sha256": hashlib.sha256(np.ascontiguousarray(np.round(base, 10)).tobytes()).hexdigest(),
                  "base_wall_clock_seconds": round(time.perf_counter() - t0, 3)}
     keep = ("val_scores", "correct", "smooth", "iterations", "converged", "eps", "rho_W", "rho_H", "H", "H_counts",
-            "sinkhorn", "last_layer_change_l1", "zero_rows", "layers")
+            "sinkhorn", "last_layer_change_l1", "zero_rows", "layers", "hops", "sigma", "autoscale_capped_rows",
+            "selected_layer", "selected_layers")
     for name in names:
         t0 = time.perf_counter()
         try:
@@ -254,7 +257,7 @@ def main() -> int:
                          "('' = none)")
     ap.add_argument("--posthoc", default="",
                     help="Track-B post-hoc comparators on the base predictor of EDSP-B / C&S: comma list of "
-                         "cs2hop,clp,linbp_b ('' = none; PR-39)")
+                         + ",".join(POSTHOC_METHOD) + " ('' = none; PR-39)")
     ap.add_argument("--gnn-hidden", type=int, default=256,
                     help="hidden width of the GNNs (64 for the fraud graphs = BWGNN's published setting; A9)")
     ap.add_argument("--learned-sign-baselines", action="store_true",

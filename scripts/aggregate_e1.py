@@ -33,7 +33,7 @@ BASELINES = ["harmonic", "harmonic_cmn", "lgc", "ppr_lp", "linbp", "train_prior"
 B56 = ["sgcn", "snea", "sdgnn", "sigat", "care_gnn", "pc_gnn"]
 # Track-B post-hoc comparators on the base predictor of EDSP-B / C&S (PR-39, run_e1.py --posthoc): same rule as
 # B5 / B6 — columns, win/tie/loss rows (and stratified rows) only when their records exist; never in RANKED
-POSTHOC = ["cs_2hop", "clp", "linbp_b"]
+POSTHOC = ["cs_ref", "cs_2hop", "cs_2hop_ref", "clp", "clp_es", "linbp_b"]
 # case studies (tiny or label-leaking by construction, Master Prompt §3.1 C5.3): reported, never ranked
 EXCLUDED_FROM_RANKS = {"sampson", "wiki-rfa", "wiki-elec"}
 
