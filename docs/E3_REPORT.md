@@ -117,3 +117,41 @@ over the graphs where every ranked method exists:
   is a post-hoc smoother on top of a fixed predictor, comparable to C&S, not to the GNNs.
 - **The GNN numbers are from re-implementations** with 9-point grids on CPU runners. Published
   numbers for the same graphs may differ.
+
+## Coauthor graphs (A12, not part of H4)
+
+These are homophilous graphs with dense bag-of-words features (6,805 and 8,415 dimensions).
+They are run per split and per method group on branch `pr-21-e3-results`. Records are in
+`results/runs/e3-coauthor/` (assembly listing in `ASSEMBLY.md`) and tables in
+`results/aggregates/e3-coauthor/E3_SUMMARY.md`. Accuracy is ×100, mean ± std over 10 splits.
+
+| graph | EDSP-B-tuned | LogReg (base) | C&S | MLP | GCN+ | SAGE+ | GAT+ | GPR-GNN | BWGNN |
+|---|---|---|---|---|---|---|---|---|---|
+| coauthor-cs | 95.78 ± 0.22 | 94.72 ± 0.23 | 95.83 ± 0.21 | 95.40 ± 0.22 | 95.52 ± 0.20 | 95.38 ± 0.38 | 95.93 ± 0.30 | **95.97 ± 0.20** | 95.88 ± 0.29 |
+| coauthor-physics | 97.03 ± 0.22 | 96.25 ± 0.19 | 97.21 ± 0.23 | 96.98 ± 0.23 | 97.12 ± 0.17 | NOT-RUN | NOT-RUN | **97.37 ± 0.21** | 97.31 ± 0.24 |
+
+**NOT-RUN on coauthor-physics (330-minute CI limit, A12).** A row is kept only if it is
+complete (the principle of A14), so these partial rows are left out of the tables and tests
+(`--drop`):
+- **SAGE+** finished 9 of 10 splits, mean 97.13. On the same 9 splits EDSP-B-tuned has 97.06
+  and is higher on 4 of them.
+- **GAT+** finished 3 of 10 splits, mean 97.47. On the same 3 splits EDSP-B-tuned has 97.17
+  and is higher on none.
+
+**EDSP-B-tuned win / tie / loss** (Wilcoxon over splits, Holm across the 2 graphs):
+
+| baseline | win / tie / loss |
+|---|---|
+| LogReg (base) | 2 / 0 / 0 |
+| C&S | 0 / 1 / 1 (loss on physics) |
+| MLP | 1 / 1 / 0 |
+| GCN+ | 1 / 1 / 0 |
+| SAGE+ | 1 / 0 / 0 (cs only) |
+| GAT+ | 0 / 1 / 0 (cs only) |
+| GPR-GNN | 0 / 0 / 2 |
+| BWGNN | 0 / 1 / 1 |
+
+**Reading.** On these feature-rich homophilous graphs every method is within about 1.3
+points. EDSP-B adds about 1 point over its base predictor, as C&S does, and is within 0.2
+(cs) and 0.35 (physics) points of the best GNN (GPR-GNN), which beats it on both graphs.
+This matches the homophilous E3 graphs above: no win over the best comparator.
