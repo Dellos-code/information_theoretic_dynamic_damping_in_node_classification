@@ -6,10 +6,16 @@ checked against the *calling module*:
 * ``train_labels()``      any caller.
 * ``val_labels()``        only modules under ``edsp.selection`` or ``edsp.eval``.
 * ``test_labels()``       only ``edsp.eval.evaluate``.
-* ``descriptive_labels()`` only ``edsp.data.stats`` and ``edsp.data.perturb``; used
-  for descriptive dataset statistics (Master Prompt §3.2 "full-label descriptive
-  version") and as the data-generating process of the PERTURBED-REAL mixing sweep,
-  never by a method. Every such access is logged and flagged.
+* ``descriptive_labels()`` only ``edsp.data.stats``, ``edsp.data.perturb`` and
+  ``edsp.data.label_noise``; used for descriptive dataset statistics (Master Prompt
+  §3.2 "full-label descriptive version") and as the data-generating process of the
+  PERTURBED-REAL sweeps (edge re-wiring; train/val label noise, §5.5), never by a
+  method. Every such access is logged and flagged.
+
+Label noise (§5.5, H6): a vault may carry an *observed* label array. ``train_labels()``
+and ``val_labels()`` then return the observed (possibly corrupted) labels, while
+``test_labels()`` and ``descriptive_labels()`` always return the true labels; the
+observed array must agree with the true labels on every test node.
 * ``oracle_labels()``     only ``edsp.regimes.oracle`` *and* only when the
   environment variable ``ORACLE=1`` is set (H-ORACLE upper bound, §2.3g).
 
@@ -29,7 +35,7 @@ import numpy as np
 
 _VAL_PREFIXES = ("edsp.selection", "edsp.eval")
 _TEST_MODULES = ("edsp.eval.evaluate",)
-_DESCRIPTIVE_MODULES = ("edsp.data.stats", "edsp.data.perturb")
+_DESCRIPTIVE_MODULES = ("edsp.data.stats", "edsp.data.perturb", "edsp.data.label_noise")
 _ORACLE_MODULES = ("edsp.regimes.oracle",)
 
 
@@ -56,10 +62,21 @@ class LabelVault:
     split_id: str = "0"
     strict: bool = True
     access_log: list[AccessRecord] = field(default_factory=list, repr=False)
+    _observed: np.ndarray | None = field(default=None, repr=False)  # noisy train/val labels (§5.5)
+    noise_info: dict | None = None
 
     def __post_init__(self) -> None:
         self._labels = np.asarray(self._labels)
         self._labels.setflags(write=False)
+        if self._observed is not None:
+            obs = np.array(self._observed, copy=True)
+            if obs.shape != self._labels.shape:
+                raise ValueError("observed labels must have the shape of the true labels")
+            if not np.array_equal(obs[np.asarray(self.test_idx, dtype=np.int64)],
+                                  self._labels[np.asarray(self.test_idx, dtype=np.int64)]):
+                raise ValueError("observed labels must equal the true labels on test nodes")
+            obs.setflags(write=False)
+            self._observed = obs
         for name in ("train_idx", "val_idx", "test_idx"):
             setattr(self, name, np.asarray(getattr(self, name), dtype=np.int64))
         overlap = (
@@ -88,11 +105,13 @@ class LabelVault:
     # ------------------------------------------------------------------ public
     def train_labels(self) -> tuple[np.ndarray, np.ndarray]:
         self._check("train", None)
-        return self.train_idx.copy(), self._labels[self.train_idx].copy()
+        src = self._labels if self._observed is None else self._observed
+        return self.train_idx.copy(), src[self.train_idx].copy()
 
     def val_labels(self) -> tuple[np.ndarray, np.ndarray]:
         self._check("val", _VAL_PREFIXES)
-        return self.val_idx.copy(), self._labels[self.val_idx].copy()
+        src = self._labels if self._observed is None else self._observed
+        return self.val_idx.copy(), src[self.val_idx].copy()
 
     def test_labels(self) -> tuple[np.ndarray, np.ndarray]:
         self._check("test", _TEST_MODULES)

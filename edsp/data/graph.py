@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 from dataclasses import dataclass, field
 
@@ -41,12 +42,13 @@ class GraphData:
     edge_relation: np.ndarray | None = None  # (m,) int relation id, for H-RELATION (§2.3f)
     multilabel: bool = False
     meta: dict = field(default_factory=dict)
+    label_noise: tuple[str, int] | None = None  # (spec, seed): train/val label noise, §5.5 / H6
 
     def vault(self, split: int | str = 0, *, strict: bool = True) -> LabelVault:
         chosen = self.splits[split] if isinstance(split, int) else next(
             s for s in self.splits if s.split_id == split
         )
-        return LabelVault(
+        v = LabelVault(
             self._labels,
             chosen.train_idx,
             chosen.val_idx,
@@ -55,6 +57,13 @@ class GraphData:
             split_id=chosen.split_id,
             strict=strict,
         )
+        if self.label_noise is None:
+            return v
+        # descriptive module: the noise process, not a method
+        from .label_noise import observe
+
+        observed, info = observe(v, *self.label_noise)
+        return dataclasses.replace(v, _observed=observed, noise_info=info)
 
     def descriptive_vault(self) -> LabelVault:
         """Vault whose only legitimate use is edsp.data.stats (all nodes in 'train')."""
@@ -75,6 +84,9 @@ class GraphData:
                 a = np.ascontiguousarray(arr)
                 h.update(str(a.dtype).encode() + str(a.shape).encode())
                 h.update(a.tobytes())
+        if self.label_noise is not None:
+            spec, seed = self.label_noise
+            h.update(f"label_noise:{spec}:{seed}".encode())
         return "sha256:" + h.hexdigest()
 
 

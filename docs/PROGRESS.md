@@ -48,7 +48,8 @@
 - Results (2026-11-08): E3 / H4 on 13 real graphs (docs/E3_REPORT.md; H4 inconclusive; A9 fraud, A14 GAT fallback on tolokers); A11 attribution of the MIX wins (MIX_REPORT §5); A13 native-mixing graphs (docs/A13_REPORT.md; inconclusive, FB100 wins belong to the learned polarity). E3 on coauthor-cs / -physics (A12) done (2026-11-09).
 
 ## Remaining
-- Not run by design or budget: H5 (ogbn-proteins / uncertain DBLP), H6 (label-noise suite), signed / fraud GNN SOTA beyond BWGNN (PR-6).
+- H6 (A16, 2026-11-09): not supported (docs/H6_REPORT.md).
+- Not run by design or budget: H5 (ogbn-proteins / uncertain DBLP), signed / fraud GNN SOTA beyond BWGNN (PR-6).
 
 - Verify the sources marked TO VERIFY in data/PUBLISHED_STATS.json (Planetoid/Amazon/Coauthor/WikiCS reference values).
 - PR-3: fetch-data.yml and acquisition run for the remaining cells (LINKX, fraud, C4/C5 sources).
