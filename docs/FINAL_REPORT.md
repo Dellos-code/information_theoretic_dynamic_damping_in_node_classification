@@ -51,6 +51,11 @@ What is evaluated:
      graphs (9 / 4 / 0). This last point is exploratory, not preregistered. On yelpchi, run
      later for B6, EDSP-B is 0.16 below its base predictor (raw p = 0.037). That is not
      significant after Holm, but it is not a gain either.
+     **This advantage is not EDSP's alone** (A18 Phase 1, `docs/A18_PHASE1_REPORT.md`,
+     exploratory, 17 graphs):
+     - Reference C&S (PyG semantics) and C&S 2-hop collapse the same way.
+     - CLP (Zhong et al., TMLR 2022) never harms its base on any of the 17 graphs and gains
+       more than EDSP-B. EDSP-B against CLP-ES: 0 wins, 12 ties, 5 losses.
    - **With a noisy learned polarity on fraud graphs (A10)**, against simple signed propagation
      fed the same polarity: amazon-fraud +1.74 AUC, yelpchi +4.64. Here EDSP is itself only
      tied with (amazon-fraud) or below (yelpchi) plain LGC.
@@ -160,6 +165,7 @@ Average ranks (Friedman over the graphs where every ranked method exists; `tab_r
 | `docs/A13_REPORT.md` | Native mixing |
 | `docs/E3_REPORT.md` | Track B, H4 |
 | `docs/B5B6_REPORT.md` | Signed GNNs and fraud GNNs (A17) |
+| `docs/A18_PHASE1_REPORT.md` | Post-hoc comparators (reference C&S, C&S 2-hop, CLP, LinBP-B) vs EDSP-B |
 | `docs/H5_REPORT.md` | H5, native edge probabilities (ogbn-proteins) |
 | `docs/H6_REPORT.md` | H6, label noise |
 | `docs/AUDIT_2026-11-07.md` | Independent audit |
